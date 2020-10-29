@@ -1,0 +1,27 @@
+{block menu}
+	{control menu}
+{/block}
+
+{block content}
+<div class="container">
+	{form loginForm}
+		<div class="field">
+			{label email/}
+			<div class="control">
+				{input email, class => 'input'}
+			</div>
+		</div>
+		<div class="field">
+			{label password/}
+			<div class="control">
+				{input password, class => 'input'}
+			</div>
+		</div>
+
+		<div class="field is-grouped">
+			<div class="control">
+				{input ok, class => "button is-link"}
+			</div>
+		</div>
+	{/form}
+</div>

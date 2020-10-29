@@ -1,0 +1,40 @@
+<nav class="navbar" role="navigation" aria-label="main navigation">
+	<div class="navbar-brand">
+		<a class="navbar-item" href="{$baseUrl}">
+			<img src="{$baseUrl}/mstile-150x150.png">Turistické známky
+		</a>
+
+		<a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+		</a>
+	</div>
+
+	<div id="navbarBasicExample" class="navbar-menu">
+		<div class="navbar-start">
+			<a href="{plink Homepage:}" class="navbar-item">
+				Všechny známky
+			</a>
+
+			<a n:if="$user->isLoggedIn()" href="{plink Homepage:, onlyCollected => true}" class="navbar-item">
+				Moje sbírka
+			</a>
+
+		</div>
+
+		<div class="navbar-end">
+			<div class="navbar-item">
+				<div class="buttons">
+					<span n:if="$user->isLoggedIn()">{$user->getIdentity()->email}</span>
+					<a n:if="!$user->isLoggedIn()" href="{plink Login:}" class="button is-primary">
+						<strong>Přihlásit</strong>
+					</a>
+					<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="navbar-item">
+						Administrace
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</nav>

@@ -1,0 +1,4 @@
+app/config/local.neon
+deployment.ini
+deployment.phar
+vendor/*
