@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Nette\Database\Explorer;
+use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
 
 class StampsModel {
@@ -21,15 +22,14 @@ class StampsModel {
 
 	}
 
-	public function count(array $filter): int {
+	public function count(?array $filter = null): int {
 		return $this->prepareQuery($filter)->count('*');
 	}
 
 	private function prepareQuery(array $filter): Selection {
 
 		$query = $this->db
-			->table(\Table::Stamps)
-			->order('id');
+			->table(\Table::Stamps);
 
 		if ($filter['withoutImage'] ?? null) {
 			$query->where('image IS NULL');
@@ -42,6 +42,25 @@ class StampsModel {
 			]);
 		}
 
+		if ($filter['label'] ?? null) {
+			if ($filter['label'] == 'NEZAŘAZENO') {
+				$query->whereOr([
+					'type = ?' => $filter['label'],
+					'type' => '',
+				]);
+			} else {
+				$query->where('type',  $filter['label']);
+			}
+		}
+
+		switch ($filter['sort'] ?? null) {
+			case '-num':
+				$query->order('id DESC');
+				break;
+			default:
+				$query->order('id');
+		}
+
 		if ($filter['ids'] ?? null) {
 			$query->where('id', $filter['ids']);
 		}
@@ -50,15 +69,27 @@ class StampsModel {
 
 	}
 
-	public function fetchCount() {
+	public function fetch(int $id): ?ActiveRow {
 
 		return $this->db
 			->table(\Table::Stamps)
-			->count('id');
+			->wherePrimary($id)
+			->fetch();
 
 	}
 
-	public function fetchImageCount() {
+	public function fetchLabels(): array {
+
+		return $this->db
+			->table(\Table::Stamps)
+			->select('DISTINCT type')
+			->where('type != ""')
+			->order('type')
+			->fetchPairs('type', 'type');
+
+	}
+
+	public function fetchImageCount(): int {
 
 		return $this->db
 			->table(\Table::Stamps)
@@ -66,7 +97,7 @@ class StampsModel {
 			->count('id');
 	}
 
-	public function fetchClosest(float $lat, float $lng, ?int $num = 10) {
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10): ?array {
 
 		return $this->db
 			->table(\Table::Stamps)

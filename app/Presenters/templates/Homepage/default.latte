@@ -6,27 +6,55 @@
 
 <div class="container">
 
-	<form n:name="searchForm">
+	<form n:name="filterForm" class="field is-horizontal">
 		<div class="field has-addons">
 			<div class="control">
 				{input search, class => "input"}
 			</div>
+			<div class="select">
+				{input sort}
+			</div>
+			<div class="select">
+				{input label}
+			</div>
 			<div class="control">
 				{input ok, class => "button is-info"}
 			</div>
+			<div class="control">
+					123/25
+			</div>
+		</div>
+		<div n:if="$filter['sort'] || $filter['search'] || $filter['label']" class="control">
+			<a n:href='this, sort => null, search => null, label => null' class="button is-warning">
+				Reset
+			</a>
 		</div>
 	</form>
 
-	{control paginator}
+	{if $allStamps}
 
-	<div class="columns is-multiline">
-		{foreach $allStamps as $stamp}
-			<div class="column is-3">
-				{include "@stampCard.latte", stamp => $stamp, collection => $collection}
-			</div>
-		{/foreach}
-	</div>
+		{control paginator}
 
-	{control paginator}
+		<div class="columns is-multiline">
+			{foreach $allStamps as $stamp}
+				<div class="column is-3">
+					{include "@stampCard.latte", stamp => $stamp, collection => $collection}
+				</div>
+			{/foreach}
+		</div>
+
+		{control paginator}
+	{/if}
+
+	<article n:if="!$allStamps" class="message is-danger">
+		<div class="message-body">
+			Vašemu filtru neodpovídají žádné položky.
+			<br>
+			<br>
+			<a n:href='this, sort => null, search => null' class="button is-success">
+				Reset filter
+			</a>
+		</div>
+	</article>
 
 </div>

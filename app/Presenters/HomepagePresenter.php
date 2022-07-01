@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Presenters;
 
 use App\Forms\EditStampFormFactory;
-use App\Forms\SearchForm;
+use App\Forms\FilterForm;
 use App\Helpers\Paginator;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
@@ -19,7 +19,13 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
 	private const StampsPerPage = 200;
 
-	protected ?string $search = '';
+	/** @persistent  */
+	public ?string $search = '';
+	/** @persistent  */
+	public ?string $sort = null;
+	/** @persistent  */
+	public ?string $label = null;
+
 	protected array $userCollection = [];
 
 	public function actionDefault() {
@@ -28,19 +34,23 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
 	}
 
-	public function renderDefault(bool $onlyCollected = null) {
+	public function handleToggleCollect(int $id) {
+
+		if ($this->user->isLoggedIn()) {
+			$this->collectionModel->toggleCollect($id, $this->user->getId());
+			$this->redirect('default', $this->getFilter());
+		}
+
+	}
+
+	public function renderDefault(bool $onlyCollected = null): void {
 
 		$filter = $this->getFilter();
 
 		if ($onlyCollected && $this->userCollection) {
 			$filter['ids'] = array_keys($this->userCollection);
 		}
-		if ($filter['search']) {
-			$this['searchForm']->setDefaults([
-				'search' => $filter['search'],
-				'sort' => $filter['sort'],
-			]);
-		}
+		$this['filterForm']->setDefaults($filter);
 
 		/** @var Paginator $paginator */
 		$paginator = $this['paginator'];
@@ -53,21 +63,19 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 			$paginator->getOffset()
 		);
 		$this->template->collection = $this->userCollection;
+		$this->template->filter = $filter;
 
 	}
 
-	public function handleToggleCollect(int $id) {
 
-		if ($this->user->isLoggedIn()) {
-			$this->collectionModel->toggleCollect($id, $this->user->getId());
-		}
+	public function createComponentFilterForm() {
 
-	}
+		$labels = $this->stampsModel->fetchLabels();
+		$labels = array_map(function($item) {
+			return Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($item));
+		}, $labels);
 
-	public function createComponentSearchForm() {
-
-		return SearchForm::create();
-
+		return FilterForm::create($labels);
 	}
 
 	public function createComponentEditStampForm() {
@@ -108,7 +116,8 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 	private function getFilter() {
 
 		return [
-			'search' => $this->getParameter('search', null),
+			'search' => $this->getParameter('search'),
+			'sort' => $this->getParameter('sort'),
 		];
 
 	}

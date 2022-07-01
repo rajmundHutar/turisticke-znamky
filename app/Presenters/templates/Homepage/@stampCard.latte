@@ -24,12 +24,11 @@
 			</div>
 			<div class="media-content">
 				<p class="title is-6 has-text-right">{$stamp['type']}</p>
-				<p class="subtitle is-6 has-text-right">{$stamp['region']}</p>
 			</div>
 		</div>
 		<div class="media">
 			<div class="media-content">
-				<a href="https://www.turisticke-znamky.cz/znamky/-c{$stamp['id']}" target="_blank">
+				<a n:href="detail, $stamp['id']">
 					<p class="title is-5">
 						{$stamp['name']}
 					</p>
@@ -43,9 +42,6 @@
 					<a n:href="toggleCollect!, id => $stamp['id']">Collect</a>
 				{/if}
 			</div>
-			<p class="media-content has-text-right">
-				<time>{$stamp['created_at']|date:'j. n. Y'}</time>
-			</p>
 		</div>
 
 		<div class="media" n:if="$stamp['dist'] ?? null">

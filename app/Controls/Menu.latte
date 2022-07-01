@@ -26,11 +26,11 @@
 		<div class="navbar-end">
 			<div class="navbar-item">
 				<div class="buttons">
-					<span n:if="$user->isLoggedIn()">{$user->getIdentity()->email}</span>
+					<span class="navbar-item" n:if="$user->isLoggedIn()">{$user->getIdentity()->email}</span>
 					<a n:if="!$user->isLoggedIn()" href="{plink Login:}" class="button is-primary">
 						<strong>Přihlásit</strong>
 					</a>
-					<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="navbar-item">
+					<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="button navbar-item">
 						Administrace
 					</a>
 				</div>
