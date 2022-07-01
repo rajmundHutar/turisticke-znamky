@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use Nette\Database\Context;
+use Nette\Database\Explorer;
+use Nette\Database\Table\ActiveRow;
 use Nette\Utils\DateTime;
 use Nette\Utils\Strings;
 use Tracy\Debugger;
@@ -12,22 +13,15 @@ class ImportModel {
 	const IMAGE_SCRAPER_BASE_URL = 'https://www.turisticke-znamky.cz/znamky/%s-c%d';
 	const REMOTE_IMAGE_BASE_URL = 'https://www.turisticke-znamky.cz/photos/medium/';
 
-	/** @var string */
-	protected $csvPath;
-
-	/** @var string */
-	protected $stampsImagesPath;
-
-	/** @var Context */
-	protected $db;
-
-	/** @var StampsModel */
-	protected $stampsModel;
+	protected string $csvPath;
+	protected string $stampsImagesPath;
+	protected Explorer $db;
+	protected StampsModel $stampsModel;
 
 	public function __construct(
 		string $csvPath,
 		string $stampsImagesPath,
-		Context $db,
+		Explorer $db,
 		StampsModel $stampsModel
 	) {
 
@@ -38,10 +32,10 @@ class ImportModel {
 
 	}
 
-	public function fetchLastLog() {
+	public function fetchLastLog(): ActiveRow {
 
 		return $this->db
-			->table(\Table::IMPORT_LOG)
+			->table(\Table::ImportLog)
 			->order('id DESC')
 			->limit(1)
 			->fetch();
@@ -87,8 +81,8 @@ class ImportModel {
 					'type' => $data[2],
 					'region' => $data[3],
 					'created_at' => new DateTime($data[4]),
-					'lat' => $data[27],
-					'lng' => $data[28],
+					'lat' => $data[29],
+					'lng' => $data[30],
 				];
 
 				$isNew = $this->save($batch);
@@ -104,7 +98,7 @@ class ImportModel {
 		$elapsedTIme = Debugger::timer();
 
 		$this->db
-			->table(\Table::IMPORT_LOG)
+			->table(\Table::ImportLog)
 			->insert([
 				'date' => new DateTime(),
 				'parsed' => $countTotal,
@@ -118,9 +112,9 @@ class ImportModel {
 
 	public function importImages(): int {
 
-		$stamps = $this->stampsModel->fetchAll([
+		$stamps = $this->stampsModel->search([
 			'withoutImage' => true,
-		], 400);
+		], 500);
 
 		$count = 0;
 		foreach ($stamps as $stamp) {
@@ -164,14 +158,10 @@ class ImportModel {
 
 	}
 
-	/**
-	 * @param array $data
-	 * @return bool If stamp is new return true
-	 */
 	public function save(array $data): bool {
 
 		$stamp = $this->db
-			->table(\Table::STAMPS)
+			->table(\Table::Stamps)
 			->wherePrimary($data['id'])
 			->fetch();
 
@@ -185,7 +175,7 @@ class ImportModel {
 		} else {
 
 			$this->db
-				->table(\Table::STAMPS)
+				->table(\Table::Stamps)
 				->insert($data);
 
 			return true;

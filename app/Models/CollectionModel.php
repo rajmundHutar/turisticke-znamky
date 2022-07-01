@@ -18,7 +18,7 @@ class CollectionModel {
 	public function fetch(int $id, int $userId) {
 
 		return $this->db
-			->table(\Table::COLLECTION)
+			->table(\Table::Collection)
 			->where('stamp_id', $id)
 			->where('user_id', $userId)
 			->fetch();
@@ -27,7 +27,7 @@ class CollectionModel {
 	public function fetchByUser(?int $userId) {
 
 		return $this->db
-			->table(\Table::COLLECTION)
+			->table(\Table::Collection)
 			->where('user_id', $userId)
 			->fetchPairs('stamp_id');
 
@@ -43,7 +43,7 @@ class CollectionModel {
 		}
 
 		$this->db
-			->table(\Table::COLLECTION)
+			->table(\Table::Collection)
 			->insert([
 				'stamp_id' => $id,
 				'user_id' => $userId,

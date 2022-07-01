@@ -52,7 +52,7 @@ class UserModel implements IAuthenticator {
 	public function fetchByEmail(string $email) {
 
 		return $this->db
-			->table(\Table::USERS)
+			->table(\Table::Users)
 			->where('email', $email)
 			->fetch();
 

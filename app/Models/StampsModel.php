@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
-use Nette\Database\Context;
+use Nette\Database\Explorer;
 use Nette\Database\Table\Selection;
 
 class StampsModel {
 
-	/** @var Context */
-	protected $db;
+	protected Explorer $db;
 
-	public function __construct(Context $db) {
-
+	public function __construct(Explorer $db) {
 		$this->db = $db;
-
 	}
 
 	public function search(array $filter, $limit = null, $offset = null): ?array {
@@ -31,7 +28,7 @@ class StampsModel {
 	private function prepareQuery(array $filter): Selection {
 
 		$query = $this->db
-			->table(\Table::STAMPS)
+			->table(\Table::Stamps)
 			->order('id');
 
 		if ($filter['withoutImage'] ?? null) {
@@ -56,7 +53,7 @@ class StampsModel {
 	public function fetchCount() {
 
 		return $this->db
-			->table(\Table::STAMPS)
+			->table(\Table::Stamps)
 			->count('id');
 
 	}
@@ -64,7 +61,7 @@ class StampsModel {
 	public function fetchImageCount() {
 
 		return $this->db
-			->table(\Table::STAMPS)
+			->table(\Table::Stamps)
 			->where('image IS NOT NULL')
 			->count('id');
 	}
@@ -72,7 +69,7 @@ class StampsModel {
 	public function fetchClosest(float $lat, float $lng, ?int $num = 10) {
 
 		return $this->db
-			->table(\Table::STAMPS)
+			->table(\Table::Stamps)
 			->select('*, SQRT(POW(ABS(? - lat), 2) + POW(ABS(? - lng), 2)) AS dist', $lat, $lng)
 			->order('dist')
 			->limit($num)

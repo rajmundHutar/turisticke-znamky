@@ -1,93 +1,93 @@
 <div class="card">
 
-    <div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
-						<span>
-							Mám
-						</span>
-    </div>
+	<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
+		<span>
+			Mám
+		</span>
+	</div>
 
-    <a n:if="$collection[$stamp['id']] ?? null" href="#" class="stamp-edit-button" data-stampId="{$stamp['id']}">
-						<span class="icon is-medium has-text-success">
-							<i class="fas fa-lg fa-pencil-alt "></i>
-						</span>
-    </a>
+	<a n:if="$collection[$stamp['id']] ?? null" href="#" class="stamp-edit-button" data-stampId="{$stamp['id']}">
+		<span class="icon is-medium has-text-success">
+			<i class="fas fa-lg fa-pencil-alt "></i>
+		</span>
+	</a>
 
-   <div class="card-image stamp-image">
-        <figure class="image">
-            <img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
-        </figure>
-    </div>
-    <div class="card-content">
-        <div class="media">
-            <div class="media-left">
-                <p class="title is-2">{$stamp['id']}</p>
-            </div>
-            <div class="media-content">
-                <p class="title is-6 has-text-right">{$stamp['type']}</p>
-                <p class="subtitle is-6 has-text-right">{$stamp['region']}</p>
-            </div>
-        </div>
-        <div class="media">
-            <div class="media-content">
-                <a href="https://www.turisticke-znamky.cz/znamky/-c{$stamp['id']}" target="_blank">
-                    <p class="title is-5">
-                        {$stamp['name']}
-                    </p>
-                </a>
-            </div>
-        </div>
+	<div class="card-image stamp-image">
+		<figure class="image">
+			<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
+		</figure>
+	</div>
+	<div class="card-content">
+		<div class="media">
+			<div class="media-left">
+				<p class="title is-2">{$stamp['id']}</p>
+			</div>
+			<div class="media-content">
+				<p class="title is-6 has-text-right">{$stamp['type']}</p>
+				<p class="subtitle is-6 has-text-right">{$stamp['region']}</p>
+			</div>
+		</div>
+		<div class="media">
+			<div class="media-content">
+				<a href="https://www.turisticke-znamky.cz/znamky/-c{$stamp['id']}" target="_blank">
+					<p class="title is-5">
+						{$stamp['name']}
+					</p>
+				</a>
+			</div>
+		</div>
 
-        <div class="media">
-            <div class="media-left">
-                {if !($collection[$stamp['id']] ?? null)}
-                    <a n:href="toggleCollect!, id => $stamp['id']">Collect</a>
-                {/if}
-            </div>
-            <p class="media-content has-text-right">
-                <time>{$stamp['created_at']|date:'j. n. Y'}</time>
-            </p>
-        </div>
+		<div class="media">
+			<div class="media-left">
+				{if !($collection[$stamp['id']] ?? null)}
+					<a n:href="toggleCollect!, id => $stamp['id']">Collect</a>
+				{/if}
+			</div>
+			<p class="media-content has-text-right">
+				<time>{$stamp['created_at']|date:'j. n. Y'}</time>
+			</p>
+		</div>
 
-        <div class="media" n:if="$stamp['dist'] ?? null">
-            <p class="media-content has-text-centered">
-                <span class="title is-3">
-                    {$stamp['dist']}
-                </span>
-            </p>
-        </div>
-    </div>
+		<div class="media" n:if="$stamp['dist'] ?? null">
+			<p class="media-content has-text-centered">
+				<span class="title is-3">
+					{$stamp['dist']}
+				</span>
+			</p>
+		</div>
+	</div>
 </div>
 <div class="collection">
-    {if $collection[$stamp['id']] ?? null}
+	{if $collection[$stamp['id']] ?? null}
 
-        <div class="modal" data-stampId="{$stamp['id']}">
-            <div class="modal-background"></div>
-            <div class="modal-content">
-                {form "editStampForm-{$stamp['id']}"}
-                    <div class="field">
-                        {label date, class => "label"/}
-                        <div class="control">
-                            {input date, class => "input", value => $collection[$stamp['id']]['date']}
-                        </div>
-                    </div>
-                    <div class="field">
-                        {label comment, class => "label"/}
-                        <div class="control">
-                            {input comment, class => "input", value => $collection[$stamp['id']]['comment']}
-                        </div>
-                    </div>
+		<div class="modal" data-stampId="{$stamp['id']}">
+			<div class="modal-background"></div>
+			<div class="modal-content">
+				{form "editStampForm-{$stamp['id']}"}
+					<div class="field">
+						{label date, class => "label"/}
+						<div class="control">
+							{input date, class => "input", value => $collection[$stamp['id']]['date']}
+						</div>
+					</div>
+					<div class="field">
+						{label comment, class => "label"/}
+						<div class="control">
+							{input comment, class => "input", value => $collection[$stamp['id']]['comment']}
+						</div>
+					</div>
 
-                {input id, value => $stamp['id']}
+					{input id, value => $stamp['id']}
 
-                    <div class="buttons">
-                        {input ok, class => "button is-link"}
-								{input delete, class => "button is-link is-danger is-light"}
-                    </div>
+					<div class="buttons">
+						{input ok, class => "button is-link"}
+						{input delete, class => "button is-link is-danger is-light"}
+					</div>
 
-                {/form}
-            </div>
-            <button class="modal-close is-large" aria-label="close"></button>
-        </div>
+				{/form}
+			</div>
+			<button class="modal-close is-large" aria-label="close"></button>
+		</div>
 
-    {/if}
+	{/if}
 </div>
