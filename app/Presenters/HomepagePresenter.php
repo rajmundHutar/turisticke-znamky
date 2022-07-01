@@ -6,10 +6,10 @@ namespace App\Presenters;
 
 use App\Forms\EditStampFormFactory;
 use App\Forms\SearchForm;
+use App\Helpers\Paginator;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use Nette;
-
 
 final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
@@ -17,11 +17,10 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 		InjectStampsModel,
 		InjectCollectionModel;
 
-	/** @var @persistent */
-	public $search;
+	private const StampsPerPage = 200;
 
-	/** @var array */
-	protected $userCollection;
+	protected ?string $search = '';
+	protected array $userCollection = [];
 
 	public function actionDefault() {
 
@@ -36,15 +35,24 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 		if ($onlyCollected && $this->userCollection) {
 			$filter['ids'] = array_keys($this->userCollection);
 		}
-		$this->template->allStamps = $this->stampsModel->fetchAll($filter, 100);
+		if ($filter['search']) {
+			$this['searchForm']->setDefaults([
+				'search' => $filter['search'],
+				'sort' => $filter['sort'],
+			]);
+		}
+
+		/** @var Paginator $paginator */
+		$paginator = $this['paginator'];
+		$paginator->setItemsPerPage(self::StampsPerPage);
+		$paginator->setItemCount($this->stampsModel->count($filter));
+
+		$this->template->allStamps = $this->stampsModel->search(
+			$filter,
+			$paginator->getLength(),
+			$paginator->getOffset()
+		);
 		$this->template->collection = $this->userCollection;
-
-	}
-
-	public function actionFetchClosest(string $lat, string $lng) {
-
-		dump($this->stampsModel->fetchClosest((float)$lat, (float)$lng));
-		die;
 
 	}
 
@@ -91,6 +99,10 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 		});
 
 
+	}
+
+	public function createComponentPaginator(): Nette\Application\UI\Control {
+		return new Paginator();
 	}
 
 	private function getFilter() {

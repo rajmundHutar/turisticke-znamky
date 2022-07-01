@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Nette\Database\Context;
+use Nette\Database\Table\Selection;
 
 class StampsModel {
 
@@ -15,7 +16,19 @@ class StampsModel {
 
 	}
 
-	public function fetchAll(array $filter = [], $limit = null, $offset = null) {
+	public function search(array $filter, $limit = null, $offset = null): ?array {
+
+		return $this->prepareQuery($filter)
+			->limit($limit, $offset)
+			->fetchAll() ?: null;
+
+	}
+
+	public function count(array $filter): int {
+		return $this->prepareQuery($filter)->count('*');
+	}
+
+	private function prepareQuery(array $filter): Selection {
 
 		$query = $this->db
 			->table(\Table::STAMPS)
@@ -36,9 +49,7 @@ class StampsModel {
 			$query->where('id', $filter['ids']);
 		}
 
-		return $query
-			->limit($limit, $offset)
-			->fetchAll();
+		return $query;
 
 	}
 

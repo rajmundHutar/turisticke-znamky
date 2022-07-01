@@ -1,0 +1,57 @@
+<nav class="pagination" role="navigation" aria-label="pagination">
+
+	{var $currentPage = $paginator->getPage()}
+
+	{if $paginator->isFirst()}
+		<a class="pagination-previous" disabled>Previous</a>
+	{else}
+		<a n:href="this, page => $currentPage - 1" class="pagination-previous">Previous</a>
+	{/if}
+	{if $paginator->isLast()}
+		<a class="pagination-previous" disabled>Next</a>
+	{else}
+		<a n:href="this, page => $currentPage + 1" class="pagination-previous">Next</a>
+	{/if}
+
+	<ul class="pagination-list">
+		<li>
+			<a
+				n:href="this, page => $paginator->getFirstPage()"
+				n:class="pagination-link, $paginator->isFirst() ? is-current"
+				aria-label="Goto page {$paginator->getFirstPage()}"
+			>
+				{$paginator->getFirstPage()}
+			</a>
+		</li>
+		<li n:if="$paginator->getPage() - 2 > $paginator->getFirstPage()">
+			<span class="pagination-ellipsis">&hellip;</span>
+		</li>
+		<li n:if="$paginator->getPage() - 1 > $paginator->getFirstPage()">
+			<a
+				n:href="this, page => $paginator->getPage() - 1"
+				class="pagination-link"
+				aria-label="Goto page {$paginator->getPage() - 1}"
+			>
+				{$paginator->getPage() - 1}
+			</a>
+		</li>
+		<li n:if="!$paginator->isLast() && !$paginator->isFirst()">
+			<a class="pagination-link is-current" aria-label="Page {$paginator->getPage()}" aria-current="page">{$paginator->getPage()}</a>
+		</li>
+		<li n:if="$paginator->getPage() + 1 < $paginator->getLastPage()">
+			<a n:href="this, page => $paginator->getPage() + 1" class="pagination-link" aria-label="Goto page {$paginator->getPage() + 1}">{$paginator->getPage() + 1}</a>
+		</li>
+		<li n:if="$paginator->getPage() + 2 < $paginator->getLastPage()">
+			<span class="pagination-ellipsis">&hellip;</span>
+		</li>
+		<li n:if="$paginator->getLastPage() != $paginator->getFirstPage()">
+			<a
+				n:href="this, page => $paginator->getLastPage()"
+				n:class="pagination-link, $paginator->isLast() ? is-current"
+				aria-label="Goto page {$paginator->getLastPage()}"
+			>
+				{$paginator->getLastPage()}
+			</a>
+		</li>
+	</ul>
+</nav>
