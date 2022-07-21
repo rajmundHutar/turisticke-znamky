@@ -17,11 +17,13 @@
 </head>
 
 <body>
+<div class="container">
 	{block menu}{/block}
 
 	<div n:foreach="$flashes as $flash" class="notification is-{$flash->type}">{$flash->message}</div>
 
 	{include content}
+</div>
 
 	{block scripts}
 		<script src="https://nette.github.io/resources/js/3/netteForms.min.js"></script>
