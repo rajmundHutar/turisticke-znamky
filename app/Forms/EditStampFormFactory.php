@@ -6,7 +6,11 @@ use Nette\Application\UI\Form;
 
 class EditStampFormFactory {
 
-	public static function create(int $stampId, array $defaults, callable $onSuccess, callable $onDelete) {
+	public static function create(
+		int $stampId,
+		array $defaults,
+		callable $onSuccess
+	) {
 
 		$f = new Form;
 		$f->addText('date', 'Datum');
@@ -14,15 +18,8 @@ class EditStampFormFactory {
 		$f->addHidden('id', $stampId);
 
 		$f->addSubmit('ok', 'Uložit');
-		$f->addSubmit('delete', 'Odebrat');
 
-		$f->onSuccess[] = function(Form $form, array $values) use ($onSuccess, $onDelete) {
-			if ($form['delete']->isSubmittedBy()) {
-				$onDelete((int) $values['id']);
-			} else {
-				$onSuccess($form, $values);
-			}
-		};
+		$f->onSuccess[] = $onSuccess;
 
 		$f->setDefaults($defaults);
 

@@ -1,17 +1,15 @@
 <?php
 
-
 namespace App\Models;
 
-
-use Nette\Database\Context;
+use Nette\Database\Explorer;
+use Nette\Database\Table\ActiveRow;
 
 class CollectionModel {
 
-	/** @var Context */
-	protected $db;
+	protected Explorer $db;
 
-	public function __construct(Context $db) {
+	public function __construct(Explorer $db) {
 		$this->db = $db;
 	}
 
@@ -30,6 +28,16 @@ class CollectionModel {
 			->table(\Table::Collection)
 			->where('user_id', $userId)
 			->fetchPairs('stamp_id');
+
+	}
+
+	public function update(int $stampId, int $userId, array $data): void {
+
+		$this->db
+			->table(\Table::Collection)
+			->where('stamp_id', $stampId)
+			->where('user_id', $userId)
+			->update($data);
 
 	}
 

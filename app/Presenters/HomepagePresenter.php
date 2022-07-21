@@ -38,7 +38,7 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
 		if ($this->user->isLoggedIn()) {
 			$this->collectionModel->toggleCollect($id, $this->user->getId());
-			$this->redirect('default', $this->getFilter());
+			$this->redirect('this', $this->getFilter());
 		}
 
 	}
@@ -94,13 +94,13 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 					array $values
 				) {
 
-
-				}, function(int $stampId) {
-
-						// Delete resp. toggle
-						$this->collectionModel->toggleCollect($stampId, $this->user->getId());
-						$this->flashMessage('Známka odebrána.', \Flash::INFO);
-						$this->redirect('default');
+						$stampId = $values['id'];
+						unset($values['id']);
+						$this->collectionModel->update(
+							(int) $stampId,
+							$this->user->getId(),
+							$values
+						);
 
 				});
 
