@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1379e2fd0ebd2c6e714390c50e5982f7",
+    "content-hash": "deecbf83ece52c7674ff559a9e6548e8",
     "packages": [
         {
             "name": "latte/latte",
@@ -984,35 +984,35 @@
         },
         {
             "name": "nette/php-generator",
-            "version": "v4.0.2",
+            "version": "v3.6.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/php-generator.git",
-                "reference": "f19b7975c7c4d729be5b64fce7eb72f0d4aac6fc"
+                "reference": "b9ba414c9895fd9420887f20eeb4eabde123677f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nette/php-generator/zipball/f19b7975c7c4d729be5b64fce7eb72f0d4aac6fc",
-                "reference": "f19b7975c7c4d729be5b64fce7eb72f0d4aac6fc",
+                "url": "https://api.github.com/repos/nette/php-generator/zipball/b9ba414c9895fd9420887f20eeb4eabde123677f",
+                "reference": "b9ba414c9895fd9420887f20eeb4eabde123677f",
                 "shasum": ""
             },
             "require": {
-                "nette/utils": "^3.2.7 || ^4.0",
-                "php": ">=8.0 <8.2"
+                "nette/utils": "^3.1.2",
+                "php": ">=7.2 <8.2"
             },
             "require-dev": {
                 "nette/tester": "^2.4",
                 "nikic/php-parser": "^4.13",
-                "phpstan/phpstan": "^1.0",
+                "phpstan/phpstan": "^0.12",
                 "tracy/tracy": "^2.8"
             },
             "suggest": {
-                "nikic/php-parser": "to use ClassType::from(withBodies: true) & ClassType::fromCode()"
+                "nikic/php-parser": "to use ClassType::withBodiesFrom() & GlobalFunction::withBodyFrom()"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "4.0-dev"
+                    "dev-master": "3.6-dev"
                 }
             },
             "autoload": {
@@ -1046,9 +1046,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nette/php-generator/issues",
-                "source": "https://github.com/nette/php-generator/tree/v4.0.2"
+                "source": "https://github.com/nette/php-generator/tree/v3.6.7"
             },
-            "time": "2022-06-17T12:20:08+00:00"
+            "time": "2022-03-10T01:51:00+00:00"
         },
         {
             "name": "nette/robot-loader",
@@ -1520,16 +1520,16 @@
         },
         {
             "name": "tracy/tracy",
-            "version": "v2.9.3",
+            "version": "v2.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/tracy.git",
-                "reference": "3aadc88c00d7aca84ce2f07da236a703cc183d52"
+                "reference": "0ed605329b095f5f5fe2db2adc3d1ee80c917294"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nette/tracy/zipball/3aadc88c00d7aca84ce2f07da236a703cc183d52",
-                "reference": "3aadc88c00d7aca84ce2f07da236a703cc183d52",
+                "url": "https://api.github.com/repos/nette/tracy/zipball/0ed605329b095f5f5fe2db2adc3d1ee80c917294",
+                "reference": "0ed605329b095f5f5fe2db2adc3d1ee80c917294",
                 "shasum": ""
             },
             "require": {
@@ -1588,9 +1588,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nette/tracy/issues",
-                "source": "https://github.com/nette/tracy/tree/v2.9.3"
+                "source": "https://github.com/nette/tracy/tree/v2.9.4"
             },
-            "time": "2022-05-30T19:31:14+00:00"
+            "time": "2022-07-19T14:06:15+00:00"
         }
     ],
     "packages-dev": [
@@ -1737,7 +1737,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">= 8.0"
+        "php": "^7.4"
     },
     "platform-dev": [],
     "plugin-api-version": "2.1.0"
