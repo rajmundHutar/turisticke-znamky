@@ -13,9 +13,11 @@
 	</a>
 
 	<div class="card-image stamp-image">
-		<figure class="image">
-			<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
-		</figure>
+		<a n:href="detail, $stamp['id']">
+			<figure class="image">
+				<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
+			</figure>
+		</a>
 	</div>
 	<div class="card-content">
 		<div class="media">
@@ -36,18 +38,18 @@
 			</div>
 		</div>
 
-		<div class="media">
+		<div n:if="!($collection[$stamp['id']] ?? null) && $user->isLoggedIn()" class="media">
 			<div class="media-left">
-				{if !($collection[$stamp['id']] ?? null)}
-					<a n:href="toggleCollect!, id => $stamp['id']">Collect</a>
-				{/if}
+				<a n:href="toggleCollect!, id => $stamp['id']" class="button is-primary">
+					Collect
+				</a>
 			</div>
 		</div>
 
-		<div class="media" n:if="$stamp['dist'] ?? null">
-			<p class="media-content has-text-centered">
+		<div class="media" n:if="$stamp['distance'] ?? null">
+			<p class="media-content has-text-centered" title="{$stamp['distance']|round:0} m">
 				<span class="title is-3">
-					{$stamp['dist']}
+					{$stamp['prettyDistance']}
 				</span>
 			</p>
 		</div>

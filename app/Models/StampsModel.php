@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\GPS;
 use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
@@ -22,7 +23,7 @@ class StampsModel {
 
 	}
 
-	public function count(?array $filter = null): int {
+	public function count(array $filter = []): int {
 		return $this->prepareQuery($filter)->count('*');
 	}
 
@@ -97,14 +98,34 @@ class StampsModel {
 			->count('id');
 	}
 
-	public function fetchClosest(float $lat, float $lng, ?int $num = 10): ?array {
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): ?array {
 
-		return $this->db
+		$query = $this->db
 			->table(\Table::Stamps)
 			->select('*, SQRT(POW(ABS(? - lat), 2) + POW(ABS(? - lng), 2)) AS dist', $lat, $lng)
 			->order('dist')
-			->limit($num)
-			->fetchAll();
+			->limit($num);
+
+		if ($exclude) {
+			$query->where('id NOT IN ?', $exclude);
+		}
+
+		$rows = $query->fetchAll();
+
+		$closest = [];
+		foreach ($rows as $key => $item) {
+			$item = $item->toArray();
+			$item['distance'] = GPS::gpsDistance(
+				$lat,
+				$lng,
+				(float) $item['lat'],
+				(float) $item['lng']
+			);
+			$item['prettyDistance'] = GPS::prettyDistance($item['distance']);
+			$closest[$key] = $item;
+		}
+
+		return $closest;
 
 	}
 

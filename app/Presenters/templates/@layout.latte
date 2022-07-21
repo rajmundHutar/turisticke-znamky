@@ -24,9 +24,11 @@
 	{include content}
 
 	{block scripts}
-	<script src="https://nette.github.io/resources/js/3/netteForms.min.js"></script>
-	<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
-	<script src="{$baseUrl}/js/bundle.js"></script>
+		<script src="https://nette.github.io/resources/js/3/netteForms.min.js"></script>
+		<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+		<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
+		<script src="{$baseUrl}/js/bundle.js"></script>
+		{block userScript}
 	{/block}
 </body>
 </html>

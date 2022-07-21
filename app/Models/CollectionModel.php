@@ -13,7 +13,7 @@ class CollectionModel {
 		$this->db = $db;
 	}
 
-	public function fetch(int $id, int $userId) {
+	public function fetch(int $id, int $userId): ?ActiveRow {
 
 		return $this->db
 			->table(\Table::Collection)
@@ -22,7 +22,7 @@ class CollectionModel {
 			->fetch();
 	}
 
-	public function fetchByUser(?int $userId) {
+	public function fetchByUser(?int $userId): ?array {
 
 		return $this->db
 			->table(\Table::Collection)

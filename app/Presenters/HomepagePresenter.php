@@ -67,6 +67,19 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
 	}
 
+	public function renderDetail(int $id): void {
+
+		$this->template->stamp = $stamp =  $this->stampsModel->fetch($id);
+		$this->template->closest = $this->stampsModel->fetchClosest(
+			(float) $stamp['lat'],
+			(float) $stamp['lng'],
+			4,
+			[$stamp['id']]
+		);
+		$this->template->collection = $this->collectionModel->fetchByUser($this->user->getId());;
+
+	}
+
 
 	public function createComponentFilterForm() {
 
@@ -118,6 +131,7 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 		return [
 			'search' => $this->getParameter('search'),
 			'sort' => $this->getParameter('sort'),
+			'label' => $this->getParameter('label'),
 		];
 
 	}

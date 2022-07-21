@@ -1,0 +1,111 @@
+{block menu}
+	{control menu}
+{/block}
+
+{block content}
+
+<div class="container">
+
+	<div class="columns">
+		<div class="column is-flex is-align-items-center">
+			<a n:if="$stamp['id'] != 1" n:href="detail, id => $stamp['id'] - 1">
+				<i class="fas fa-5x fa-arrow-left"></i>
+			</a>
+		</div>
+		<div class="column is-three-quarters">
+			<article class="media">
+				<figure class="media-left">
+
+					<figure class="image">
+						<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
+							<span>
+								Mám
+							</span>
+						</div>
+						<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
+					</figure>
+				</figure>
+				<div class="media-content">
+					<div class="content">
+						<p class="title is-3">
+							{$stamp['name']}
+						</p>
+					</div>
+					<div class="content">
+						<p class="title is-6">
+							{$stamp['type']}
+						</p>
+					</div>
+					<div class="content">
+						<p class="title is-6">
+							{$stamp['region']}
+						</p>
+					</div>
+					<div class="content">
+						<p class="title is-6">
+							{$stamp['created_at']|date:'j. n. Y'}
+						</p>
+					</div>
+					<div class="content">
+						<a href="https://www.turisticke-znamky.cz/znamky/-c{$stamp['id']}" target="_blank">
+							Turistické známky.cz&hellip;
+						</a>
+					</div>
+					<div class="content">
+						{if $collection[$stamp['id']] ?? null}
+							<a n:href="toggleCollect!, id => $stamp['id']" class="button is-danger is-light confirm">
+								Vyřadit
+							</a>
+						{else}
+							<a n:href="toggleCollect!, id => $stamp['id']" class="button is-primary">
+								Collect
+							</a>
+						{/if}
+					</div>
+				</div>
+			</article>
+
+		</div>
+		<div class="column is-flex is-align-items-center">
+			<a n:href="detail, id => $stamp['id'] + 1">
+				<i class="fas fa-5x fa-arrow-right"></i>
+			</a>
+		</div>
+	</div>
+
+	<div id="mapa" style="height:500px"></div>
+
+	<p class="title is-3">
+		Známky v okolí:
+	</p>
+
+	<div class="columns is-multiline">
+		{foreach $closest as $closestStamp}
+			<div class="column is-3">
+				{include "@stampCard.latte", stamp => $closestStamp, collection => $collection}
+			</div>
+		{/foreach}
+	</div>
+</div>
+
+{/block}
+
+<script n:syntax="double" n:block=userScript>
+
+	Loader.async = true;
+	Loader.load(null, {}, onApiLoad);
+	function onApiLoad() {
+		var center = SMap.Coords.fromWGS84({{$stamp['lng']}}, {{$stamp['lat']}});
+		var m = new SMap(JAK.gel("mapa"), center, 16);
+		m.addDefaultLayer(SMap.DEF_BASE).enable();
+		m.addDefaultControls();
+
+		var layer = new SMap.Layer.Marker();
+		m.addLayer(layer);
+		layer.enable();
+
+		var options = {};
+		var marker = new SMap.Marker(center, {{$stamp['name']}}, options);
+		layer.addMarker(marker);
+	}
+</script>
