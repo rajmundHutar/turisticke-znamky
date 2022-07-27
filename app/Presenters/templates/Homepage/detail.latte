@@ -97,7 +97,7 @@
 	function onApiLoad() {
 		var center = SMap.Coords.fromWGS84({{$stamp['lng']}}, {{$stamp['lat']}});
 		var m = new SMap(JAK.gel("mapa"), center, 16);
-		m.addDefaultLayer(SMap.DEF_BASE).enable();
+		m.addDefaultLayer(SMap.DEF_TURIST).enable();
 		m.addDefaultControls();
 
 		var layer = new SMap.Layer.Marker();

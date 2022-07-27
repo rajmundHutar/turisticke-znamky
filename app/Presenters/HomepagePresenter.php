@@ -27,12 +27,22 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 	public ?string $label = null;
 
 	protected array $userCollection = [];
+	protected array $closest = [];
 
 	public function actionDefault() {
 
 		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
 
 	}
+
+	public function actionNearby(?string $lat = null, ?string $lng = null) {
+
+		if ($lat && $lng) {
+			$this->closest = $this->stampsModel->fetchClosest((float) $lat, (float) $lng, 20);
+		}
+
+	}
+
 
 	public function handleToggleCollect(int $id) {
 
@@ -64,6 +74,17 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 		);
 		$this->template->collection = $this->userCollection;
 		$this->template->filter = $filter;
+
+	}
+
+	public function renderNearby(): void {
+
+		$this->template->allStamps = $this->closest;
+		$this->template->collection = $this->collectionModel->fetchByUser($this->user->getId());
+
+		if ($this->isAjax()) {
+			$this->redrawControl('stamps');
+		}
 
 	}
 

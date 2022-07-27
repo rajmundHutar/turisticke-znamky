@@ -32,3 +32,27 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
 });
+
+function ajax(url, params) {
+
+    const searchParams = new URLSearchParams(params);
+
+    const options = {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    }
+
+    fetch(url + '?' + searchParams.toString(), options)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(myJson) {
+
+            // Render snippets
+            for (const [key, value] of Object.entries(myJson.snippets || {})) {
+                document.getElementById(key).innerHTML = value;
+            }
+
+        });
+}
