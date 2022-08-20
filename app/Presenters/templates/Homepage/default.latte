@@ -25,7 +25,7 @@
 				{input ok, class => "button is-info"}
 			</div>
 			<div class="control">
-					{=count($allStamps)}
+					{=count($allStamps ?? [])}
 			</div>
 			<div n:if="$filter['sort'] || $filter['search'] || $filter['label']" class="control">
 				<a n:href='this, sort => null, search => null, label => null' class="button is-warning">

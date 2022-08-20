@@ -48,7 +48,7 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
 		if ($this->user->isLoggedIn()) {
 			$this->collectionModel->toggleCollect($id, $this->user->getId());
-			$this->redirect('this', $this->getFilter());
+			$this->redirect("this#stamp-{$id}", $this->getFilter());
 		}
 
 	}
@@ -105,10 +105,6 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 	public function createComponentFilterForm() {
 
 		$labels = $this->stampsModel->fetchLabels();
-		$labels = array_map(function($item) {
-			return Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($item));
-		}, $labels);
-
 		return FilterForm::create($labels);
 	}
 

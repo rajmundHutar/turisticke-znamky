@@ -6,6 +6,7 @@ use App\Helpers\GPS;
 use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
+use Nette\Utils\Strings;
 
 class StampsModel {
 
@@ -81,12 +82,16 @@ class StampsModel {
 
 	public function fetchLabels(): array {
 
-		return $this->db
+		$labels = $this->db
 			->table(\Table::Stamps)
 			->select('DISTINCT type')
 			->where('type != ""')
 			->order('type')
 			->fetchPairs('type', 'type');
+
+		return array_map(function($item) {
+			return Strings::firstUpper(Strings::lower($item));
+		}, $labels);
 
 	}
 

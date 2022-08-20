@@ -55,6 +55,7 @@ class CollectionModel {
 			->insert([
 				'stamp_id' => $id,
 				'user_id' => $userId,
+				'date' => new \DateTime(),
 			]);
 
 		return true;

@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card" id="stamp-{$stamp['id']}">
 
 	<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
 		<span>
@@ -6,11 +6,19 @@
 		</span>
 	</div>
 
-	<a n:if="$collection[$stamp['id']] ?? null" href="#" class="stamp-edit-button" data-stampId="{$stamp['id']}">
-		<span class="icon is-medium has-text-success">
-			<i class="fas fa-lg fa-pencil-alt "></i>
-		</span>
-	</a>
+	{if $collection[$stamp['id']] ?? null}
+		<a href="#" class="stamp-edit-button" data-stampId="{$stamp['id']}">
+			<span class="icon is-medium has-text-success">
+				<i class="fas fa-lg fa-pencil-alt "></i>
+			</span>
+		</a>
+	{else}
+		<a n:href="toggleCollect!, id => $stamp['id']" class="stamp-edit-button">
+			<span class="icon is-medium has-text-success">
+				<i class="fas fa-lg fa-plus"></i>
+			</span>
+		</a>
+	{/if}
 
 	<div class="card-image stamp-image">
 		<a n:href="detail, $stamp['id']">
@@ -38,14 +46,6 @@
 			</div>
 		</div>
 
-		<div n:if="!($collection[$stamp['id']] ?? null) && $user->isLoggedIn()" class="media">
-			<div class="media-left">
-				<a n:href="toggleCollect!, id => $stamp['id']" class="button is-primary">
-					Collect
-				</a>
-			</div>
-		</div>
-
 		<div class="media" n:if="$stamp['distance'] ?? null">
 			<p class="media-content has-text-centered" title="{$stamp['distance']|round:0} m">
 				<span class="title is-3">
@@ -60,28 +60,38 @@
 
 		<div class="modal" data-stampId="{$stamp['id']}">
 			<div class="modal-background"></div>
-			<div class="modal-content">
-				{form "editStampForm-{$stamp['id']}"}
-					<div class="field">
-						{label date, class => "label"/}
-						<div class="control">
-							{input date, class => "input", value => $collection[$stamp['id']]['date']}
+			<div class="modal-card">
+				<section class="modal-card-body">
+					{form "editStampForm-{$stamp['id']}"}
+						<div class="field">
+							<a n:href="detail, $stamp['id']">
+								<span class="is-title is-size-3">{$stamp['id']} - {$stamp['name']}</span>
+							</a>
 						</div>
-					</div>
-					<div class="field">
-						{label comment, class => "label"/}
-						<div class="control">
-							{input comment, class => "input", value => $collection[$stamp['id']]['comment']}
+						<div class="field">
+							{label date, class => "label"/}
+							<div class="control">
+								{input date, class => "input", value => $collection[$stamp['id']]['date'], data-datepicker => ''}
+							</div>
 						</div>
-					</div>
+						<div class="field">
+							{label comment, class => "label"/}
+							<div class="control">
+								{input comment, class => "input", value => $collection[$stamp['id']]['comment']}
+							</div>
+						</div>
 
-					{input id, value => $stamp['id']}
+						{input id, value => $stamp['id']}
 
-					<div class="buttons">
-						{input ok, class => "button is-link"}
-					</div>
+						<div class="field">
+							{input ok, class => "button is-link"}
+							<a n:href="toggleCollect!, id => $stamp['id']" class="button is-pulled-right is-danger is-light confirm">
+								Vyřadit
+							</a>
+						</div>
 
-				{/form}
+					{/form}
+				</section>
 			</div>
 			<button class="modal-close is-large" aria-label="close"></button>
 		</div>
