@@ -25,7 +25,7 @@
 				{input ok, class => "button is-info"}
 			</div>
 			<div class="control">
-					{=count($allStamps ?? [])}
+					{=count($stamps ?? [])}
 			</div>
 			<div n:if="$filter['sort'] || $filter['search'] || $filter['label']" class="control">
 				<a n:href='this, sort => null, search => null, label => null' class="button is-warning">
@@ -35,12 +35,12 @@
 		</div>
 	</form>
 
-	{if $allStamps}
+	{if $stamps}
 
 		{control paginator}
 
 		<div class="columns is-multiline">
-			{foreach $allStamps as $stamp}
+			{foreach $stamps as $stamp}
 				<div class="column is-3">
 					{include "@stampCard.latte", stamp => $stamp, collection => $collection}
 				</div>
@@ -50,7 +50,7 @@
 		{control paginator}
 	{/if}
 
-	<article n:if="!$allStamps" class="message is-danger">
+	<article n:if="!$stamps" class="message is-danger">
 		<div class="message-body">
 			Vašemu filtru neodpovídají žádné položky.
 			<br>

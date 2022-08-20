@@ -67,7 +67,7 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 		$paginator->setItemsPerPage(self::StampsPerPage);
 		$paginator->setItemCount($this->stampsModel->count($filter));
 
-		$this->template->allStamps = $this->stampsModel->search(
+		$this->template->stamps = $this->stampsModel->search(
 			$filter,
 			$paginator->getLength(),
 			$paginator->getOffset()
@@ -79,7 +79,7 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
 	public function renderNearby(): void {
 
-		$this->template->allStamps = $this->closest;
+		$this->template->stamps = $this->closest;
 		$this->template->collection = $this->collectionModel->fetchByUser($this->user->getId());
 
 		if ($this->isAjax()) {
@@ -94,7 +94,7 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 		$this->template->closest = $this->stampsModel->fetchClosest(
 			(float) $stamp['lat'],
 			(float) $stamp['lng'],
-			4,
+			8,
 			[$stamp['id']]
 		);
 		$this->template->collection = $this->collectionModel->fetchByUser($this->user->getId());;
