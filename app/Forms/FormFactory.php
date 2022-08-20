@@ -17,7 +17,7 @@ class FormFactory {
 	}
 
 	public function register(BaseForm $form) {
-		$this->forms[$form::class] = $form;
+		$this->forms[get_class($form)] = $form;
 	}
 
 	public function create(string $formClass, ...$args): Form {

@@ -19,7 +19,7 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 	public function actionImportStamps() {
 
 		[$total, $new] = $this->importModel->import();
-		$this->flashMessage($this->t('admin.{new}stampsOutOf{total}', total: $total, new: $new));
+		$this->flashMessage($this->t('admin.{new}stampsOutOf{total}', ['total' => $total, 'new' => $new]));
 		$this->redirect('default');
 
 	}
@@ -27,7 +27,7 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 	public function actionImportImages() {
 
 		$new = $this->importModel->importImages();
-		$this->flashMessage($this->t('admin.{count}loadedImages', count: $new));
+		$this->flashMessage($this->t('admin.{count}loadedImages', ['count' => $new]));
 		$this->redirect('default');
 
 	}

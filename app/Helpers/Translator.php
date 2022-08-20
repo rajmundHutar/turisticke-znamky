@@ -55,6 +55,12 @@ class Translator implements \Nette\Localization\Translator {
 			return $message;
 		}
 
+		if (!$parameters) {
+			return $translation;
+		}
+
+		$parameters = $parameters[0];
+
 		$keys = array_map(fn($item) => "{" . $item . "}", array_keys($parameters));
 
 		return strtr(
