@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Presenters;
 
-use App\Forms\EditStampFormFactory;
+use App\Forms\EditStampForm;
 use App\Forms\FilterForm;
 use App\Helpers\Paginator;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
+use App\Presenters\Traits\InjectFormFactory;
+use App\Presenters\Traits\InjectTranslator;
 use Nette;
 
 final class HomepagePresenter extends Nette\Application\UI\Presenter {
 
 	use InjectMenu,
+		InjectFormFactory,
+		InjectTranslator,
 		InjectStampsModel,
 		InjectCollectionModel;
 
@@ -105,7 +109,8 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 	public function createComponentFilterForm() {
 
 		$labels = $this->stampsModel->fetchLabels();
-		return FilterForm::create($labels);
+		return $this->formFactory->create(FilterForm::class, $labels);
+
 	}
 
 	public function createComponentEditStampForm() {
@@ -118,11 +123,14 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 					$defaults['comment'] = $this->userCollection[$stampId]['comment'];
 				}
 
-				return EditStampFormFactory::create(
-					(int) $stampId, $defaults, function(
-					Nette\Application\UI\Form $form,
-					array $values
-				) {
+				return $this->formFactory->create(
+					EditStampForm::class,
+					(int) $stampId,
+					$defaults,
+					function(
+						Nette\Application\UI\Form $form,
+						array $values
+					) {
 
 						$stampId = $values['id'];
 						unset($values['id']);
@@ -140,7 +148,9 @@ final class HomepagePresenter extends Nette\Application\UI\Presenter {
 	}
 
 	public function createComponentPaginator(): Nette\Application\UI\Control {
-		return new Paginator();
+		$paginator = new Paginator();
+		$paginator->setTranslator($this->translator);
+		return $paginator;
 	}
 
 	private function getFilter() {

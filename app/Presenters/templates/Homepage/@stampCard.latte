@@ -2,18 +2,20 @@
 
 	<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
 		<span>
-			Mám
+			{_'stamp.collected'}
 		</span>
 	</div>
 
 	{if $collection[$stamp['id']] ?? null}
-		<a href="#" class="stamp-edit-button" data-stampId="{$stamp['id']}">
+		{* Edit collection *}
+		<a href="#" class="stamp-edit-button" data-stampId="{$stamp['id']}" title="{_'general.edit'}">
 			<span class="icon is-medium has-text-success">
 				<i class="fas fa-lg fa-pencil-alt "></i>
 			</span>
 		</a>
 	{else}
-		<a n:href="toggleCollect!, id => $stamp['id']" class="stamp-edit-button">
+		{* Toggle/add collection *}
+		<a n:href="toggleCollect!, id => $stamp['id']" class="stamp-edit-button" title="{_'stamp.collect'}">
 			<span class="icon is-medium has-text-success">
 				<i class="fas fa-lg fa-plus"></i>
 			</span>
@@ -33,7 +35,7 @@
 				<p class="title is-2">{$stamp['id']}</p>
 			</div>
 			<div class="media-content">
-				<p class="title is-6 has-text-right">{$stamp['type']}</p>
+				<p class="title is-6 has-text-right pt-5">{$stamp['type']}</p>
 			</div>
 		</div>
 		<div class="media">
@@ -86,7 +88,7 @@
 						<div class="field">
 							{input ok, class => "button is-link"}
 							<a n:href="toggleCollect!, id => $stamp['id']" class="button is-pulled-right is-danger is-light confirm">
-								Vyřadit
+								{_'stamp.uncollect'}
 							</a>
 						</div>
 

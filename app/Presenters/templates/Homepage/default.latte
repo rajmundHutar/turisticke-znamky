@@ -29,7 +29,7 @@
 			</div>
 			<div n:if="$filter['sort'] || $filter['search'] || $filter['label']" class="control">
 				<a n:href='this, sort => null, search => null, label => null' class="button is-warning">
-					Reset
+					{_'general.reset'}
 				</a>
 			</div>
 		</div>
@@ -52,11 +52,11 @@
 
 	<article n:if="!$stamps" class="message is-danger">
 		<div class="message-body">
-			Vašemu filtru neodpovídají žádné položky.
+			{_'general.noItemsFound'}
 			<br>
 			<br>
 			<a n:href='this, sort => null, search => null' class="button is-success">
-				Reset filter
+				{_'general.resetFilter'}
 			</a>
 		</div>
 	</article>

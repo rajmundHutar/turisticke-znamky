@@ -114,7 +114,7 @@ class ImportModel {
 
 		$stamps = $this->stampsModel->search([
 			'withoutImage' => true,
-		], 500);
+		], 500) ?: [];
 
 		$count = 0;
 		foreach ($stamps as $stamp) {

@@ -4,27 +4,26 @@ namespace App\Forms;
 
 use Nette\Application\UI\Form;
 
-class FilterForm {
+class FilterForm extends BaseForm {
 
-	public static function create(array $labels) {
+	public function create(array $labels): Form {
 
-		$form = new Form();
-		$form->setMethod('GET');
-		$form->addText('search', 'Hledat')
+		$this->form->setMethod('GET');
+		$this->form->addText('search', 'form.filter.search')
 			->getControlPrototype()
-			->placeholder('Hledat');
-		$form->addSelect('sort', 'Řadit', [
-			null => 'Vzestupně',
-			'-num' => 'Sestupně',
+			->placeholder('form.filter.search');
+		$this->form->addSelect('sort', 'form.filter.sortBy', [
+			null => 'form.filter.sortBy.asc',
+			'-num' => 'form.filter.sortBy.desc',
 		]);
-		$form->addSelect('label', 'Label', $labels)
-			->setPrompt('Vyber...');
-		$form->addSubmit('ok', 'OK');
-		$form->onSuccess[] = function() {
+		$this->form->addSelect('label', 'form.filter.label', $labels)
+			->setPrompt('general.chooseSomething');
+		$this->form->addSubmit('ok', 'general.submit');
+		$this->form->onSuccess[] = function() {
 			// Empty, will be handled in action method
 		};
 
-		return $form;
+		return $this->form;
 
 	}
 

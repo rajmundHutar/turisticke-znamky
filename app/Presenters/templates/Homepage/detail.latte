@@ -8,7 +8,7 @@
 
 	<div class="columns">
 		<div class="column is-flex is-align-items-center">
-			<a n:if="$stamp['id'] != 1" n:href="detail, id => $stamp['id'] - 1">
+			<a n:if="$stamp['id'] != 1" n:href="detail, id => $stamp['id'] - 1" title="{_'general.prev'}">
 				<i class="fas fa-5x fa-arrow-left"></i>
 			</a>
 		</div>
@@ -19,7 +19,7 @@
 					<figure class="image">
 						<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
 							<span>
-								Mám
+								{_'stamp.collected'}
 							</span>
 						</div>
 						<a data-fslightbox href="{$baseUrl}/images/stamps/{$stamp['image']}" target="_blank">
@@ -49,18 +49,19 @@
 						</p>
 					</div>
 					<div class="content">
+						{_'detail.detailsOn'}
 						<a href="https://www.turisticke-znamky.cz/znamky/-c{$stamp['id']}" target="_blank">
-							Turistické známky.cz&hellip;
+							Turistické známky.cz
 						</a>
 					</div>
 					<div class="content">
 						{if $collection[$stamp['id']] ?? null}
 							<a n:href="toggleCollect!, id => $stamp['id']" class="button is-danger is-light confirm">
-								Vyřadit
+								{_'stamp.uncollect'}
 							</a>
 						{else}
 							<a n:href="toggleCollect!, id => $stamp['id']" class="button is-primary">
-								Collect
+								{_'stamp.collect'}
 							</a>
 						{/if}
 					</div>
@@ -69,7 +70,7 @@
 
 		</div>
 		<div class="column is-flex is-align-items-center">
-			<a n:href="detail, id => $stamp['id'] + 1">
+			<a n:href="detail, id => $stamp['id'] + 1" title="{_'general.next'}">
 				<i class="fas fa-5x fa-arrow-right"></i>
 			</a>
 		</div>
@@ -77,8 +78,8 @@
 
 	<div id="mapa" style="height:500px"></div>
 
-	<p class="title is-3">
-		Známky v okolí:
+	<p class="title is-3 pt-6">
+		{_'detail.nearby'}
 	</p>
 
 	<div class="columns is-multiline">

@@ -20,7 +20,23 @@ di:
 
 services:
 	router: App\Router\RouterFactory::createRouter
+
+	# Helpers
+	- App\Helpers\Translator
+
+	# Models
 	- App\Models\StampsModel
 	- App\Models\ImportModel(%csvPath%, %stampsImagesPath%)
 	- App\Models\UserModel
 	- App\Models\CollectionModel
+
+	# Forms
+	formFactory:
+		create: App\Forms\FormFactory
+		setup:
+			- register(@App\Forms\FilterForm)
+			- register(@App\Forms\EditStampForm)
+			- register(@App\Forms\LoginForm)
+	- App\Forms\FilterForm
+	- App\Forms\EditStampForm
+	- App\Forms\LoginForm

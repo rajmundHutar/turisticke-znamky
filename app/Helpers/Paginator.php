@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Helpers;
 
 use Nette\Application\UI\Control;
+use Nette\Application\UI\Presenter;
 
 class Paginator extends Control {
 
@@ -15,6 +16,14 @@ class Paginator extends Control {
 
 	public function __construct() {
 		$this->paginator = new \Nette\Utils\Paginator();
+	}
+
+	public function setTranslator(\Nette\Localization\Translator $translator): void {
+
+		$this->monitor(Presenter::class, function() use ($translator) {
+			$this->template->setTranslator($translator);
+		});
+
 	}
 
 	public function getPage(): int {

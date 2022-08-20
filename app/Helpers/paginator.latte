@@ -3,14 +3,14 @@
 	{var $currentPage = $paginator->getPage()}
 
 	{if $paginator->isFirst()}
-		<a class="pagination-previous" disabled>Previous</a>
+		<a class="pagination-previous" disabled>{_'general.prev'}</a>
 	{else}
-		<a n:href="this, page => $currentPage - 1" class="pagination-previous">Previous</a>
+		<a n:href="this, page => $currentPage - 1" class="pagination-previous">{_'general.prev'}</a>
 	{/if}
 	{if $paginator->isLast()}
-		<a class="pagination-previous" disabled>Next</a>
+		<a class="pagination-previous" disabled>{_'general.next'}</a>
 	{else}
-		<a n:href="this, page => $currentPage + 1" class="pagination-previous">Next</a>
+		<a n:href="this, page => $currentPage + 1" class="pagination-previous">{_'general.next'}</a>
 	{/if}
 
 	<ul class="pagination-list">
