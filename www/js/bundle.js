@@ -1,5 +1,38 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+    initDatepicker()
+    initNavbarBurger()
+    initModalWindows()
+    initConfirmButtons()
+
+});
+
+function ajax(url, params) {
+
+    const searchParams = new URLSearchParams(params);
+
+    const options = {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    }
+
+    fetch(url + '?' + searchParams.toString(), options)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(myJson) {
+
+            // Render snippets
+            for (const [key, value] of Object.entries(myJson.snippets || {})) {
+                document.getElementById(key).innerHTML = value;
+            }
+
+        });
+}
+
+function initDatepicker() {
+
     const elems = document.querySelectorAll('input[data-datepicker]');
     elems.forEach((elem)=>{
         const datepicker = new Datepicker(elem, {
@@ -15,6 +48,10 @@ document.addEventListener("DOMContentLoaded", () => {
             },
         });
     })
+
+}
+
+function initNavbarBurger() {
 
     // Get all "navbar-burger" elements
     const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
@@ -34,6 +71,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+}
+
+function initModalWindows() {
+
     document.querySelectorAll('.stamp-edit-button').forEach((el) => {
         var stampid = el.dataset.stampid
         el.addEventListener('click', () => {
@@ -41,9 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     })
 
-});
-
-document.addEventListener('DOMContentLoaded', () => {
     // Functions to open and close a modal
     function openModal($el) {
         $el.classList.add('is-active');
@@ -86,28 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
             closeAllModals();
         }
     });
-});
 
-function ajax(url, params) {
+}
 
-    const searchParams = new URLSearchParams(params);
+function initConfirmButtons() {
 
-    const options = {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-    }
-
-    fetch(url + '?' + searchParams.toString(), options)
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(myJson) {
-
-            // Render snippets
-            for (const [key, value] of Object.entries(myJson.snippets || {})) {
-                document.getElementById(key).innerHTML = value;
+    const elems = document.querySelectorAll('.confirm');
+    elems.forEach((elem)=>{
+        elem.addEventListener('click', (e) => {
+            const result = confirm('Really commit action?')
+            if (!result) {
+                e.preventDefault();
             }
-
         });
+    })
+
 }
