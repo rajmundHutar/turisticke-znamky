@@ -23,7 +23,7 @@
 	{/if}
 
 	<div class="card-image stamp-image">
-		<a n:href="detail, $stamp['id']">
+		<a n:href="Detail:, $stamp['id']">
 			<figure class="image">
 				<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
 			</figure>
@@ -40,7 +40,7 @@
 		</div>
 		<div class="media">
 			<div class="media-content">
-				<a n:href="detail, $stamp['id']">
+				<a n:href="Detail:, $stamp['id']">
 					<p class="title is-5">
 						{$stamp['name']}
 					</p>
@@ -66,7 +66,7 @@
 				<section class="modal-card-body">
 					{form "editStampForm-{$stamp['id']}"}
 						<div class="field">
-							<a n:href="detail, $stamp['id']">
+							<a n:href="Detail:, $stamp['id']">
 								<span class="is-title is-size-3">{$stamp['id']} - {$stamp['name']}</span>
 							</a>
 						</div>

@@ -44,17 +44,6 @@ class StampsModel {
 			]);
 		}
 
-		if ($filter['label'] ?? null) {
-			if ($filter['label'] == 'NEZAŘAZENO') {
-				$query->whereOr([
-					'type = ?' => $filter['label'],
-					'type' => '',
-				]);
-			} else {
-				$query->where('type',  $filter['label']);
-			}
-		}
-
 		switch ($filter['sort'] ?? null) {
 			case '-num':
 				$query->order('id DESC');

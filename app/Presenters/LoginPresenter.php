@@ -16,6 +16,12 @@ final class LoginPresenter extends Nette\Application\UI\Presenter {
 		InjectTranslator,
 		InjectFormFactory;
 
+	public function actionOut(): void
+	{
+		$this->user->logout(true);
+		$this->redirect('Homepage:');
+	}
+
 	public function createComponentLoginForm() {
 
 		return $this->formFactory->create(LoginForm::class, function($form, $values) {

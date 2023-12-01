@@ -8,11 +8,11 @@
 
     <div id="demo"></div>
 
-    <div n:snippet="stamps" class="columns is-multiline">
+    <div n:snippet="stamps" class="columns is-multiline px-4">
 
         {foreach $stamps as $stamp}
             <div class="column is-3">
-                {include "@stampCard.latte", stamp => $stamp}
+                {include "../@stampCard.latte", stamp => $stamp}
             </div>
         {/foreach}
 
@@ -25,13 +25,13 @@
     document.addEventListener("DOMContentLoaded", () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function (position) {
-                ajax({{plink "Homepage:nearby"}}, {
+                ajax({{plink "Nearby:"}}, {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
                 })
             });
         } else {
-            alert("Geolocation is not supported by this browser.");
+            alert("Geolocation is not allowed by this browser.");
         }
     })
 </script>

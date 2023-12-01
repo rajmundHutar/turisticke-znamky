@@ -8,21 +8,46 @@
 		<h1 class="title">
 			Přehled
 		</h1>
-		<div>
-			<h2 class="is-size-4">Poslední aktualizace:</h2> {$lastUpdate|date:'j. n. Y H:i:s'}
+		<div class="columns">
+			<div class="column">
+				<div class=" box">
+					<h2 class="is-size-4">Poslední aktualizace:</h2>
+					{$lastUpdate|date:'j. n. Y H:i:s'}
+				</div>
+			</div>
+			<div class="column">
+				<div class=" box">
+					<h2 class="is-size-4">Počet známek:</h2>
+					<p>{$stampsCount}</p>
+					<a n:href="importStamps" class="button is-primary">Importovat známky</a>
+				</div>
+			</div>
+			<div class="column">
+				<div class=" box">
+					<h2 class="is-size-4">Počet obrázků:</h2>
+					<p>{$imageCount}</p>
+					<a n:href="importImages" class="button is-primary">Importovat obrázky</a>
+				</div>
+			</div>
 		</div>
-		<div>
-			<h2 class="is-size-4">Počet známek:</h2>
-			<p>{$stampsCount}</p>
-			<a n:href="importStamps" class="button is-primary">Importovat známky</a>
-		</div>
-		<div>
-			<h2 class="is-size-4">Počet obrázků:</h2>
-			<p>{$imageCount}</p>
-			<a n:href="importImages" class="button is-primary">Importovat obrázky</a>
-		</div>
-
-
+		<table class="table">
+			<thead>
+			<tr>
+				<th>Date</th>
+				<th>Parsed</th>
+				<th>New</th>
+				<th>Time</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr n:foreach="$logs as $log">
+				<td class="has-text-right">{$log['date']|date:"j. n. Y"}</td>
+				<td class="has-text-right">{$log['parsed']}</td>
+				<td class="has-text-right">{$log['new']}</td>
+				<td class="has-text-right">{$log['time']}s</td>
+			</tr>
+			</tbody>
+		</table>
 	</div>
 </section>
 

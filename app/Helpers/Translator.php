@@ -16,6 +16,7 @@ class Translator implements \Nette\Localization\Translator {
 		'general.next' => 'Next',
 		'general.submit' => 'Submit',
 		'general.chooseSomething' => 'Select option...',
+		'general.close' => '✘',
 
 		'login.email' => 'E-mail',
 		'login.password' => 'Password',
@@ -26,6 +27,7 @@ class Translator implements \Nette\Localization\Translator {
 		'menu.nearby' => 'Nearby',
 		'menu.MyCollection' => 'My collection',
 		'menu.login' => 'Login',
+		'menu.logout' => 'Logout',
 		'menu.administration' => 'Admin',
 		'detail.detailsOn' => 'More details on',
 		'detail.nearby' => 'Stamps nearby:',

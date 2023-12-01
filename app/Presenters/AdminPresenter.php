@@ -39,6 +39,7 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 		$this->template->lastUpdate = $lastLog['date'];
 		$this->template->stampsCount = $this->stampsModel->count();
 		$this->template->imageCount = $this->stampsModel->fetchImageCount();
+		$this->template->logs = $this->importModel->fetchAllLogs();
 
 	}
 

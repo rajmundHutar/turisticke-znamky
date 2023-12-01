@@ -42,6 +42,14 @@ class ImportModel {
 
 	}
 
+	public function fetchAllLogs(): array
+	{
+		return $this->db
+			->table(\Table::ImportLog)
+			->order('date DESC')
+			->fetchAll();
+	}
+
 	public function import(): array {
 
 		Debugger::timer();

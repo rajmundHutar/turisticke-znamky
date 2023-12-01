@@ -1,0 +1,24 @@
+version: '3.7'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./.docker/php/Dockerfile
+    volumes:
+      - ./app:/usr/src/app
+      - ./log:/usr/src/log
+      - ./temp:/usr/src/temp
+      - ./vendor:/usr/src/vendor
+      - ./www/:/usr/src/www/
+    image: tz-app
+    restart: always
+    ports:
+      - 8082:80
+  db:
+    build:
+      context: .
+      dockerfile: ./.docker/db/Dockerfile
+    image: tz-db
+    restart: always
+    ports:
+      - 13306:3306

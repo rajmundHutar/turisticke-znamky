@@ -7,11 +7,6 @@
 	{else}
 		<a n:href="this, page => $currentPage - 1" class="pagination-previous">{_'general.prev'}</a>
 	{/if}
-	{if $paginator->isLast()}
-		<a class="pagination-previous" disabled>{_'general.next'}</a>
-	{else}
-		<a n:href="this, page => $currentPage + 1" class="pagination-previous">{_'general.next'}</a>
-	{/if}
 
 	<ul class="pagination-list">
 		<li>
@@ -54,4 +49,9 @@
 			</a>
 		</li>
 	</ul>
+	{if $paginator->isLast()}
+		<a class="pagination-previous" disabled>{_'general.next'}</a>
+	{else}
+		<a n:href="this, page => $currentPage + 1" class="pagination-previous">{_'general.next'}</a>
+	{/if}
 </nav>

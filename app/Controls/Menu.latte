@@ -14,27 +14,30 @@
 	<div id="navbarBasicExample" class="navbar-menu">
 		<div class="navbar-start">
 
-			<a href="{plink Homepage:nearby}" class="navbar-item">
+			<a href="{plink Nearby:}" class="navbar-item">
 				{_'menu.nearby'}
 			</a>
 
 			<a n:if="$user->isLoggedIn()" href="{plink Homepage:, onlyCollected => true}" class="navbar-item">
-				{_'menu.MyCollection'}
+				{_'menu.MyCollection'}&nbsp;<small>({$user->getIdentity()->email})</small>
 			</a>
 
 		</div>
 
 		<div class="navbar-end">
 			<div class="navbar-item">
-				<div class="buttons">
-					<span class="navbar-item" n:if="$user->isLoggedIn()">{$user->getIdentity()->email}</span>
-					<a n:if="!$user->isLoggedIn()" href="{plink Login:}" class="button is-primary">
+				<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="navbar-item is-dark">
+					{_'menu.administration'}
+				</a>
+				{if $user->isLoggedIn()}
+					<a href="{plink Login:out}" class="navbar-item is-danger">
+						{_'menu.logout'}
+					</a>
+				{else}
+					<a href="{plink Login:}" class="navbar-item is-primary">
 						<strong>{_'menu.login'}</strong>
 					</a>
-					<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="button navbar-item">
-						{_'menu.administration'}
-					</a>
-				</div>
+				{/if}
 			</div>
 		</div>
 	</div>

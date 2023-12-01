@@ -8,30 +8,27 @@
 		<div class="field">
 			<div class="field has-addons">
 				<div class="control">
+					<a class="button is-static">
+						{=count($stamps ?? [])} / {$totalStampsCount}
+					</a>
+				</div>
+				<div class="control">
 					{input search, class => "input"}
 				</div>
 				<div class="select">
 					{input sort}
 				</div>
+				<div class="control">
+					{input ok, class => "button is-info"}
+				</div>
+				<div n:if="$filter['sort'] || $filter['search']" class="control">
+					<a n:href='this, sort => null, search => null, label => null' class="button is-danger">
+						{_'general.close'}
+					</a>
+				</div>
 			</div>
 		</div>
 		<div class="field">
-			<div class="select">
-				{input label}
-			</div>
-		</div>
-		<div class="field">
-			<div class="control">
-				{input ok, class => "button is-info"}
-			</div>
-			<div class="control">
-					{=count($stamps ?? [])}
-			</div>
-			<div n:if="$filter['sort'] || $filter['search'] || $filter['label']" class="control">
-				<a n:href='this, sort => null, search => null, label => null' class="button is-warning">
-					{_'general.reset'}
-				</a>
-			</div>
 		</div>
 	</form>
 
@@ -39,10 +36,10 @@
 
 		{control paginator}
 
-		<div class="columns is-multiline">
+		<div class="columns is-multiline px-4">
 			{foreach $stamps as $stamp}
 				<div class="column is-3">
-					{include "@stampCard.latte", stamp => $stamp, collection => $collection}
+					{include "../@stampCard.latte", stamp => $stamp, collection => $collection}
 				</div>
 			{/foreach}
 		</div>

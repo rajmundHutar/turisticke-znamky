@@ -1,0 +1,86 @@
+{block menu}
+	{control menu}
+{/block}
+
+{block content}
+
+<div class="container">
+
+	<div class="columns">
+		<div class="column is-one-third px-6">
+			<figure class="image">
+				<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
+							<span>
+								{_'stamp.collected'}
+							</span>
+				</div>
+				<a data-fslightbox href="{$baseUrl}/images/stamps/{$stamp['image']}" target="_blank">
+					<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
+				</a>
+			</figure>
+		</div>
+		<div class="column px-6">
+			<div class="content">
+				<p class="title is-3">
+					{$stamp['id']} - {$stamp['name']}
+				</p>
+			</div>
+			<div class="content">
+				<p class="title is-6">
+					{$stamp['type']}
+				</p>
+			</div>
+			<div class="content">
+				<p class="title is-6">
+					{$stamp['region']}
+				</p>
+			</div>
+			<div class="content">
+				<p class="title is-6">
+					{$stamp['created_at']|date:'j. n. Y'}
+				</p>
+			</div>
+			<div class="content">
+				{_'detail.detailsOn'}
+				<a href="https://www.turisticke-znamky.cz/znamky/-c{$stamp['id']}" target="_blank">
+					Turistické známky.cz
+				</a>
+			</div>
+			<div class="content">
+				{if $collection[$stamp['id']] ?? null}
+					<a n:href="toggleCollect!, id => $stamp['id']" class="button is-danger is-light confirm">
+						{_'stamp.uncollect'}
+					</a>
+				{else}
+					<a n:href="toggleCollect!, id => $stamp['id']" class="button is-primary">
+						{_'stamp.collect'}
+					</a>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+	<div id="map" class="mx-6" style="height:500px"></div>
+
+	<div class="columns is-multiline px-4">
+		<div class="column is-12">
+			<p class="title is-3 pt-6">
+				{_'detail.nearby'}
+			</p>
+		</div>
+		{foreach $closest as $closestStamp}
+			<div class="column is-3">
+				{include "../@stampCard.latte", stamp => $closestStamp, collection => $collection}
+			</div>
+		{/foreach}
+	</div>
+</div>
+
+{/block}
+
+<script n:syntax="double" n:block=userScript>
+	// replace with your own API key
+	const API_KEY = 'qsdduL32xP7zUe8rj174i2LSClOB0JlpArnIk3fG_3Y';
+	{{var $allStamps = array_merge([$stamp->toArray()], array_values($closest))}}
+	new StampMap('map', {{$allStamps}}, {{$collection}}, {{$stamp['lat']}}, {{$stamp['lng']}}, {{$baseUrl}}, API_KEY);
+</script>
