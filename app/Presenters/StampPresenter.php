@@ -8,11 +8,12 @@ use App\Forms\EditStampForm;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\InjectFormFactory;
+use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette\Application\UI\Multiplier;
 use Nette\Application\UI\Presenter;
 
-class DetailPresenter extends Presenter
+class StampPresenter extends Presenter
 {
 
 	use InjectTranslator;
@@ -30,7 +31,7 @@ class DetailPresenter extends Presenter
 			$this->redirect("this#stamp-{$id}", $this->getFilter());
 		}
 	}
-	public function renderDefault(string $id): void {
+	public function renderDefault(?string $id = null): void {
 
 		$this->template->stamp = $stamp =  $this->stampsModel->fetch((int)$id);
 		$this->template->closest = $this->stampsModel->fetchClosest(

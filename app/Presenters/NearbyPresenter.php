@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace App\Presenters;
 
+use App\Forms\EditStampForm;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
+use App\Presenters\Traits\InjectFormFactory;
+use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
+use Nette\Application\UI\Form;
+use Nette\Application\UI\Multiplier;
 use Nette\Application\UI\Presenter;
 
 class NearbyPresenter extends Presenter
 {
 
-	use InjectTranslator;
-	use InjectMenu;
 	use InjectStampsModel;
 	use InjectCollectionModel;
+	use InjectTranslator;
+	use InjectMenu;
+	use InjectFormFactory;
 	protected array $closest = [];
 
 	public function actionDefault(?string $lat = null, ?string $lng = null)
@@ -41,5 +47,37 @@ class NearbyPresenter extends Presenter
 		if ($this->isAjax()) {
 			$this->redrawControl('stamps');
 		}
+	}
+
+	public function createComponentEditStampForm()
+	{
+		return new Multiplier(function (string $stampId) {
+
+			$defaults = [];
+			if ($this->userCollection[$stampId] ?? null) {
+				$defaults['date'] = $this->userCollection[$stampId]['date'];
+				$defaults['comment'] = $this->userCollection[$stampId]['comment'];
+			}
+
+			return $this->formFactory->create(
+				EditStampForm::class,
+				(int)$stampId,
+				$defaults,
+				function (
+					Form $form,
+					array $values
+				) {
+
+					$stampId = $values['id'];
+					unset($values['id']);
+					$this->collectionModel->update(
+						(int)$stampId,
+						$this->user->getId(),
+						$values
+					);
+
+				});
+
+		});
 	}
 }

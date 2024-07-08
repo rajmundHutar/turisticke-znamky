@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Enums\EnvironmentEnum;
 use Nette\Bootstrap\Configurator;
 
 
@@ -13,7 +14,8 @@ class Bootstrap
 	{
 		$configurator = new Configurator;
 
-		//$configurator->setDebugMode('secret@23.75.345.200'); // enable for your remote IP
+		$env = EnvironmentEnum::tryFrom((string)getenv('ENVIRONMENT'));
+		$configurator->setDebugMode($env === EnvironmentEnum::Dev);
 		$configurator->enableTracy(__DIR__ . '/../log');
 
 		$configurator->setTimeZone('Europe/Prague');

@@ -1,3 +1,7 @@
+::backdrop {
+    background-color: rgba(10, 10, 10, 0.62);
+}
+
 .stamp-image {
     height: 360px;
     display: flex;
@@ -140,4 +144,8 @@
 
 #mapa img {
     max-width: none
+}
+
+dialog {
+    border: none;
 }

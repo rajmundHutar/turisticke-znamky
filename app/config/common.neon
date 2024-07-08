@@ -17,18 +17,20 @@ di:
 		parameters: no
 		tags: no
 
-
 services:
 	router: App\Router\RouterFactory::createRouter
 
 	# Helpers
-	- App\Helpers\Translator
+	translator: App\Helpers\Translator
 
 	# Models
 	- App\Models\StampsModel
 	- App\Models\ImportModel(%csvPath%, %stampsImagesPath%)
 	- App\Models\UserModel
 	- App\Models\CollectionModel
+
+	# Controls
+	- App\Controls\Menu(@translator)
 
 	# Forms
 	formFactory:

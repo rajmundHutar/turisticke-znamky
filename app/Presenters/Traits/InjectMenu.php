@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Presenters;
+namespace App\Presenters\Traits;
 
 use App\Controls\Menu;
-use Nette\Localization\Translator;
 
 trait InjectMenu {
 

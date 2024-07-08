@@ -22,6 +22,10 @@
 				{_'menu.MyCollection'}&nbsp;<small>({$user->getIdentity()->email})</small>
 			</a>
 
+			<a n:if="$user->isLoggedIn()" href="{plink CollectionStats:}" class="navbar-item">
+				{_'menu.MyCollectionStats'}
+			</a>
+
 		</div>
 
 		<div class="navbar-end">

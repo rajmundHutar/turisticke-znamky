@@ -78,17 +78,23 @@ function initModalWindows() {
     document.querySelectorAll('.stamp-edit-button').forEach((el) => {
         var stampid = el.dataset.stampid
         el.addEventListener('click', () => {
-            document.querySelector(`.modal[data-stampid="${stampid}"]`).classList.add('is-active')
+
+            var modal = document.querySelector(`dialog[data-stampid="${stampid}"]`)
+            openModal(modal)
+            /*modal.showModal();
+            modal.classList.add('is-active')*/
         })
     })
 
     // Functions to open and close a modal
     function openModal($el) {
         $el.classList.add('is-active');
+        $el.showModal();
     }
 
     function closeModal($el) {
         $el.classList.remove('is-active');
+        $el.close();
     }
 
     function closeAllModals() {
@@ -184,7 +190,8 @@ class StampMap {
 
         for (var stamp of this.stamps) {
             var isCollected = this.collection[stamp['id']] || null;
-            L.marker([stamp['lat'], stamp['lng']], {icon: isCollected ? greenStamp : redStamp}).addTo(map).bindPopup(stamp['id'] + ' - ' + stamp['name']);
+            var link = "<a href='" + this.baseUrl + '/stamp/' + stamp['id'] + "'>" + stamp['id'] + ' - ' + stamp['name'] + "</a>";
+            L.marker([stamp['lat'], stamp['lng']], {icon: isCollected ? greenStamp : redStamp}).addTo(map).bindPopup(link);
         }
 
         /*

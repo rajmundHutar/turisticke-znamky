@@ -29,6 +29,8 @@
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
                 })
+            }, function() {
+                alert("Geolocation is not allowed by this browser.");
             });
         } else {
             alert("Geolocation is not allowed by this browser.");

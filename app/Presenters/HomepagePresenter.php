@@ -10,6 +10,7 @@ use App\Helpers\Paginator;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\InjectFormFactory;
+use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\Form;

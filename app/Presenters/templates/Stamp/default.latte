@@ -3,13 +3,13 @@
 {/block}
 
 {block content}
-
+{var $isCollected = (bool)($collection[$stamp['id']] ?? false)}
 <div class="container">
 
 	<div class="columns">
 		<div class="column is-one-third px-6">
 			<figure class="image">
-				<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
+				<div n:if="$isCollected" class="ribbon ribbon-top-right">
 							<span>
 								{_'stamp.collected'}
 							</span>
@@ -46,8 +46,10 @@
 					Turistické známky.cz
 				</a>
 			</div>
+		</div>
+		<div class="column px-6">
 			<div class="content">
-				{if $collection[$stamp['id']] ?? null}
+				{if $isCollected}
 					<a n:href="toggleCollect!, id => $stamp['id']" class="button is-danger is-light confirm">
 						{_'stamp.uncollect'}
 					</a>
@@ -57,6 +59,7 @@
 					</a>
 				{/if}
 			</div>
+			FORM
 		</div>
 	</div>
 

@@ -6,6 +6,7 @@ namespace App\Presenters;
 
 use App\Models\Traits\InjectImportModel;
 use App\Models\Traits\InjectStampsModel;
+use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette;
 

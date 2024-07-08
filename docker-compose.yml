@@ -12,6 +12,8 @@ services:
       - ./www/:/usr/src/www/
     image: tz-app
     restart: always
+    environment:
+      - ENVIRONMENT=dev
     ports:
       - 8082:80
   db:

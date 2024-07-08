@@ -6,6 +6,7 @@ namespace App\Presenters;
 
 use App\Forms\LoginForm;
 use App\Presenters\Traits\InjectFormFactory;
+use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette;
 use Nette\Security\AuthenticationException;
