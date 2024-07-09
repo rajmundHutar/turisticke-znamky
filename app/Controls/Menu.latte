@@ -1,7 +1,7 @@
 <nav class="navbar" role="navigation" aria-label="main navigation">
 	<div class="navbar-brand">
 		<a class="navbar-item" href="{$baseUrl}">
-			<img src="{$baseUrl}/mstile-150x150.png">{_'menu.allStamps'}
+			<img src="{$baseUrl}/mstile-150x150.png">
 		</a>
 
 		<a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
@@ -13,23 +13,27 @@
 
 	<div id="navbarBasicExample" class="navbar-menu">
 		<div class="navbar-start">
+			<a href="{plink Homepage:, onlyCollected => false}" class="navbar-item">
+				{_'menu.allStamps'}
+			</a>
 
 			<a href="{plink Nearby:}" class="navbar-item">
 				{_'menu.nearby'}
 			</a>
 
 			<a n:if="$user->isLoggedIn()" href="{plink Homepage:, onlyCollected => true}" class="navbar-item">
-				{_'menu.MyCollection'}&nbsp;<small>({$user->getIdentity()->email})</small>
+				{_'menu.myCollection'}
 			</a>
 
 			<a n:if="$user->isLoggedIn()" href="{plink CollectionStats:}" class="navbar-item">
-				{_'menu.MyCollectionStats'}
+				{_'menu.myCollectionStats'}
 			</a>
-
 		</div>
 
 		<div class="navbar-end">
-			<div class="navbar-item">
+				<span n:if="$user->isLoggedIn()" class="navbar-item">
+					<small>({$user->getIdentity()->email})</small>
+				</span>
 				<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="navbar-item is-dark">
 					{_'menu.administration'}
 				</a>
@@ -42,7 +46,6 @@
 						<strong>{_'menu.login'}</strong>
 					</a>
 				{/if}
-			</div>
 		</div>
 	</div>
 </nav>

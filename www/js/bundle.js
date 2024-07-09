@@ -170,7 +170,7 @@ class StampMap {
         Then we add a raster tile layer with Mapy NG tiles
         See https://leafletjs.com/reference.html#tilelayer
         */
-        L.tileLayer(`https://api.mapy.cz/v1/maptiles/basic/256/{z}/{x}/{y}?apikey=${this.apiKey}`, {
+        L.tileLayer(`https://api.mapy.cz/v1/maptiles/outdoor/256/{z}/{x}/{y}?apikey=${this.apiKey}`, {
             minZoom: 0,
             maxZoom: 19,
             attribution: '<a href="https://api.mapy.cz/copyright" target="_blank">&copy; Seznam.cz a.s. a další</a>',

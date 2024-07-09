@@ -1,4 +1,4 @@
-<nav class="pagination" role="navigation" aria-label="pagination">
+<nav n:if="$paginator->getPageCount() > 1" class="pagination" role="navigation" aria-label="pagination">
 
 	{var $currentPage = $paginator->getPage()}
 

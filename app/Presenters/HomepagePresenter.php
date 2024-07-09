@@ -34,6 +34,8 @@ final class HomepagePresenter extends Presenter
 	public ?string $sort = null;
 	/** @persistent */
 	public ?string $label = null;
+	/** @persistent */
+	public bool $onlyCollected = false;
 
 	protected array $userCollection = [];
 
@@ -64,11 +66,21 @@ final class HomepagePresenter extends Presenter
 		$paginator->setItemsPerPage(self::StampsPerPage);
 		$paginator->setItemCount($this->stampsModel->count($filter));
 
-		$this->template->stamps = $this->stampsModel->search(
+		$stamps = $this->stampsModel->search(
 			$filter,
 			$paginator->getLength(),
 			$paginator->getOffset()
 		);
+		if ($filter['sort'] === 'date' && $onlyCollected) {
+			usort($stamps, function ($a, $b) {
+				return $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date;
+			});
+		}
+		if ($filter['sort'] === '-date' && $onlyCollected) {
+			usort($stamps, fn($b, $a) => $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date);
+		}
+		$this->template->stamps = $stamps;
+
 		$this->template->totalStampsCount = $this->stampsModel->count($filter);
 		$this->template->collection = $this->userCollection;
 		$this->template->filter = $filter;
@@ -77,7 +89,15 @@ final class HomepagePresenter extends Presenter
 
 	public function createComponentFilterForm()
 	{
-		return $this->formFactory->create(FilterForm::class);
+		$sortBy = [
+			'id' => 'form.filter.sortBy.id.asc',
+			'-id' => 'form.filter.sortBy.id.desc',
+		];
+		if ($this->onlyCollected) {
+			$sortBy['date'] = 'form.filter.sortBy.date.asc';
+			$sortBy['-date'] = 'form.filter.sortBy.date.desc';
+		}
+		return $this->formFactory->create(FilterForm::class, $sortBy);
 	}
 
 	public function createComponentEditStampForm()
@@ -86,8 +106,8 @@ final class HomepagePresenter extends Presenter
 
 			$defaults = [];
 			if ($this->userCollection[$stampId] ?? null) {
-				$defaults['date'] = $this->userCollection[$stampId]['date'];
-				$defaults['comment'] = $this->userCollection[$stampId]['comment'];
+				$defaults['date'] = $this->userCollection[$stampId]->date;
+				$defaults['comment'] = $this->userCollection[$stampId]->comment;
 			}
 
 			return $this->formFactory->create(

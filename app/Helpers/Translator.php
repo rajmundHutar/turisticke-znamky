@@ -18,6 +18,8 @@ class Translator implements \Nette\Localization\Translator {
 		'general.chooseSomething' => 'Select option...',
 		'general.close' => '✘',
 
+		'nearby.forLocation{lat}{lng}' => 'Nearby stamps for {lat}, {lng}.',
+
 		'login.email' => 'E-mail',
 		'login.password' => 'Password',
 		'login.loginSuccessful' => 'User successfully logged in.',
@@ -25,12 +27,18 @@ class Translator implements \Nette\Localization\Translator {
 
 		'menu.allStamps' => 'All stamps',
 		'menu.nearby' => 'Nearby',
-		'menu.MyCollection' => 'My collection',
+		'menu.myCollection' => 'My collection',
+		'menu.myCollectionStats' => 'My stats',
 		'menu.login' => 'Login',
 		'menu.logout' => 'Logout',
 		'menu.administration' => 'Admin',
 		'detail.detailsOn' => 'More details on',
 		'detail.nearby' => 'Stamps nearby:',
+
+		'stats.numberOfCollected' => 'collected',
+		'stats.percentage' => 'percentage',
+		'stats.collectedThisYear' => 'collected this year',
+		'stats.mostConsecutiveItems' => 'most consecutive items',
 
 		'stamp.collected' => 'Have it!',
 		'stamp.collect' => 'Collect',
@@ -41,8 +49,10 @@ class Translator implements \Nette\Localization\Translator {
 
 		'form.filter.search' => 'Search',
 		'form.filter.sortBy' => 'Sort by',
-		'form.filter.sortBy.asc' => 'Ascending',
-		'form.filter.sortBy.desc' => 'Descending',
+		'form.filter.sortBy.id.asc' => '123 ↑',
+		'form.filter.sortBy.id.desc' => '123 ↓',
+		'form.filter.sortBy.date.asc' => 'Date ↑',
+		'form.filter.sortBy.date.desc' => 'Date ↓',
 		'form.filter.label' => 'Label',
 		'form.editStamp.date' => 'Date',
 		'form.editStamp.description' => 'Description',

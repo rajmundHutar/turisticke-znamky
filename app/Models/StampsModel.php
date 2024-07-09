@@ -17,11 +17,9 @@ class StampsModel {
 	}
 
 	public function search(array $filter, $limit = null, $offset = null): ?array {
-
 		return $this->prepareQuery($filter)
 			->limit($limit, $offset)
 			->fetchAll() ?: null;
-
 	}
 
 	public function count(array $filter = []): int {
@@ -45,7 +43,7 @@ class StampsModel {
 		}
 
 		switch ($filter['sort'] ?? null) {
-			case '-num':
+			case '-id':
 				$query->order('id DESC');
 				break;
 			default:
@@ -61,12 +59,10 @@ class StampsModel {
 	}
 
 	public function fetch(int $id): ?ActiveRow {
-
 		return $this->db
 			->table(\Table::Stamps)
 			->wherePrimary($id)
 			->fetch();
-
 	}
 
 	public function fetchLabels(): array {

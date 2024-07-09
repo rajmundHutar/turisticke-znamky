@@ -1,4 +1,4 @@
-FROM php:8.2-cli
+FROM php:8.3-cli
 
 # Move our PHP file into the container
 # COPY ../../www/index.php /usr/src/www/index.php

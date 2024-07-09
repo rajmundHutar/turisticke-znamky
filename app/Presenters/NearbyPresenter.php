@@ -23,11 +23,15 @@ class NearbyPresenter extends Presenter
 	use InjectMenu;
 	use InjectFormFactory;
 	protected array $closest = [];
+	protected ?string $lat = null;
+	protected ?string $lng = null;
 
 	public function actionDefault(?string $lat = null, ?string $lng = null)
 	{
 		if ($lat && $lng) {
 			$this->closest = $this->stampsModel->fetchClosest((float) $lat, (float) $lng, 20);
+			$this->lat = $lat;
+			$this->lng = $lng;
 		}
 	}
 
@@ -43,6 +47,8 @@ class NearbyPresenter extends Presenter
 	{
 		$this->template->stamps = $this->closest;
 		$this->template->collection = $this->collectionModel->fetchByUser($this->user->getId());
+		$this->template->lat = $this->lat;
+		$this->template->lng = $this->lng;
 
 		if ($this->isAjax()) {
 			$this->redrawControl('stamps');

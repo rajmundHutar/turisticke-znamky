@@ -4,20 +4,19 @@
 
 {block content}
 
-<div class="container">
-
-    <div id="demo"></div>
-
-    <div n:snippet="stamps" class="columns is-multiline px-4">
-
-        {foreach $stamps as $stamp}
-            <div class="column is-3">
-                {include "../@stampCard.latte", stamp => $stamp}
+    <div class="container">
+        <div n:snippet="stamps">
+            <h3 class="title is-4 has-text-centered	">{_'nearby.forLocation{lat}{lng}', ['lat' => $lat, 'lng' => $lng]}</h3>
+            <div class="columns is-multiline px-4">
+                {foreach $stamps as $stamp}
+                    <div class="column is-3">
+                        {include "../@stampCard.latte", stamp => $stamp}
+                    </div>
+                {/foreach}
             </div>
-        {/foreach}
 
+        </div>
     </div>
-</div>
 
 {/block}
 
@@ -29,7 +28,7 @@
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
                 })
-            }, function() {
+            }, function () {
                 alert("Geolocation is not allowed by this browser.");
             });
         } else {

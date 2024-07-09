@@ -10,8 +10,10 @@ use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\InjectFormFactory;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
+use Nette\Application\UI\Form;
 use Nette\Application\UI\Multiplier;
 use Nette\Application\UI\Presenter;
+use Nette\Database\Table\ActiveRow;
 
 class StampPresenter extends Presenter
 {
@@ -24,23 +26,64 @@ class StampPresenter extends Presenter
 
 	const NearbyStamps = 20;
 
+	protected ?int $stampId = null;
+	protected ?ActiveRow $stamp;
+	protected array $userCollection = [];
+
+	public function actionDefault(?string $id = null): void
+	{
+		$this->stampId = (int)$id;
+	}
+
 	public function handleToggleCollect(int $id)
 	{
 		if ($this->user->isLoggedIn()) {
 			$this->collectionModel->toggleCollect($id, $this->user->getId());
-			$this->redirect("this#stamp-{$id}", $this->getFilter());
+			$this->redirect("this");
 		}
 	}
-	public function renderDefault(?string $id = null): void {
 
-		$this->template->stamp = $stamp =  $this->stampsModel->fetch((int)$id);
+	public function renderDefault(): void
+	{
+
+		$this->stamp = $this->stampsModel->fetch($this->stampId);
+		$this->template->stamp = $this->stamp;
 		$this->template->closest = $this->stampsModel->fetchClosest(
-			(float) $stamp['lat'],
-			(float) $stamp['lng'],
+			(float)$this->stamp['lat'],
+			(float)$this->stamp['lng'],
 			self::NearbyStamps,
-			[$stamp['id']]
+			[$this->stampId]
 		);
-		$this->template->collection = $this->collectionModel->fetchByUser($this->user->getId());;
+		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
+		$this->template->collection = $this->userCollection;
+
+	}
+
+	public function createComponentEditSingleStampForm()
+	{
+		$defaults = [];
+		if ($this->userCollection[$this->stampId] ?? null) {
+			$defaults['date'] = $this->userCollection[$this->stampId]->date;
+			$defaults['comment'] = $this->userCollection[$this->stampId]->comment;
+		}
+		return $this->formFactory->create(
+			EditStampForm::class,
+			(int)$this->stampId,
+			$defaults,
+			function (
+				Form $form,
+				array $values
+			) {
+
+				$stampId = $values['id'];
+				unset($values['id']);
+				$this->collectionModel->update(
+					(int)$stampId,
+					$this->user->getId(),
+					$values
+				);
+
+			});
 
 	}
 
@@ -50,8 +93,8 @@ class StampPresenter extends Presenter
 
 			$defaults = [];
 			if ($this->userCollection[$stampId] ?? null) {
-				$defaults['date'] = $this->userCollection[$stampId]['date'];
-				$defaults['comment'] = $this->userCollection[$stampId]['comment'];
+				$defaults['date'] = $this->userCollection[$stampId]->date;
+				$defaults['comment'] = $this->userCollection[$stampId]->comment;
 			}
 
 			return $this->formFactory->create(
