@@ -1,0 +1,79 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Controls/Menu.php
+
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Helpers/Paginator.php
+
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Presenters/AdminPresenter.php
+
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Presenters/CollectionStatsPresenter.php
+
+		-
+			message: '#^Method App\\Presenters\\ErrorPresenter\:\:run\(\) should return Nette\\Application\\IResponse but returns Nette\\Application\\Responses\\CallbackResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Presenters/ErrorPresenter.php
+
+		-
+			message: '#^Method App\\Presenters\\ErrorPresenter\:\:run\(\) should return Nette\\Application\\IResponse but returns Nette\\Application\\Responses\\ForwardResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Presenters/ErrorPresenter.php
+
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Presenters/HomepagePresenter.php
+
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Presenters/LoginPresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Presenters\\NearbyPresenter\:\:\$userCollection\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Presenters/NearbyPresenter.php
+
+		-
+			message: '#^Call to an undefined method App\\Presenters\\NearbyPresenter\:\:getFilter\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Presenters/NearbyPresenter.php
+
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Presenters/NearbyPresenter.php
+
+		-
+			message: '#^Cannot call method setTranslator\(\) on Nette\\Application\\UI\\Template\|stdClass\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Presenters/StampPresenter.php
+
+		-
+			message: '#^Parameter \$form of anonymous function has invalid type App\\Presenters\\Nette\\Application\\UI\\Form\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Presenters/StampPresenter.php

@@ -15,7 +15,17 @@
 		"tracy/tracy": "^2.10"
 	},
 	"require-dev": {
-		"nette/tester": "^v2.5"
+		"nette/tester": "^v2.5",
+		"phpstan/phpstan": "^2",
+		"phpstan/phpstan-nette": "^2"
+	},
+	"scripts": {
+		"test": "tester tests -C",
+		"phpstan": "phpstan analyse --memory-limit=1G",
+		"check": [
+			"@phpstan",
+			"@test"
+		]
 	},
 	"autoload": {
 		"psr-4": {
@@ -25,6 +35,9 @@
 	"config": {
 		"allow-plugins": {
 			"symfony/thanks": false
+		},
+		"platform": {
+			"php": "8.3"
 		}
 	}
 }
