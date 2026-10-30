@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
+use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\Presenter;
 
 class Paginator extends Control {
 
-	/** @persistent  */
+	#[Persistent]
 	public int $page = 1;
 
 	protected \Nette\Utils\Paginator $paginator;

@@ -12,6 +12,7 @@ use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\InjectFormFactory;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
+use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\Form;
 use Nette\Application\UI\Multiplier;
@@ -28,13 +29,13 @@ final class HomepagePresenter extends Presenter
 
 	private const StampsPerPage = 200;
 
-	/** @persistent */
+	#[Persistent]
 	public ?string $search = '';
-	/** @persistent */
+	#[Persistent]
 	public ?string $sort = null;
-	/** @persistent */
+	#[Persistent]
 	public ?string $label = null;
-	/** @persistent */
+	#[Persistent]
 	public bool $onlyCollected = false;
 
 	protected array $userCollection = [];
@@ -52,7 +53,7 @@ final class HomepagePresenter extends Presenter
 		}
 	}
 
-	public function renderDefault(bool $onlyCollected = null): void
+	public function renderDefault(?bool $onlyCollected = null): void
 	{
 		$filter = $this->getFilter();
 
