@@ -52,7 +52,7 @@ final class HomepagePresenter extends Presenter
 		}
 	}
 
-	public function renderDefault(bool $onlyCollected = null): void
+	public function renderDefault(?bool $onlyCollected = null): void
 	{
 		$filter = $this->getFilter();
 
