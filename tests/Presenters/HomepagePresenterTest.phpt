@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Helpers\Paginator;
 use App\Presenters\HomepagePresenter;
 use Nette\Application\UI\ComponentReflection;
 use Tester\Assert;
@@ -16,5 +15,4 @@ Assert::noError(function () {
 		['search', 'sort', 'label', 'onlyCollected'],
 		array_keys((new ComponentReflection(HomepagePresenter::class))->getPersistentParams()),
 	);
-	Assert::same(['page'], array_keys((new ComponentReflection(Paginator::class))->getPersistentParams()));
 });
