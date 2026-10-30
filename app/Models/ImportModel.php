@@ -64,7 +64,7 @@ class ImportModel {
 		curl_setopt($ch, CURLOPT_FILE, $fp);
 		// get curl response
 		curl_exec($ch);
-		curl_close($ch);
+		unset($ch);
 		fclose($fp);
 
 		$i = 0;
@@ -76,7 +76,7 @@ class ImportModel {
 			throw new \RuntimeException("Can't read from {$fileTempPath}");
 		} else {
 
-			while (($data = fgetcsv($handle, 0, ';')) !== false) {
+			while (($data = fgetcsv($handle, 0, ';', '"', '\\')) !== false) {
 				$i++;
 				if ($i === 1) {
 					// Skip first row with header
