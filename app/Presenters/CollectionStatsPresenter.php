@@ -20,6 +20,14 @@ class CollectionStatsPresenter extends Presenter
 	use InjectCollectionModel;
 	use InjectStampsModel;
 
+	protected function startup(): void
+	{
+		parent::startup();
+		if (!$this->user->isLoggedIn()) {
+			$this->redirect('Login:');
+		}
+	}
+
 	public function renderDefault(): void
 	{
 		$collection = $this->collectionModel->fetchByUser($this->user->getId());

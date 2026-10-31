@@ -17,7 +17,16 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 		InjectStampsModel,
 		InjectImportModel;
 
-	public function actionImportStamps() {
+	protected function startup() {
+
+		parent::startup();
+		if (!$this->user->isInRole('admin')) {
+			$this->error('Admin role is required.', Nette\Http\IResponse::S403_Forbidden);
+		}
+
+	}
+
+	public function handleImportStamps() {
 
 		[$total, $new] = $this->importModel->import();
 		$this->flashMessage($this->t('admin.{new}stampsOutOf{total}', ['total' => $total, 'new' => $new]));
@@ -25,7 +34,7 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 
 	}
 
-	public function actionImportImages() {
+	public function handleImportImages() {
 
 		$new = $this->importModel->importImages();
 		$this->flashMessage($this->t('admin.{count}loadedImages', ['count' => $new]));
