@@ -43,6 +43,9 @@ final class NearbyFakeCollectionModel extends CollectionModel
 	/** @var list<array{int, int}> */
 	public array $toggled = [];
 
+	/** @var list<array{int, int, array<string, mixed>}> */
+	public array $updates = [];
+
 
 	/** @param  array<int, CollectedStampDto>  $collection */
 	public function __construct(
@@ -61,6 +64,12 @@ final class NearbyFakeCollectionModel extends CollectionModel
 	{
 		$this->toggled[] = [$id, $userId];
 		return true;
+	}
+
+
+	public function update(int $stampId, int $userId, array $data): void
+	{
+		$this->updates[] = [$stampId, $userId, $data];
 	}
 }
 
@@ -120,3 +129,21 @@ Assert::same('50.1', $url->getQueryParameter('lat'));
 Assert::same('14.4', $url->getQueryParameter('lng'));
 Assert::same('stamp-5', $url->getFragment());
 Assert::null($url->getQueryParameter('do'));
+
+
+// Submitting the edit form stores the values and redirects back (no stale collection rendered), keeping lat/lng
+$collectionModel = new NearbyFakeCollectionModel;
+$presenter = createNearbyPresenter($collectionModel);
+$response = $presenter->run(new Request(
+	'Nearby',
+	'POST',
+	['action' => 'default', 'lat' => '50.1', 'lng' => '14.4', 'do' => 'editStampForm-5-submit'],
+	['id' => '5', 'date' => '2024-06-02', 'comment' => 'Sunny', 'ok' => 'general.submit'],
+));
+Assert::same([[5, 1, ['date' => '2024-06-02', 'comment' => 'Sunny']]], $collectionModel->updates);
+Assert::type(RedirectResponse::class, $response);
+assert($response instanceof RedirectResponse);
+$url = new Nette\Http\Url($response->getUrl());
+Assert::same('50.1', $url->getQueryParameter('lat'));
+Assert::same('14.4', $url->getQueryParameter('lng'));
+Assert::same('stamp-5', $url->getFragment());
