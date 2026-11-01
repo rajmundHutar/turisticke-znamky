@@ -11,6 +11,7 @@ use Nette\Application\UI\Control;
 use Nette\Application\UI\Presenter;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use Nette\Bridges\ApplicationLatte\TemplateFactory;
+use Nette\Bridges\ApplicationLatte\UIExtension;
 use Nette\Http\UrlScript;
 use Nette\Localization\Translator;
 use Nette\Security\IIdentity;
@@ -87,7 +88,9 @@ final class PresenterTestHelpers
 		$latteFactory = new class implements LatteFactory {
 			public function create(?Control $control = null): Latte\Engine
 			{
-				return new Latte\Engine;
+				$latte = new Latte\Engine;
+				$latte->addExtension(new UIExtension($control)); // layout lookup, as in the app's LatteExtension
+				return $latte;
 			}
 		};
 
@@ -98,7 +101,7 @@ final class PresenterTestHelpers
 			RouterFactory::createRouter(),
 			new Nette\Http\Session($httpRequest, $httpResponse),
 			$user,
-			new TemplateFactory($latteFactory),
+			new TemplateFactory($latteFactory, $httpRequest, $user),
 		);
 		$presenter->autoCanonicalize = false;
 	}

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Presenters;
 
+use App\Presenters\Traits\InjectTranslator;
 use Nette;
 
 
 final class Error4xxPresenter extends Nette\Application\UI\Presenter
 {
+	use InjectTranslator;
+
 	public function startup(): void
 	{
 		parent::startup();
