@@ -1,18 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Method App\\Presenters\\ErrorPresenter\:\:run\(\) should return Nette\\Application\\IResponse but returns Nette\\Application\\Responses\\CallbackResponse\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Presenters/ErrorPresenter.php
-
-		-
-			message: '#^Method App\\Presenters\\ErrorPresenter\:\:run\(\) should return Nette\\Application\\IResponse but returns Nette\\Application\\Responses\\ForwardResponse\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Presenters/ErrorPresenter.php
-
-		-
 			message: '#^Access to an undefined property App\\Presenters\\NearbyPresenter\:\:\$userCollection\.$#'
 			identifier: property.notFound
 			count: 2
