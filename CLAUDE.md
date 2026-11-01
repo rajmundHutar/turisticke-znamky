@@ -14,6 +14,17 @@ Everything runs in Docker (PHP 8.5, `.docker/php/Dockerfile`); the host PHP is n
 
 Tests need no database. There are no DB/integration tests yet; acceptance criteria that need a DB are verified manually against the running app.
 
+## Deploy
+
+Production (tz.rajmund.dev) is deployed over FTPS with [FTP Deployment](https://github.com/dg/ftp-deployment). `deployment.phar` and `deployment.ini` (credentials) live in the repo root and are not in git. Deploy from an up-to-date `main` checkout:
+
+- `make deploy-test` – dry run, lists what would be uploaded/deleted (the `before` job strips dev dependencies, the target restores them afterwards)
+- `make deploy` – deploy; refuses to run unless on a clean `main` in sync with `origin/main`. Runs `composer install --no-dev` before upload, restores dev dependencies after, purges `temp/cache` on the server
+
+Both run `deployment.phar` in Docker with `error_reporting` without `E_WARNING`: the Wedos FTPS server drops TLS without a clean shutdown and the stray `SSL_shutdown failed` warning would abort the run; transfer errors are still caught and retried.
+
+Runtime data on the server (`app/config/local.neon`, `log/`, `temp/`, downloaded `www/images/stamps/`) is ignored and never uploaded or deleted.
+
 ## Conventions
 
 - Code, comments, commit messages in English; Conventional Commits referencing the issue, e.g. `fix: return 404 for unknown stamp (#7)`.

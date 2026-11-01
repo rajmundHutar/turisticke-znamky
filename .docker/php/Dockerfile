@@ -10,9 +10,10 @@ WORKDIR /usr/src
 EXPOSE 8080
 
 RUN apt-get -y update \
-&& apt-get install -y libicu-dev git unzip \
+&& apt-get install -y libicu-dev libssl-dev git unzip \
 && docker-php-ext-configure intl \
-&& docker-php-ext-install intl pdo_mysql
+&& docker-php-ext-configure ftp --with-ftp-ssl \
+&& docker-php-ext-install intl pdo_mysql ftp
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
