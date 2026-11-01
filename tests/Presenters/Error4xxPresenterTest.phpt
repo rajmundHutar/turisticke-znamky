@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: Error4xxPresenter renders 4xx error pages in the site layout
+ * Test: Error4xxPresenter renders 4xx error pages in the error layout (same look as 500.phtml)
  */
 
 declare(strict_types=1);
@@ -34,4 +34,6 @@ foreach ([404 => 'Page Not Found', 403 => 'Access Denied'] as $code => $heading)
 	$html = renderError($code);
 	Assert::contains("<h1>$heading</h1>", $html);
 	Assert::contains('general.turistStampsTitle', $html); // layout title, translated by the identity translator
+	Assert::contains('<div id="nette-error">', $html); // error layout, not the site layout
+	Assert::notContains('bulma.min.css', $html);
 }
