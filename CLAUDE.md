@@ -12,6 +12,8 @@ Everything runs in Docker (PHP 8.5, `.docker/php/Dockerfile`); the host PHP is n
 - `docker compose run --rm app composer check` – PHPStan + tests; run before every PR
 - `docker compose up` – app on http://localhost:8082 (container listens on 8080), MySQL on port 13306 (schema from `.docker/db/init.sql`)
 
+Tests need no database. There are no DB/integration tests yet; acceptance criteria that need a DB are verified manually against the running app.
+
 ## Deploy
 
 Production (tz.rajmund.dev) is deployed over FTPS with [FTP Deployment](https://github.com/dg/ftp-deployment). `deployment.phar` and `deployment.ini` (credentials) live in the repo root and are not in git. Deploy from an up-to-date `main` checkout:
@@ -22,8 +24,6 @@ Production (tz.rajmund.dev) is deployed over FTPS with [FTP Deployment](https://
 Both run `deployment.phar` in Docker with `error_reporting` without `E_WARNING`: the Wedos FTPS server drops TLS without a clean shutdown and the stray `SSL_shutdown failed` warning would abort the run; transfer errors are still caught and retried.
 
 Runtime data on the server (`app/config/local.neon`, `log/`, `temp/`, downloaded `www/images/stamps/`) is ignored and never uploaded or deleted.
-
-Tests need no database. There are no DB/integration tests yet; acceptance criteria that need a DB are verified manually against the running app.
 
 ## Conventions
 
