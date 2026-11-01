@@ -25,6 +25,7 @@ class NearbyPresenter extends Presenter
 	protected array $closest = [];
 	protected ?string $lat = null;
 	protected ?string $lng = null;
+	protected array $userCollection = [];
 
 	public function actionDefault(?string $lat = null, ?string $lng = null)
 	{
@@ -33,20 +34,23 @@ class NearbyPresenter extends Presenter
 			$this->lat = $lat;
 			$this->lng = $lng;
 		}
+		if ($this->user->isLoggedIn()) {
+			$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
+		}
 	}
 
 	public function handleToggleCollect(int $id)
 	{
 		if ($this->user->isLoggedIn()) {
 			$this->collectionModel->toggleCollect($id, $this->user->getId());
-			$this->redirect("this#stamp-{$id}", $this->getFilter());
+			$this->redirect("this#stamp-{$id}");
 		}
 	}
 
 	public function renderDefault(): void
 	{
 		$this->template->stamps = $this->closest;
-		$this->template->collection = $this->collectionModel->fetchByUser($this->user->getId());
+		$this->template->collection = $this->userCollection;
 		$this->template->lat = $this->lat;
 		$this->template->lng = $this->lng;
 
@@ -61,8 +65,8 @@ class NearbyPresenter extends Presenter
 
 			$defaults = [];
 			if ($this->userCollection[$stampId] ?? null) {
-				$defaults['date'] = $this->userCollection[$stampId]['date'];
-				$defaults['comment'] = $this->userCollection[$stampId]['comment'];
+				$defaults['date'] = $this->userCollection[$stampId]->date;
+				$defaults['comment'] = $this->userCollection[$stampId]->comment;
 			}
 
 			return $this->formFactory->create(

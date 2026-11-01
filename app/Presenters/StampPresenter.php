@@ -102,7 +102,7 @@ class StampPresenter extends Presenter
 				(int)$stampId,
 				$defaults,
 				function (
-					Nette\Application\UI\Form $form,
+					Form $form,
 					array $values
 				) {
 
