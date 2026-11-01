@@ -16,8 +16,10 @@ Everything runs in Docker (PHP 8.5, `.docker/php/Dockerfile`); the host PHP is n
 
 Production (tz.rajmund.dev) is deployed over FTPS with [FTP Deployment](https://github.com/dg/ftp-deployment). `deployment.phar` and `deployment.ini` (credentials) live in the repo root and are not in git. Deploy from an up-to-date `main` checkout:
 
-- `docker compose run --rm app php deployment.phar deployment.ini --test` – dry run, lists what would be uploaded/deleted. The `before` job still runs and leaves `vendor/` without dev dependencies; restore them with `docker compose run --rm app composer install`
-- `docker compose run --rm app php -d error_reporting=32765 deployment.phar deployment.ini` – deploy (`error_reporting` without `E_WARNING`: the Wedos FTPS server drops TLS without a clean shutdown and the stray `SSL_shutdown failed` warning would abort the run; transfer errors are still caught and retried); runs `composer install --no-dev` before upload, restores dev dependencies after, purges `temp/cache` on the server
+- `make deploy-test` – dry run, lists what would be uploaded/deleted (the `before` job strips dev dependencies, the target restores them afterwards)
+- `make deploy` – deploy; refuses to run unless on a clean `main` in sync with `origin/main`. Runs `composer install --no-dev` before upload, restores dev dependencies after, purges `temp/cache` on the server
+
+Both run `deployment.phar` in Docker with `error_reporting` without `E_WARNING`: the Wedos FTPS server drops TLS without a clean shutdown and the stray `SSL_shutdown failed` warning would abort the run; transfer errors are still caught and retried.
 
 Runtime data on the server (`app/config/local.neon`, `log/`, `temp/`, downloaded `www/images/stamps/`) is ignored and never uploaded or deleted.
 
