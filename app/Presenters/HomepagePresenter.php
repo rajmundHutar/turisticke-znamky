@@ -59,12 +59,6 @@ final class HomepagePresenter extends Presenter
 			$paginator->getLength(),
 			$paginator->getOffset()
 		) ?? [];
-		if ($filter['sort'] === 'date' && $onlyCollected) {
-			usort($stamps, fn($a, $b) => $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date);
-		}
-		if ($filter['sort'] === '-date' && $onlyCollected) {
-			usort($stamps, fn($b, $a) => $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date);
-		}
 		$this->template->stamps = $stamps;
 
 		$this->template->totalStampsCount = $this->stampsModel->count($filter);
@@ -75,6 +69,15 @@ final class HomepagePresenter extends Presenter
 
 	public function createComponentFilterForm()
 	{
+		return $this->formFactory->create(FilterForm::class, $this->getSortOptions());
+	}
+
+	/**
+	 * Sort values offered by the filter; sorting by collection date only in "My collection".
+	 * @return array<string, string>
+	 */
+	private function getSortOptions(): array
+	{
 		$sortBy = [
 			'id' => 'form.filter.sortBy.id.asc',
 			'-id' => 'form.filter.sortBy.id.desc',
@@ -83,7 +86,7 @@ final class HomepagePresenter extends Presenter
 			$sortBy['date'] = 'form.filter.sortBy.date.asc';
 			$sortBy['-date'] = 'form.filter.sortBy.date.desc';
 		}
-		return $this->formFactory->create(FilterForm::class, $sortBy);
+		return $sortBy;
 	}
 
 	public function createComponentPaginator(): Control
@@ -97,7 +100,8 @@ final class HomepagePresenter extends Presenter
 	{
 		return [
 			'search' => $this->getParameter('search'),
-			'sort' => $this->getParameter('sort'),
+			'sort' => isset($this->getSortOptions()[$this->sort ?? '']) ? $this->sort : null, // unknown values are ignored
+			'userId' => $this->user->getId(), // sorting by collection date
 		];
 	}
 }
