@@ -7,14 +7,13 @@ namespace App;
 use App\Enums\EnvironmentEnum;
 use Nette\Bootstrap\Configurator;
 
-
 class Bootstrap
 {
 	public static function boot(): Configurator
 	{
 		$configurator = new Configurator;
 
-		$env = EnvironmentEnum::tryFrom((string)getenv('ENVIRONMENT'));
+		$env = EnvironmentEnum::tryFrom((string) getenv('ENVIRONMENT'));
 		$configurator->setDebugMode($env === EnvironmentEnum::Dev);
 		$configurator->enableTracy(__DIR__ . '/../log');
 

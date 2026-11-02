@@ -9,7 +9,8 @@ use Nette\Security\IIdentity;
 use Nette\Security\Passwords;
 use Nette\Security\SimpleIdentity;
 
-class UserModel implements Authenticator {
+class UserModel implements Authenticator
+{
 
 	/** @var Explorer */
 	protected $db;
@@ -25,7 +26,8 @@ class UserModel implements Authenticator {
 		$this->passwords = $passwords;
 	}
 
-	public function authenticate(string $email, string $password): IIdentity {
+	public function authenticate(string $email, string $password): IIdentity
+	{
 
 		$row = $this->fetchByEmail($email);
 
@@ -44,16 +46,15 @@ class UserModel implements Authenticator {
 				'email' => $row['email'],
 			]
 		);
-
 	}
 
-	public function fetchByEmail(string $email) {
+	public function fetchByEmail(string $email)
+	{
 
 		return $this->db
 			->table(\Table::Users)
 			->where('email', $email)
 			->fetch();
-
 	}
 
 }

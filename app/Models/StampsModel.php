@@ -7,25 +7,27 @@ use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
 
-class StampsModel {
+class StampsModel
+{
 
-	protected Explorer $db;
-
-	public function __construct(Explorer $db) {
-		$this->db = $db;
+	public function __construct(protected Explorer $db)
+	{
 	}
 
-	public function search(array $filter, $limit = null, $offset = null): ?array {
+	public function search(array $filter, $limit = null, $offset = null): ?array
+	{
 		return $this->prepareQuery($filter)
 			->limit($limit, $offset)
 			->fetchAll() ?: null;
 	}
 
-	public function count(array $filter = []): int {
+	public function count(array $filter = []): int
+	{
 		return $this->prepareQuery($filter)->count('*');
 	}
 
-	private function prepareQuery(array $filter): Selection {
+	private function prepareQuery(array $filter): Selection
+	{
 
 		$query = $this->db
 			->table(\Table::Stamps);
@@ -54,10 +56,10 @@ class StampsModel {
 		}
 
 		return $query;
-
 	}
 
-	public function fetch(int $id): ?ActiveRow {
+	public function fetch(int $id): ?ActiveRow
+	{
 		return $this->db
 			->table(\Table::Stamps)
 			->wherePrimary($id)
@@ -68,7 +70,8 @@ class StampsModel {
 	 * Salespoints of the stamp in the feed order (sort, unsorted last).
 	 * @return ActiveRow[]
 	 */
-	public function fetchSalespoints(int $stampId): array {
+	public function fetchSalespoints(int $stampId): array
+	{
 		return $this->db
 			->table(\Table::Salespoints)
 			->where('stamp_id', $stampId)
@@ -76,7 +79,8 @@ class StampsModel {
 			->fetchAll();
 	}
 
-	public function fetchImageCount(): int {
+	public function fetchImageCount(): int
+	{
 
 		return $this->db
 			->table(\Table::Stamps)
@@ -84,7 +88,8 @@ class StampsModel {
 			->count('id');
 	}
 
-	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): ?array {
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): ?array
+	{
 
 		$query = $this->db
 			->table(\Table::Stamps)
@@ -113,10 +118,10 @@ class StampsModel {
 		}
 
 		return $closest;
-
 	}
 
-	private static function mysqlEscapeLike(string $string, string $wildcards = 'both'): string {
+	private static function mysqlEscapeLike(string $string, string $wildcards = 'both'): string
+	{
 
 		switch ($wildcards) {
 			case 'both':
@@ -138,11 +143,9 @@ class StampsModel {
 		return sprintf(
 			$format,
 			addcslashes(
-				str_replace('\\', '\\\\', $string)
-				, "\x00\n\r'%_"
+				str_replace('\\', '\\\\', $string), "\x00\n\r'%_"
 			)
 		);
-
 	}
 
 }

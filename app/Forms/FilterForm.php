@@ -4,9 +4,11 @@ namespace App\Forms;
 
 use Nette\Application\UI\Form;
 
-class FilterForm extends BaseForm {
+class FilterForm extends BaseForm
+{
 
-	public function create(array $sortBy): Form {
+	public function create(array $sortBy): Form
+	{
 
 		$this->form->setMethod('GET');
 		$this->form->addText('search', 'form.filter.search')
@@ -19,7 +21,6 @@ class FilterForm extends BaseForm {
 		};
 
 		return $this->form;
-
 	}
 
 }

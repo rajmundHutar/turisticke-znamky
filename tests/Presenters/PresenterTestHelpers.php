@@ -20,7 +20,6 @@ use Nette\Security\SimpleIdentity;
 use Nette\Security\User;
 use Nette\Security\UserStorage;
 
-
 /**
  * Helpers for running presenters in tests without a database or a DI container.
  */

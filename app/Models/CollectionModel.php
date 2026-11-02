@@ -6,15 +6,15 @@ use App\Dto\CollectedStampDto;
 use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 
-class CollectionModel {
+class CollectionModel
+{
 
-	protected Explorer $db;
-
-	public function __construct(Explorer $db) {
-		$this->db = $db;
+	public function __construct(protected Explorer $db)
+	{
 	}
 
-	public function fetch(int $id, int $userId): ?ActiveRow {
+	public function fetch(int $id, int $userId): ?ActiveRow
+	{
 
 		return $this->db
 			->table(\Table::Collection)
@@ -27,7 +27,8 @@ class CollectionModel {
 	 * @param int|null $userId
 	 * @return list<CollectedStampDto>
 	 */
-	public function fetchByUser(?int $userId): ?array {
+	public function fetchByUser(?int $userId): ?array
+	{
 
 		$list = $this->db
 			->table(\Table::Collection)
@@ -38,17 +39,18 @@ class CollectionModel {
 		return array_map(fn(ActiveRow $row) => CollectedStampDto::fromActiveRow($row), $list);
 	}
 
-	public function update(int $stampId, int $userId, array $data): void {
+	public function update(int $stampId, int $userId, array $data): void
+	{
 
 		$this->db
 			->table(\Table::Collection)
 			->where('stamp_id', $stampId)
 			->where('user_id', $userId)
 			->update($data);
-
 	}
 
-	public function toggleCollect(int $id, int $userId): bool {
+	public function toggleCollect(int $id, int $userId): bool
+	{
 
 		$stamp = $this->fetch($id, $userId);
 
@@ -62,11 +64,10 @@ class CollectionModel {
 			->insert([
 				'stamp_id' => $id,
 				'user_id' => $userId,
-				'date' => new \DateTime(),
+				'date' => new \DateTime,
 			]);
 
 		return true;
-
 	}
 
 }

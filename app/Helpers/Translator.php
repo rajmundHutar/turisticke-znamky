@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
-class Translator implements \Nette\Localization\Translator {
+class Translator implements \Nette\Localization\Translator
+{
 
-	const Translations = [
+	public const Translations = [
 		'general.turistStampsTitle' => 'Turistické známky',
 		'general.reset' => 'Reset',
 		'general.resetFilter' => 'Reset filter',
@@ -65,7 +66,8 @@ class Translator implements \Nette\Localization\Translator {
 
 	];
 
-	function translate($message, ...$parameters): string {
+	public function translate($message, ...$parameters): string
+	{
 
 		$translation = self::Translations[$message] ?? null;
 
@@ -86,7 +88,6 @@ class Translator implements \Nette\Localization\Translator {
 			$translation,
 			array_combine($keys, $parameters),
 		);
-
 	}
 
 }

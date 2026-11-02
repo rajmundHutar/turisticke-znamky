@@ -8,35 +8,27 @@ use Nette\Utils\DateTime;
 use Nette\Utils\Strings;
 use Tracy\Debugger;
 
-class ImportModel {
+class ImportModel
+{
 
-	const IMAGES_PER_RUN = 500;
-	const SALESPOINTS_CHUNK = 500;
-
-	protected string $feedUrl;
-	protected string $stampsImagesPath;
-	protected Explorer $db;
+	public const IMAGES_PER_RUN = 500;
+	public const SALESPOINTS_CHUNK = 500;
 
 	public function __construct(
-		string $feedUrl,
-		string $stampsImagesPath,
-		Explorer $db
+		protected string $feedUrl,
+		protected string $stampsImagesPath,
+		protected Explorer $db
 	) {
-
-		$this->feedUrl = $feedUrl;
-		$this->stampsImagesPath = $stampsImagesPath;
-		$this->db = $db;
-
 	}
 
-	public function fetchLastLog(): ?ActiveRow {
+	public function fetchLastLog(): ?ActiveRow
+	{
 
 		return $this->db
 			->table(\Table::ImportLog)
 			->order('id DESC')
 			->limit(1)
 			->fetch();
-
 	}
 
 	public function fetchAllLogs(): array
@@ -52,7 +44,8 @@ class ImportModel {
 	 * @return array{int, int} [imported stamps, new stamps]
 	 * @throws \RuntimeException when the feed cannot be downloaded or parsed
 	 */
-	public function import(): array {
+	public function import(): array
+	{
 
 		Debugger::timer();
 
@@ -71,21 +64,21 @@ class ImportModel {
 		$this->db
 			->table(\Table::ImportLog)
 			->insert([
-				'date' => new DateTime(),
+				'date' => new DateTime,
 				'parsed' => $countTotal,
 				'new' => $countNew,
 				'time' => (int) round(Debugger::timer()),
 			]);
 
 		return [$countTotal, $countNew];
-
 	}
 
 	/**
 	 * Upserts the stamps and replaces their salespoints in one transaction.
 	 * @return array{int, int} [imported stamps, new stamps]
 	 */
-	private function importFeed(StampFeedReader $reader): array {
+	private function importFeed(StampFeedReader $reader): array
+	{
 
 		$existingIds = array_flip($this->db
 			->table(\Table::Stamps)
@@ -138,14 +131,14 @@ class ImportModel {
 		}
 
 		return [count($stampIds), $countNew];
-
 	}
 
 	/**
 	 * Downloads missing stamp images from their feed URLs.
 	 * @return int number of downloaded images
 	 */
-	public function importImages(): int {
+	public function importImages(): int
+	{
 
 		$stamps = $this->db
 			->table(\Table::Stamps)
@@ -179,14 +172,14 @@ class ImportModel {
 		}
 
 		return $count;
-
 	}
 
 	/**
 	 * Downloads the URL into the target file; on failure deletes the file and throws.
 	 * @throws \RuntimeException
 	 */
-	private function download(string $url, string $target, int $timeout): void {
+	private function download(string $url, string $target, int $timeout): void
+	{
 
 		$fp = fopen($target, 'w');
 		if (!$fp) {
@@ -217,7 +210,6 @@ class ImportModel {
 			unlink($target);
 			throw new \RuntimeException($message);
 		}
-
 	}
 
 }

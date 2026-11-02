@@ -6,7 +6,8 @@ use Nette\Application\UI\Form;
 use Nette\Forms\Controls\TextInput;
 use Nette\Utils\DateTime;
 
-class EditStampForm extends BaseForm {
+class EditStampForm extends BaseForm
+{
 
 	private const DateFormat = 'j. n. Y';
 
@@ -38,14 +39,14 @@ class EditStampForm extends BaseForm {
 		$this->form->setDefaults($defaults);
 
 		return $this->form;
-
 	}
 
 	/**
 	 * Returns the date at midnight, or null if the value is not a real date.
 	 * Accepts d. m. yyyy (leading zeros and spaces optional) and Y-m-d (old cached datepicker script).
 	 */
-	private static function parseDate(string $value): ?DateTime {
+	private static function parseDate(string $value): ?DateTime
+	{
 		if (preg_match('~^\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\s*$~', $value, $m)) {
 			[, $day, $month, $year] = $m;
 		} elseif (preg_match('~^(\d{4})-(\d{2})-(\d{2})$~', $value, $m)) {
