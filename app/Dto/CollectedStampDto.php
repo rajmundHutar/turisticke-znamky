@@ -12,19 +12,22 @@ class CollectedStampDto
 	public function __construct(
 		public readonly int $id,
 		public readonly string $name,
-		public readonly string $type,
-		public readonly string $region,
-		public readonly DateTime $createdAt,
+		public readonly ?string $type,
+		public readonly ?string $region,
+		public readonly ?DateTime $createdAt,
 		public readonly string $lat,
 		public readonly string $lng,
-		public readonly string $image,
+		public readonly ?string $image,
 		public readonly ?DateTime $date,
 		public readonly ?string $comment,
 		public readonly ?string $file,
 	) {
 	}
 
-	public static function fromActiveRow(ActiveRow $row): self
+	/**
+	 * @param  ActiveRow|\ArrayAccess<string, mixed>  $row  stamp joined with its collection record
+	 */
+	public static function fromActiveRow(\ArrayAccess $row): self
 	{
 		return new self(
 			id: $row['id'],
