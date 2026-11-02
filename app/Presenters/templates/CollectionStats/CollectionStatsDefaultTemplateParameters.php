@@ -10,7 +10,10 @@ class CollectionStatsDefaultTemplateParameters extends Template
 {
 	public int $collectedCount;
 	public int $totalCount;
+	public float $percentage;
 	public int $thisYearCollected;
-	public array $biggestSetWithMaxGap;
+	/** @var list<\App\Dto\CollectedStampDto> */
 	public array $mostConsecutiveItems;
+	public ?\App\Dto\CollectedStampDto $lowestStamp;
+	public ?\App\Dto\CollectedStampDto $highestStamp;
 }

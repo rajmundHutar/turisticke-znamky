@@ -41,6 +41,8 @@ class Translator implements \Nette\Localization\Translator {
 		'stats.percentage' => 'percentage',
 		'stats.collectedThisYear' => 'collected this year',
 		'stats.mostConsecutiveItems' => 'most consecutive items',
+		'stats.lowestNumber' => 'lowest number',
+		'stats.highestNumber' => 'highest number',
 
 		'stamp.collected' => 'Have it!',
 		'stamp.collect' => 'Collect',
