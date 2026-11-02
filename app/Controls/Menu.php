@@ -15,6 +15,13 @@ class Menu extends Control {
 		$this->translator = $translator;
 	}
 
+	public function handleLogout(): void {
+
+		$this->getPresenter()->getUser()->logout(true);
+		$this->getPresenter()->redirect('Homepage:');
+
+	}
+
 	public function render() {
 
 		$this->template->setTranslator($this->translator);

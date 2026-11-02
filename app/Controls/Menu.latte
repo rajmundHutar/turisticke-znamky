@@ -38,7 +38,7 @@
 					{_'menu.administration'}
 				</a>
 				{if $user->isLoggedIn()}
-					<a href="{plink Login:out}" class="navbar-item is-danger">
+					<a href="{link logout!}" class="navbar-item is-danger">
 						{_'menu.logout'}
 					</a>
 				{else}
