@@ -59,12 +59,6 @@ final class HomepagePresenter extends Presenter
 			$paginator->getLength(),
 			$paginator->getOffset()
 		) ?? [];
-		if ($filter['sort'] === 'date' && $onlyCollected) {
-			usort($stamps, fn($a, $b) => $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date);
-		}
-		if ($filter['sort'] === '-date' && $onlyCollected) {
-			usort($stamps, fn($b, $a) => $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date);
-		}
 		$this->template->stamps = $stamps;
 
 		$this->template->totalStampsCount = $this->stampsModel->count($filter);
@@ -98,6 +92,7 @@ final class HomepagePresenter extends Presenter
 		return [
 			'search' => $this->getParameter('search'),
 			'sort' => $this->getParameter('sort'),
+			'userId' => $this->user->getId(), // sorting by collection date
 		];
 	}
 }

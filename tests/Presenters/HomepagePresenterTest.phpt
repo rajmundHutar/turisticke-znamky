@@ -102,22 +102,24 @@ final class HomepageFakeStampsModel extends App\Models\StampsModel
 	public array $filters = [];
 
 
-	public function __construct()
-	{
+	/** @param  list<mixed>  $stamps  returned by search() as they are */
+	public function __construct(
+		private array $stamps = [],
+	) {
 	}
 
 
 	public function search(array $filter, $limit = null, $offset = null): ?array
 	{
 		$this->filters[] = $filter;
-		return null;
+		return $this->stamps ?: null;
 	}
 
 
 	public function count(array $filter = []): int
 	{
 		$this->filters[] = $filter;
-		return 0;
+		return count($this->stamps);
 	}
 }
 
@@ -198,4 +200,48 @@ foreach (homepageFilters(['user'], [3 => 'a'], []) as $filter) {
 foreach (['date', '-date'] as $sort) {
 	homepageFilters(null, [], ['onlyCollected' => '1', 'sort' => $sort]);
 	homepageFilters(['user'], [], ['onlyCollected' => '1', 'sort' => $sort]);
+}
+
+
+// Sorting by collection date is done by the model in SQL across pages; the presenter passes the user and keeps the order (#6)
+function collectedStamp(int $id, ?string $date): App\Dto\CollectedStampDto
+{
+	return new App\Dto\CollectedStampDto($id, "Stamp $id", null, null, null, '0', '0', null, $date === null ? null : new Nette\Utils\DateTime($date), null, null);
+}
+
+
+$collection = [5 => collectedStamp(5, '2024-01-01'), 3 => collectedStamp(3, '2023-01-01'), 9 => collectedStamp(9, null)];
+foreach (['date', '-date'] as $sort) {
+	$translator = PresenterTestHelpers::createTranslator();
+	$formFactory = new FormFactory($translator);
+	$formFactory->register(new App\Forms\FilterForm($translator));
+	$formFactory->register(new EditStampForm($translator));
+	$modelOrder = [9, 5, 3]; // neither ascending nor descending by date
+	$stampsModel = new HomepageFakeStampsModel(array_map(
+		fn(int $id) => Nette\Utils\ArrayHash::from(['id' => $id, 'name' => "Stamp $id", 'image' => null]),
+		$modelOrder,
+	));
+
+	$presenter = new HomepagePresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']));
+	$presenter->injectCollectionModel(new HomepageCollectionModelWith($collection));
+	$presenter->injectStampsModel($stampsModel);
+	$presenter->injectFormFactory($formFactory);
+	$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'onlyCollected' => '1', 'sort' => $sort]));
+	Assert::type(Nette\Application\Responses\TextResponse::class, $response);
+	assert($response instanceof Nette\Application\Responses\TextResponse);
+	(string) $response->getSource(); // renders the template
+
+	Assert::same($modelOrder, array_map(fn($stamp) => $stamp->id, $presenter->getTemplate()->stamps));
+	foreach ($stampsModel->filters as $filter) {
+		Assert::same($sort, $filter['sort']);
+		Assert::same(1, $filter['userId'] ?? null);
+		Assert::same([5, 3, 9], $filter['ids']);
+	}
+}
+
+
+// An anonymous user sorting by date passes no user id (the model falls back to id order) (#6)
+foreach (homepageFilters(null, [], ['onlyCollected' => '1', 'sort' => 'date']) as $filter) {
+	Assert::null($filter['userId'] ?? null);
 }

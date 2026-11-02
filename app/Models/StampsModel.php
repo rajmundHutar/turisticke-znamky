@@ -38,7 +38,7 @@ class StampsModel
 
 		if ($filter['search'] ?? null) {
 			$query->whereOr([
-				'id LIKE ?' => self::mysqlEscapeLike($filter['search'], 'right'),
+				'tz_stamps.id LIKE ?' => self::mysqlEscapeLike($filter['search'], 'right'),
 				'name LIKE ?' => self::mysqlEscapeLike($filter['search']),
 			]);
 		}
@@ -47,15 +47,36 @@ class StampsModel
 			case '-id':
 				$query->order('id DESC');
 				break;
+			case 'date':
+			case '-date':
+				$this->orderByCollectionDate($query, $filter['userId'] ?? null, $filter['sort'] === '-date');
+				break;
 			default:
 				$query->order('id');
 		}
 
 		if (isset($filter['ids'])) { // an empty list matches no stamps
-			$query->where('id', $filter['ids']);
+			$query->where('tz_stamps.id', $filter['ids']); // qualified, tz_collection may be joined
 		}
 
 		return $query;
+	}
+
+	/**
+	 * Orders by the date the user collected the stamp; stamps without a date (or not collected) last, ties by id.
+	 */
+	private function orderByCollectionDate(Selection $query, ?int $userId, bool $desc): void
+	{
+		if ($userId === null) {
+			$query->order('id');
+			return;
+		}
+
+		// the user condition is in the ON clause, so the LEFT JOIN keeps one row per stamp
+		$query->joinWhere(':tz_collection', ':tz_collection.user_id = ?', $userId)
+			->order(':tz_collection.date IS NULL')
+			->order(':tz_collection.date' . ($desc ? ' DESC' : ''))
+			->order('tz_stamps.id');
 	}
 
 	public function fetch(int $id): ?ActiveRow
