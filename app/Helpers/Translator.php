@@ -46,6 +46,7 @@ class Translator implements \Nette\Localization\Translator {
 
 		'admin.{count}loadedImages' => 'Loaded {count} new images.',
 		'admin.{new}stampsOutOf{total}' => 'Loaded {new} new stamps out of {total}.',
+		'admin.importFailed{error}' => 'Import failed: {error}',
 
 		'form.filter.search' => 'Search',
 		'form.filter.sortBy' => 'Sort by',

@@ -65,6 +65,18 @@ class StampsModel {
 			->fetch();
 	}
 
+	/**
+	 * Salespoints of the stamp in the feed order (sort, unsorted last).
+	 * @return ActiveRow[]
+	 */
+	public function fetchSalespoints(int $stampId): array {
+		return $this->db
+			->table(\Table::Salespoints)
+			->where('stamp_id', $stampId)
+			->order('sort IS NULL, sort, id')
+			->fetchAll();
+	}
+
 	public function fetchLabels(): array {
 
 		$labels = $this->db

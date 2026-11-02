@@ -28,8 +28,12 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 
 	public function handleImportStamps() {
 
-		[$total, $new] = $this->importModel->import();
-		$this->flashMessage($this->t('admin.{new}stampsOutOf{total}', ['total' => $total, 'new' => $new]));
+		try {
+			[$total, $new] = $this->importModel->import();
+			$this->flashMessage($this->t('admin.{new}stampsOutOf{total}', ['total' => $total, 'new' => $new]));
+		} catch (\RuntimeException $e) {
+			$this->flashMessage($this->t('admin.importFailed{error}', ['error' => $e->getMessage()]), \Flash::ERROR);
+		}
 		$this->redirect('default');
 
 	}
@@ -46,7 +50,7 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 
 		$lastLog = $this->importModel->fetchLastLog();
 
-		$this->template->lastUpdate = $lastLog['date'];
+		$this->template->lastUpdate = $lastLog?->date;
 		$this->template->stampsCount = $this->stampsModel->count();
 		$this->template->imageCount = $this->stampsModel->fetchImageCount();
 		$this->template->logs = $this->importModel->fetchAllLogs();

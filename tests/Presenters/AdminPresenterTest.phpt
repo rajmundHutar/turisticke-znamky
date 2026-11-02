@@ -17,6 +17,7 @@ use Tests\Presenters\PresenterTestHelpers;
 
 require __DIR__ . '/../bootstrap.php';
 require __DIR__ . '/PresenterTestHelpers.php';
+require __DIR__ . '/../../app/Helpers/Flash.php'; // global class, loaded by RobotLoader in the app
 
 
 /** ImportModel double without a database; records which imports were triggered. */
@@ -24,6 +25,8 @@ final class FakeImportModel extends ImportModel
 {
 	/** @var list<string> */
 	public array $calls = [];
+
+	public ?RuntimeException $importException = null;
 
 
 	public function __construct()
@@ -34,6 +37,9 @@ final class FakeImportModel extends ImportModel
 	public function import(): array
 	{
 		$this->calls[] = 'import';
+		if ($this->importException) {
+			throw $this->importException;
+		}
 		return [10, 2];
 	}
 
@@ -57,9 +63,9 @@ final class FakeImportModel extends ImportModel
  * @param  array<string, string>  $params
  * @param  array<string, string>  $headers
  */
-function runAdmin(?array $roles, array $params, FakeImportModel $importModel, array $headers = []): Nette\Application\Response
+function runAdmin(?array $roles, array $params, FakeImportModel $importModel, array $headers = [], ?AdminPresenter $presenter = null): Nette\Application\Response
 {
-	$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+	$presenter ??= new AdminPresenter(PresenterTestHelpers::createTranslator());
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles), $headers);
 	$presenter->injectImportModel($importModel);
 	$presenter->injectStampsModel((new ReflectionClass(StampsModel::class))->newInstanceWithoutConstructor());
@@ -106,6 +112,18 @@ foreach (['importStamps' => 'import', 'importImages' => 'importImages'] as $sign
 	Assert::type(RedirectResponse::class, $response);
 	Assert::same([$call], $importModel->calls);
 }
+
+
+// A failed import (download or feed error) is shown as an error flash message instead of crashing
+$importModel = new FakeImportModel;
+$importModel->importException = new RuntimeException('Download of https://example.com/feed.xml failed: HTTP status 404');
+$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+$response = runAdmin(['admin'], ['action' => 'default', 'do' => 'importStamps'], $importModel, $sameOrigin, $presenter);
+Assert::type(RedirectResponse::class, $response);
+$flashes = $presenter->getTemplate()->flashes;
+Assert::count(1, $flashes);
+Assert::same(Flash::ERROR, $flashes[0]->type);
+Assert::same('admin.importFailed{error}', $flashes[0]->message);
 
 
 // Admin can open the default page (rendering is deferred, so no DB access is needed beyond the stubs)

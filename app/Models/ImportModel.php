@@ -10,29 +10,26 @@ use Tracy\Debugger;
 
 class ImportModel {
 
-	const IMAGE_SCRAPER_BASE_URL = 'https://www.turisticke-znamky.cz/znamky/%s-c%d';
-	const REMOTE_IMAGE_BASE_URL = 'https://www.turisticke-znamky.cz/photos/medium/';
+	const IMAGES_PER_RUN = 500;
+	const SALESPOINTS_CHUNK = 500;
 
-	protected string $csvPath;
+	protected string $feedUrl;
 	protected string $stampsImagesPath;
 	protected Explorer $db;
-	protected StampsModel $stampsModel;
 
 	public function __construct(
-		string $csvPath,
+		string $feedUrl,
 		string $stampsImagesPath,
-		Explorer $db,
-		StampsModel $stampsModel
+		Explorer $db
 	) {
 
-		$this->csvPath = $csvPath;
+		$this->feedUrl = $feedUrl;
 		$this->stampsImagesPath = $stampsImagesPath;
 		$this->db = $db;
-		$this->stampsModel = $stampsModel;
 
 	}
 
-	public function fetchLastLog(): ActiveRow {
+	public function fetchLastLog(): ?ActiveRow {
 
 		return $this->db
 			->table(\Table::ImportLog)
@@ -50,60 +47,26 @@ class ImportModel {
 			->fetchAll();
 	}
 
+	/**
+	 * Imports CZ stamps and their salespoints from the XML feed.
+	 * @return array{int, int} [imported stamps, new stamps]
+	 * @throws \RuntimeException when the feed cannot be downloaded or parsed
+	 */
 	public function import(): array {
 
 		Debugger::timer();
 
 		$file = bin2hex(random_bytes(10));
-		$fileTempPath = __DIR__ . "/../../temp/{$file}.tmp";
-		$fp = fopen($fileTempPath, 'w+');
-		$ch = curl_init($this->csvPath);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-		// write curl response to file
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($ch, CURLOPT_FILE, $fp);
-		// get curl response
-		curl_exec($ch);
-		unset($ch);
-		fclose($fp);
+		$fileTempPath = __DIR__ . "/../../temp/{$file}.xml";
 
-		$i = 0;
-		$countNew = 0;
-		$countTotal = 0;
-		$handle = fopen($fileTempPath, "r");
-		if (!$handle) {
-			unlink($fileTempPath);
-			throw new \RuntimeException("Can't read from {$fileTempPath}");
-		} else {
-
-			while (($data = fgetcsv($handle, 0, ';', '"', '\\')) !== false) {
-				$i++;
-				if ($i === 1) {
-					// Skip first row with header
-					continue;
-				}
-
-				$batch = [
-					'id' => $data[0],
-					'name' => $data[1],
-					'type' => $data[2],
-					'region' => $data[3],
-					'created_at' => new DateTime($data[4]),
-					'lat' => $data[29],
-					'lng' => $data[30],
-				];
-
-				$isNew = $this->save($batch);
-				$countNew += $isNew ? 1 : 0;
-				$countTotal++;
-
+		try {
+			$this->download($this->feedUrl, $fileTempPath, 120);
+			[$countTotal, $countNew] = $this->importFeed(new StampFeedReader($fileTempPath));
+		} finally {
+			if (is_file($fileTempPath)) {
+				unlink($fileTempPath);
 			}
-
-			fclose($handle);
-			unlink($fileTempPath);
 		}
-
-		$elapsedTIme = Debugger::timer();
 
 		$this->db
 			->table(\Table::ImportLog)
@@ -111,83 +74,148 @@ class ImportModel {
 				'date' => new DateTime(),
 				'parsed' => $countTotal,
 				'new' => $countNew,
-				'time' => $elapsedTIme,
+				'time' => (int) round(Debugger::timer()),
 			]);
 
 		return [$countTotal, $countNew];
 
 	}
 
+	/**
+	 * Upserts the stamps and replaces their salespoints in one transaction.
+	 * @return array{int, int} [imported stamps, new stamps]
+	 */
+	private function importFeed(StampFeedReader $reader): array {
+
+		$existingIds = array_flip($this->db
+			->table(\Table::Stamps)
+			->fetchPairs(null, 'id'));
+
+		$countNew = 0;
+		$stampIds = [];
+		$salespoints = [];
+
+		$this->db->beginTransaction();
+		try {
+			foreach ($reader->read() as $stamp) {
+				$id = $stamp['id'];
+				foreach ($stamp['salespoints'] as $salespoint) {
+					$salespoints[] = ['stamp_id' => $id] + $salespoint;
+				}
+				unset($stamp['salespoints'], $stamp['id']);
+
+				if (isset($existingIds[$id])) {
+					$this->db
+						->table(\Table::Stamps)
+						->wherePrimary($id)
+						->update($stamp);
+				} else {
+					$this->db
+						->table(\Table::Stamps)
+						->insert(['id' => $id] + $stamp);
+					$existingIds[$id] = true;
+					$countNew++;
+				}
+				$stampIds[$id] = $id;
+			}
+
+			foreach (array_chunk($stampIds, self::SALESPOINTS_CHUNK) as $chunk) {
+				$this->db
+					->table(\Table::Salespoints)
+					->where('stamp_id', $chunk)
+					->delete();
+			}
+			foreach (array_chunk($salespoints, self::SALESPOINTS_CHUNK) as $chunk) {
+				$this->db
+					->table(\Table::Salespoints)
+					->insert($chunk);
+			}
+
+			$this->db->commit();
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
+
+		return [count($stampIds), $countNew];
+
+	}
+
+	/**
+	 * Downloads missing stamp images from their feed URLs.
+	 * @return int number of downloaded images
+	 */
 	public function importImages(): int {
 
-		$stamps = $this->stampsModel->search([
-			'withoutImage' => true,
-		], 500) ?: [];
+		$stamps = $this->db
+			->table(\Table::Stamps)
+			->where('image', null)
+			->where('image_url IS NOT NULL')
+			->order('id')
+			->limit(self::IMAGES_PER_RUN);
 
 		$count = 0;
+		$failed = 0;
 		foreach ($stamps as $stamp) {
-			if ($stamp['image']) {
+			$newName = $stamp['id'] . '-' . Strings::webalize($stamp['name']) . '.png';
+			$target = rtrim($this->stampsImagesPath, '/') . '/' . $newName;
+
+			try {
+				$this->download($stamp['image_url'], $target, 30);
+			} catch (\RuntimeException $e) {
+				Debugger::log($e, Debugger::WARNING);
+				$failed++;
 				continue;
 			}
 
-			$webName = Strings::webalize($stamp['name']);
-
-			$url = sprintf(self::IMAGE_SCRAPER_BASE_URL, $webName, $stamp['id']);
-
-			$page = file_get_contents($url);
-			if (!strlen($page)) {
-				dump('can\'t find page');
-				dump($stamp);
-				dump($url);
-				continue;
-			}
-
-			preg_match('~photos\/medium\/(.+?)\'~i', $page, $matches);
-
-			if (!($matches[1] ?? null)) {
-				dump('can\'t find image in page');
-				dump($stamp);
-				dump($url);
-				continue;
-			}
-
-			$source = self::REMOTE_IMAGE_BASE_URL . '/' . $matches[1];
-			$newName = $stamp['id'] . '-' .$webName . '.png';
-			$target = $this->stampsImagesPath . '/' . $newName;
-			file_put_contents($target, file_get_contents($source));
 			$stamp->update([
 				'image' => $newName,
 			]);
 			$count++;
+		}
 
+		if ($failed) {
+			Debugger::log("Stamp images: {$count} downloaded, {$failed} failed.", Debugger::WARNING);
 		}
 
 		return $count;
 
 	}
 
-	public function save(array $data): bool {
+	/**
+	 * Downloads the URL into the target file; on failure deletes the file and throws.
+	 * @throws \RuntimeException
+	 */
+	private function download(string $url, string $target, int $timeout): void {
 
-		$stamp = $this->db
-			->table(\Table::Stamps)
-			->wherePrimary($data['id'])
-			->fetch();
+		$fp = fopen($target, 'w');
+		if (!$fp) {
+			throw new \RuntimeException("Cannot write to {$target}.");
+		}
 
-		if ($stamp) {
+		$ch = curl_init($url);
+		curl_setopt_array($ch, [
+			CURLOPT_FILE => $fp,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_CONNECTTIMEOUT => 10,
+			CURLOPT_TIMEOUT => $timeout,
+		]);
+		$ok = curl_exec($ch);
+		$error = curl_error($ch);
+		$status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+		unset($ch);
+		fclose($fp);
 
-			unset($data['id']);
-			$stamp->update($data);
+		$message = match (true) {
+			$ok === false => "Download of {$url} failed: {$error}",
+			$status !== 200 => "Download of {$url} failed: HTTP status {$status}",
+			filesize($target) === 0 => "Download of {$url} failed: empty response",
+			default => null,
+		};
 
-			return false;
-
-		} else {
-
-			$this->db
-				->table(\Table::Stamps)
-				->insert($data);
-
-			return true;
-
+		if ($message !== null) {
+			unlink($target);
+			throw new \RuntimeException($message);
 		}
 
 	}
