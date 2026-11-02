@@ -93,3 +93,102 @@ Assert::same('1', $url->getQueryParameter('onlyCollected'));
 Assert::same('3', $url->getQueryParameter('paginator-page'));
 Assert::same('stamp-5', $url->getFragment());
 Assert::null($url->getQueryParameter('do'));
+
+
+/** StampsModel double without a database; records the filters it is asked for. */
+final class HomepageFakeStampsModel extends App\Models\StampsModel
+{
+	/** @var list<array<string, mixed>> */
+	public array $filters = [];
+
+
+	public function __construct()
+	{
+	}
+
+
+	public function search(array $filter, $limit = null, $offset = null): ?array
+	{
+		$this->filters[] = $filter;
+		return null;
+	}
+
+
+	public function count(array $filter = []): int
+	{
+		$this->filters[] = $filter;
+		return 0;
+	}
+}
+
+
+/** CollectionModel double returning the given collection. */
+final class HomepageCollectionModelWith extends CollectionModel
+{
+	/** @param  array<int, mixed>  $collection */
+	public function __construct(
+		private array $collection,
+	) {
+	}
+
+
+	public function fetchByUser(?int $userId): array
+	{
+		return $this->collection;
+	}
+}
+
+
+/**
+ * Renders the homepage (expecting no stamps) and returns the filters passed to the stamps model.
+ * @param  list<string>|null  $roles
+ * @param  array<int, mixed>  $collection
+ * @param  array<string, string>  $params
+ * @return list<array<string, mixed>>
+ */
+function homepageFilters(?array $roles, array $collection, array $params): array
+{
+	$translator = PresenterTestHelpers::createTranslator();
+	$formFactory = new FormFactory($translator);
+	$formFactory->register(new App\Forms\FilterForm($translator));
+	$stampsModel = new HomepageFakeStampsModel;
+
+	$presenter = new HomepagePresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
+	$presenter->injectCollectionModel(new HomepageCollectionModelWith($collection));
+	$presenter->injectStampsModel($stampsModel);
+	$presenter->injectFormFactory($formFactory);
+	$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default'] + $params));
+	Assert::type(Nette\Application\Responses\TextResponse::class, $response);
+	assert($response instanceof Nette\Application\Responses\TextResponse);
+	Assert::contains('general.noItemsFound', (string) $response->getSource()); // empty state, no paginator crash
+
+	Assert::same([], $presenter->getTemplate()->stamps ?? []);
+	Assert::same(0, $presenter->getTemplate()->totalStampsCount);
+	Assert::true(count($stampsModel->filters) > 0);
+	return $stampsModel->filters;
+}
+
+
+// "My collection" of a logged-in user with an empty collection asks for no stamps, not all of them (#5)
+foreach (homepageFilters(['user'], [], ['onlyCollected' => '1']) as $filter) {
+	Assert::same([], $filter['ids'] ?? null);
+}
+
+
+// The same for an anonymous user opening ?onlyCollected=1 (#5)
+foreach (homepageFilters(null, [], ['onlyCollected' => '1']) as $filter) {
+	Assert::same([], $filter['ids'] ?? null);
+}
+
+
+// A non-empty collection filters by the collected stamp ids (#5)
+foreach (homepageFilters(['user'], [3 => 'a', 8 => 'b'], ['onlyCollected' => '1']) as $filter) {
+	Assert::same([3, 8], $filter['ids'] ?? null);
+}
+
+
+// Without onlyCollected there is no ids filter (#5)
+foreach (homepageFilters(['user'], [3 => 'a'], []) as $filter) {
+	Assert::false(array_key_exists('ids', $filter));
+}

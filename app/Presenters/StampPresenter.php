@@ -33,6 +33,10 @@ class StampPresenter extends Presenter
 	public function actionDefault(?string $id = null): void
 	{
 		$this->stampId = (int)$id;
+		$this->stamp = $this->stampsModel->fetch($this->stampId);
+		if (!$this->stamp) {
+			$this->error();
+		}
 		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
 	}
 
@@ -47,7 +51,6 @@ class StampPresenter extends Presenter
 	public function renderDefault(): void
 	{
 
-		$this->stamp = $this->stampsModel->fetch($this->stampId);
 		$this->template->stamp = $this->stamp;
 		$this->template->closest = $this->stampsModel->fetchClosest(
 			(float)$this->stamp['lat'],

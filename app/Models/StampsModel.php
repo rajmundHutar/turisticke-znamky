@@ -49,7 +49,7 @@ class StampsModel {
 				$query->order('id');
 		}
 
-		if ($filter['ids'] ?? null) {
+		if (isset($filter['ids'])) { // an empty list matches no stamps
 			$query->where('id', $filter['ids']);
 		}
 

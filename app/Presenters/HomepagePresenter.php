@@ -55,7 +55,7 @@ final class HomepagePresenter extends Presenter
 	{
 		$filter = $this->getFilter();
 
-		if ($onlyCollected && $this->userCollection) {
+		if ($onlyCollected) {
 			$filter['ids'] = array_keys($this->userCollection);
 		}
 		$this['filterForm']->setDefaults($filter);
