@@ -8,10 +8,7 @@ use Nette\Database\Table\ActiveRow;
 
 class CollectionModel {
 
-	protected Explorer $db;
-
-	public function __construct(Explorer $db) {
-		$this->db = $db;
+	public function __construct(protected Explorer $db) {
 	}
 
 	public function fetch(int $id, int $userId): ?ActiveRow {

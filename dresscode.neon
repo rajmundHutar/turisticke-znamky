@@ -1,5 +1,7 @@
 # made to measure by `dresscode init`; run it again to see what has moved since, it writes nothing over this file
-use: perCs   # PER Coding Style, of the standards the one a fix changes the fewest files of your code under
+use:
+	- perCs   # PER Coding Style, of the standards the one a fix changes the fewest files of your code under
+	- modernizations
 
 paths: [app, tests]
 fileExtensions: [php, phpt]

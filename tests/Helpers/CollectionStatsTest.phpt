@@ -40,21 +40,21 @@ function ids(array $items): array
 
 
 // Most consecutive: the longest run of n, n+1, ...
-Assert::same([10, 11, 12, 13], ids(CollectionStats::mostConsecutive(stamps([1, 2, 3, 10, 11, 12, 13, 20, 21]))));
+Assert::same([10, 11, 12, 13], [1, 2, 3, 10, 11, 12, 13, 20, 21] |> stamps(...) |> CollectionStats::mostConsecutive(...) |> ids(...));
 
 // Most consecutive: on a tie the first (lowest) run wins
-Assert::same([1, 2], ids(CollectionStats::mostConsecutive(stamps([1, 2, 5, 6]))));
-Assert::same([3, 4, 5], ids(CollectionStats::mostConsecutive(stamps([1, 3, 4, 5, 7, 8, 9]))));
+Assert::same([1, 2], [1, 2, 5, 6] |> stamps(...) |> CollectionStats::mostConsecutive(...) |> ids(...));
+Assert::same([3, 4, 5], [1, 3, 4, 5, 7, 8, 9] |> stamps(...) |> CollectionStats::mostConsecutive(...) |> ids(...));
 
 // Most consecutive: empty input and a single item
 Assert::same([], CollectionStats::mostConsecutive([]));
-Assert::same([7], ids(CollectionStats::mostConsecutive(stamps([7]))));
+Assert::same([7], [7] |> stamps(...) |> CollectionStats::mostConsecutive(...) |> ids(...));
 
 // Most consecutive: duplicate ids do not break the run
-Assert::same([1, 2, 3], ids(CollectionStats::mostConsecutive(stamps([1, 2, 2, 3, 10, 11]))));
+Assert::same([1, 2, 3], [1, 2, 2, 3, 10, 11] |> stamps(...) |> CollectionStats::mostConsecutive(...) |> ids(...));
 
 // Most consecutive: input does not have to be sorted
-Assert::same([4, 5, 6], ids(CollectionStats::mostConsecutive(stamps([6, 1, 5, 9, 4]))));
+Assert::same([4, 5, 6], [6, 1, 5, 9, 4] |> stamps(...) |> CollectionStats::mostConsecutive(...) |> ids(...));
 
 
 // Lowest / highest stamp number

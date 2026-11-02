@@ -9,10 +9,7 @@ use Nette\Localization\Translator;
 
 class Menu extends Control {
 
-	protected Translator $translator;
-
-	public function __construct(Translator $translator) {
-		$this->translator = $translator;
+	public function __construct(protected Translator $translator) {
 	}
 
 	public function handleLogout(): void {

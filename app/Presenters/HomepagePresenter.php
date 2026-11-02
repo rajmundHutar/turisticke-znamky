@@ -60,9 +60,7 @@ final class HomepagePresenter extends Presenter
 			$paginator->getOffset()
 		) ?? [];
 		if ($filter['sort'] === 'date' && $onlyCollected) {
-			usort($stamps, function ($a, $b) {
-				return $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date;
-			});
+			usort($stamps, fn($a, $b) => $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date);
 		}
 		if ($filter['sort'] === '-date' && $onlyCollected) {
 			usort($stamps, fn($b, $a) => $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date);

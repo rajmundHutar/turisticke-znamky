@@ -13,19 +13,11 @@ class ImportModel {
 	public const IMAGES_PER_RUN = 500;
 	public const SALESPOINTS_CHUNK = 500;
 
-	protected string $feedUrl;
-	protected string $stampsImagesPath;
-	protected Explorer $db;
-
 	public function __construct(
-		string $feedUrl,
-		string $stampsImagesPath,
-		Explorer $db
+		protected string $feedUrl,
+		protected string $stampsImagesPath,
+		protected Explorer $db
 	) {
-
-		$this->feedUrl = $feedUrl;
-		$this->stampsImagesPath = $stampsImagesPath;
-		$this->db = $db;
 	}
 
 	public function fetchLastLog(): ?ActiveRow {

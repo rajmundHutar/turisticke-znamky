@@ -9,10 +9,7 @@ use Nette\Database\Table\Selection;
 
 class StampsModel {
 
-	protected Explorer $db;
-
-	public function __construct(Explorer $db) {
-		$this->db = $db;
+	public function __construct(protected Explorer $db) {
 	}
 
 	public function search(array $filter, $limit = null, $offset = null): ?array {

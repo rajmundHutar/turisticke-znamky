@@ -9,15 +9,13 @@ use Nette\Localization\Translator;
 
 class FormFactory {
 
-	protected Translator $translator;
 	protected array $forms;
 
-	public function __construct(Translator $translator) {
-		$this->translator = $translator;
+	public function __construct(protected Translator $translator) {
 	}
 
 	public function register(BaseForm $form) {
-		$this->forms[get_class($form)] = $form;
+		$this->forms[$form::class] = $form;
 	}
 
 	public function create(string $formClass, ...$args): Form {
