@@ -38,14 +38,16 @@ function initDatepicker() {
         const datepicker = new Datepicker(elem, {
             format: {
                 toValue(date, format, locale) {
-                    // parse Y-m-d as a local calendar date (new Date('Y-m-d') would be UTC midnight)
-                    const [year, month, day] = date.split('-').map(Number);
-                    return new Date(year, month - 1, day);
+                    // parse d. m. yyyy (or legacy Y-m-d) as a local calendar date
+                    let m = date.match(/^\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\s*$/);
+                    if (m) {
+                        return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+                    }
+                    m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : undefined;
                 },
                 toDisplay(date, format, locale) {
-                    const day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate();
-                    const month = date.getMonth() < 9 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1;
-                    return `${date.getFullYear()}-${month}-${day}`;
+                    return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()}`;
                 },
             },
         });

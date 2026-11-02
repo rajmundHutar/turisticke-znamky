@@ -77,7 +77,7 @@ $response = $presenter->run(new Request(
 		'paginator-page' => '3',
 		'do' => 'editStampForm-5-submit',
 	],
-	['id' => '5', 'date' => '2024-06-02', 'comment' => 'Sunny', 'ok' => 'general.submit'],
+	['id' => '5', 'date' => '2. 6. 2024', 'comment' => 'Sunny', 'ok' => 'general.submit'],
 ));
 Assert::count(1, $collectionModel->updates);
 [$stampId, $userId, $data] = $collectionModel->updates[0];

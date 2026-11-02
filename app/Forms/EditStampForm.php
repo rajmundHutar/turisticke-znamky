@@ -8,7 +8,7 @@ use Nette\Utils\DateTime;
 
 class EditStampForm extends BaseForm {
 
-	private const DateFormat = 'Y-m-d';
+	private const DateFormat = 'j. n. Y';
 
 	public function create(
 		int $stampId,
@@ -31,7 +31,7 @@ class EditStampForm extends BaseForm {
 
 		$this->form->onSuccess[] = $onSuccess;
 
-		// DateTime would render as 'Y-m-d H:i:s' and fail the validation on resubmit
+		// DateTime would render as 'Y-m-d H:i:s'; show the same Czech format the datepicker uses
 		if (($defaults['date'] ?? null) instanceof \DateTimeInterface) {
 			$defaults['date'] = $defaults['date']->format(self::DateFormat);
 		}
@@ -42,11 +42,20 @@ class EditStampForm extends BaseForm {
 	}
 
 	/**
-	 * Returns the date at midnight, or null if the value is not a real Y-m-d date.
+	 * Returns the date at midnight, or null if the value is not a real date.
+	 * Accepts d. m. yyyy (leading zeros and spaces optional) and Y-m-d (old cached datepicker script).
 	 */
 	private static function parseDate(string $value): ?DateTime {
-		$date = DateTime::createFromFormat('!' . self::DateFormat, $value);
-		return $date && $date->format(self::DateFormat) === $value ? $date : null;
+		if (preg_match('~^\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\s*$~', $value, $m)) {
+			[, $day, $month, $year] = $m;
+		} elseif (preg_match('~^(\d{4})-(\d{2})-(\d{2})$~', $value, $m)) {
+			[, $year, $month, $day] = $m;
+		} else {
+			return null;
+		}
+		return checkdate((int) $month, (int) $day, (int) $year)
+			? DateTime::fromParts((int) $year, (int) $month, (int) $day)
+			: null;
 	}
 
 }

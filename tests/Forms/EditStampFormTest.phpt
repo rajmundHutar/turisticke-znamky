@@ -65,22 +65,25 @@ function submitDate(string $date): array
 Assert::same(['date' => null, 'comment' => 'Windy', 'id' => '5'], $values);
 
 
-// A valid Y-m-d date is converted to DateTime at midnight
-[$values] = submitDate('2024-01-02');
-Assert::type(DateTimeInterface::class, $values['date']);
-Assert::same('2024-01-02 00:00:00', $values['date']->format('Y-m-d H:i:s'));
+// A valid Czech date (d. m. yyyy, with or without leading zeros and spaces) is converted to DateTime at midnight;
+// Y-m-d is still accepted for browsers with the old cached datepicker script
+foreach (['2. 1. 2024', '2.1.2024', '02. 01. 2024', '02.01.2024', ' 2. 1. 2024 ', '2024-01-02'] as $valid) {
+	[$values] = submitDate($valid);
+	Assert::type(DateTimeInterface::class, $values['date'], $valid);
+	Assert::same('2024-01-02 00:00:00', $values['date']->format('Y-m-d H:i:s'), $valid);
+}
 
 
 // Invalid format or impossible date: form error, onSuccess not called
-foreach (['2.1.2024', 'yesterday', '2024-02-31', '2024-1-2', '2024-01-02 00:00:00'] as $invalid) {
+foreach (['2. 1.', '2/1/2024', '1. 13. 2024', '31. 2. 2024', 'yesterday', '2024-02-31', '2024-1-2', '2024-01-02 00:00:00'] as $invalid) {
 	[$values, $form] = submitDate($invalid);
 	Assert::null($values, $invalid);
 	Assert::same(['form.editStamp.invalidDate'], $form->getErrors(), $invalid);
 }
 
 
-// A DateTime default renders as Y-m-d, so resubmitting the unchanged form passes validation
+// A DateTime default renders as a Czech date, so resubmitting the unchanged form passes validation
 $form = (new EditStampForm(PresenterTestHelpers::createTranslator()))->create(5, ['date' => new DateTime('2024-05-01')], fn() => null);
 $input = $form['date'];
 assert($input instanceof TextInput);
-Assert::same('2024-05-01', $input->getControl()->value);
+Assert::same('1. 5. 2024', $input->getControl()->value);

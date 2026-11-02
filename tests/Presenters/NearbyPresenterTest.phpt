@@ -107,7 +107,7 @@ $collectionModel = new NearbyFakeCollectionModel([
 $presenter = createNearbyPresenter($collectionModel);
 $presenter->run(new Request('Nearby', 'GET', ['action' => 'default', 'lat' => '50.1', 'lng' => '14.4']));
 $form = $presenter['editStampForm-5'];
-Assert::same('2024-05-01', $form['date']->getValue()); // rendered as Y-m-d (#11)
+Assert::same('1. 5. 2024', $form['date']->getValue()); // rendered as a Czech date (#11)
 Assert::same('Windy', $form['comment']->getValue());
 
 
@@ -138,7 +138,7 @@ $response = $presenter->run(new Request(
 	'Nearby',
 	'POST',
 	['action' => 'default', 'lat' => '50.1', 'lng' => '14.4', 'do' => 'editStampForm-5-submit'],
-	['id' => '5', 'date' => '2024-06-02', 'comment' => 'Sunny', 'ok' => 'general.submit'],
+	['id' => '5', 'date' => '2. 6. 2024', 'comment' => 'Sunny', 'ok' => 'general.submit'],
 ));
 Assert::count(1, $collectionModel->updates);
 [$stampId, $userId, $data] = $collectionModel->updates[0];

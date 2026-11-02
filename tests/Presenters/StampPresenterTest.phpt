@@ -90,7 +90,7 @@ $response = $presenter->run(new Request(
 	'Stamp',
 	'POST',
 	['action' => 'default', 'id' => '1', 'do' => 'editStampForm-7-submit'],
-	['id' => '7', 'date' => '2024-05-01', 'comment' => 'Windy', 'ok' => 'general.submit'],
+	['id' => '7', 'date' => '1. 5. 2024', 'comment' => 'Windy', 'ok' => 'general.submit'],
 ));
 Assert::count(1, $collectionModel->updates);
 assertUpdate(7, '2024-05-01', 'Windy', $collectionModel->updates[0]);
@@ -109,7 +109,7 @@ $response = $presenter->run(new Request(
 	'Stamp',
 	'POST',
 	['action' => 'default', 'id' => '1', 'do' => 'editSingleStampForm-submit'],
-	['id' => '1', 'date' => '2024-05-02', 'comment' => 'Foggy', 'ok' => 'general.submit'],
+	['id' => '1', 'date' => '2. 5. 2024', 'comment' => 'Foggy', 'ok' => 'general.submit'],
 ));
 Assert::count(1, $collectionModel->updates);
 assertUpdate(1, '2024-05-02', 'Foggy', $collectionModel->updates[0]);
@@ -127,5 +127,5 @@ $collectionModel = new StampFakeCollectionModel([
 $presenter = createStampPresenter($collectionModel);
 $presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => '1']));
 $form = $presenter['editSingleStampForm'];
-Assert::same('2024-05-01', $form['date']->getValue());
+Assert::same('1. 5. 2024', $form['date']->getValue());
 Assert::same('Windy', $form['comment']->getValue());
