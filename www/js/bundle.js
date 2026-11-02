@@ -38,7 +38,9 @@ function initDatepicker() {
         const datepicker = new Datepicker(elem, {
             format: {
                 toValue(date, format, locale) {
-                    return new Date(date);
+                    // parse Y-m-d as a local calendar date (new Date('Y-m-d') would be UTC midnight)
+                    const [year, month, day] = date.split('-').map(Number);
+                    return new Date(year, month - 1, day);
                 },
                 toDisplay(date, format, locale) {
                     const day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate();
