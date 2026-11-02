@@ -14,9 +14,14 @@
 								{_'stamp.collected'}
 							</span>
 				</div>
-				<a data-fslightbox href="{$baseUrl}/images/stamps/{$stamp['image']}" target="_blank">
+				<a n:if="$stamp['image']" data-fslightbox href="{$baseUrl}/images/stamps/{$stamp['image']}" target="_blank">
 					<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
 				</a>
+				<div n:if="!$stamp['image']" class="stamp-image">
+					<span class="icon is-large has-text-grey-lighter" title="{_'stamp.noImage'}">
+						<i class="fas fa-4x fa-image"></i>
+					</span>
+				</div>
 			</figure>
 		</div>
 		<div class="column px-6">
@@ -25,24 +30,26 @@
 					{$stamp['id']} - {$stamp['name']}
 				</p>
 			</div>
-			<div class="content">
-				<p class="title is-6">
-					{$stamp['type']}
-				</p>
+			<div n:if="$stamp['description']" class="content">
+				<p>{$stamp['description']|breaklines}</p>
 			</div>
-			<div class="content">
-				<p class="title is-6">
-					{$stamp['region']}
-				</p>
+			<div n:if="$stamp['website'] || $stamp['wikipedia'] || $stamp['facebook']" class="content">
+				<a n:if="$stamp['website']" href="{$stamp['website']}" target="_blank" rel="noopener" class="mr-4">{_'detail.website'}</a>
+				<a n:if="$stamp['wikipedia']" href="{$stamp['wikipedia']}" target="_blank" rel="noopener" class="mr-4">Wikipedia</a>
+				<a n:if="$stamp['facebook']" href="{$stamp['facebook']}" target="_blank" rel="noopener">Facebook</a>
 			</div>
-			<div class="content">
-				<p class="title is-6">
-					{$stamp['created_at']|date:'j. n. Y'}
-				</p>
+			<div n:if="$salespoints" class="content">
+				<p class="title is-6">{_'detail.salespoints'}</p>
+				<ul>
+					<li n:foreach="$salespoints as $salespoint" n:class="$salespoint['system'] ? 'has-text-grey is-italic'">
+						{$salespoint['name']}
+						<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
+					</li>
+				</ul>
 			</div>
-			<div class="content">
+			<div n:if="$stamp['detail_url']" class="content">
 				{_'detail.detailsOn'}
-				<a href="https://www.turisticke-znamky.cz/znamky/-c{$stamp['id']}" target="_blank">
+				<a href="{$stamp['detail_url']}" target="_blank" rel="noopener">
 					Turistické známky.cz
 				</a>
 			</div>
@@ -102,5 +109,6 @@
 	// replace with your own API key
 	const API_KEY = 'qsdduL32xP7zUe8rj174i2LSClOB0JlpArnIk3fG_3Y';
 	{{var $allStamps = array_merge([$stamp->toArray()], array_values($closest))}}
-	new StampMap('map', {{$allStamps}}, {{$collection}}, {{$stamp['lat']}}, {{$stamp['lng']}}, {{$baseUrl}}, API_KEY);
+	{{var $salespointMarkers = array_values(array_filter(array_map(fn($salespoint) => $salespoint->toArray(), $salespoints), fn($salespoint) => $salespoint['lat'] !== null && $salespoint['lng'] !== null))}}
+	new StampMap('map', {{$allStamps}}, {{$collection}}, {{$stamp['lat']}}, {{$stamp['lng']}}, {{$baseUrl}}, API_KEY, {{$salespointMarkers}});
 </script>

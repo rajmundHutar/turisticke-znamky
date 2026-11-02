@@ -34,6 +34,8 @@ class Translator implements \Nette\Localization\Translator {
 		'menu.administration' => 'Admin',
 		'detail.detailsOn' => 'More details on',
 		'detail.nearby' => 'Stamps nearby:',
+		'detail.website' => 'Website',
+		'detail.salespoints' => 'Where to buy:',
 
 		'stats.numberOfCollected' => 'collected',
 		'stats.percentage' => 'percentage',
@@ -43,6 +45,7 @@ class Translator implements \Nette\Localization\Translator {
 		'stamp.collected' => 'Have it!',
 		'stamp.collect' => 'Collect',
 		'stamp.uncollect' => 'Disperse',
+		'stamp.noImage' => 'No image yet',
 
 		'admin.{count}loadedImages' => 'Loaded {count} new images.',
 		'admin.{new}stampsOutOf{total}' => 'Loaded {new} new stamps out of {total}.',
@@ -54,7 +57,6 @@ class Translator implements \Nette\Localization\Translator {
 		'form.filter.sortBy.id.desc' => '123 ↓',
 		'form.filter.sortBy.date.asc' => 'Date ↑',
 		'form.filter.sortBy.date.desc' => 'Date ↓',
-		'form.filter.label' => 'Label',
 		'form.editStamp.date' => 'Date',
 		'form.editStamp.description' => 'Description',
 		'form.editStamp.invalidDate' => 'Invalid date, use D. M. YYYY.',

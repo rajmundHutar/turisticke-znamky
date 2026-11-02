@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: StampPresenter edit forms store the values and redirect back (#3, #29)
+ * Test: StampPresenter edit forms store the values and redirect back (#3, #29); the detail shows the feed data (#14, #4)
  */
 
 declare(strict_types=1);
@@ -10,9 +10,13 @@ use App\Dto\CollectedStampDto;
 use App\Forms\EditStampForm;
 use App\Forms\FormFactory;
 use App\Models\CollectionModel;
+use App\Models\StampsModel;
 use App\Presenters\StampPresenter;
 use Nette\Application\Request;
 use Nette\Application\Responses\RedirectResponse;
+use Nette\Application\Responses\TextResponse;
+use Nette\Database\Table\ActiveRow;
+use Nette\Database\Table\Selection;
 use Nette\Utils\DateTime;
 use Tester\Assert;
 use Tests\Presenters\PresenterTestHelpers;
@@ -129,3 +133,133 @@ $presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => '1']
 $form = $presenter['editSingleStampForm'];
 Assert::same('1. 5. 2024', $form['date']->getValue());
 Assert::same('Windy', $form['comment']->getValue());
+
+
+/** StampsModel double without a database. */
+final class StampFakeStampsModel extends StampsModel
+{
+	/**
+	 * @param  array<string, mixed>  $stamp
+	 * @param  list<array<string, mixed>>  $salespoints
+	 * @param  array<int, array<string, mixed>>  $closest
+	 */
+	public function __construct(
+		private array $stamp,
+		private array $salespoints = [],
+		private array $closest = [],
+	) {
+	}
+
+
+	public function fetch(int $id): ActiveRow
+	{
+		return createRow($this->stamp);
+	}
+
+
+	public function fetchSalespoints(int $stampId): array
+	{
+		return array_map(createRow(...), $this->salespoints);
+	}
+
+
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): array
+	{
+		return $this->closest;
+	}
+}
+
+
+/**
+ * ActiveRow holding the given data, without a database (a selection without cache never refetches columns).
+ * @param  array<string, mixed>  $data
+ */
+function createRow(array $data): ActiveRow
+{
+	$selection = (new ReflectionClass(Selection::class))->newInstanceWithoutConstructor();
+	(new ReflectionProperty(Selection::class, 'cache'))->setValue($selection, null);
+	return new ActiveRow($data, $selection);
+}
+
+
+/**
+ * @param  array<string, mixed>  $stamp
+ * @param  list<array<string, mixed>>  $salespoints
+ * @param  array<int, array<string, mixed>>  $closest
+ */
+function renderStampDetail(array $stamp, array $salespoints = [], array $closest = []): string
+{
+	$presenter = new StampPresenter(PresenterTestHelpers::createTranslator());
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null));
+	$presenter->injectCollectionModel(new StampFakeCollectionModel);
+	$presenter->injectStampsModel(new StampFakeStampsModel($stamp, $salespoints, $closest));
+	$response = $presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => (string) $stamp['id']]));
+	Assert::type(TextResponse::class, $response);
+	assert($response instanceof TextResponse);
+	return (string) $response->getSource();
+}
+
+
+$feedStamp = [
+	'id' => 3091,
+	'name' => 'Nová známka',
+	'type' => null,
+	'region' => null,
+	'created_at' => null,
+	'lat' => '50.08',
+	'lng' => '14.42',
+	'image' => null,
+	'description' => "First paragraph <b>bold</b>\n\nSecond paragraph",
+	'detail_url' => 'https://turisticke-znamky.cz/items/3535',
+	'website' => 'https://example.com/castle',
+	'wikipedia' => 'https://cs.wikipedia.org/wiki/Hrad',
+	'facebook' => 'https://www.facebook.com/hrad',
+];
+$salespoints = [
+	['id' => 1, 'stamp_id' => 3091, 'name' => 'Pokladna hradu', 'lat' => '50.081', 'lng' => '14.421', 'website' => 'https://example.com/shop', 'sort' => 1, 'system' => 0],
+	['id' => 2, 'stamp_id' => 3091, 'name' => 'Prodej dočasně pozastaven', 'lat' => null, 'lng' => null, 'website' => null, 'sort' => 2, 'system' => 1],
+];
+$closest = [
+	7 => ['id' => 7, 'name' => 'Bez obrázku', 'type' => 'Rozhledna', 'lat' => '50.1', 'lng' => '14.5', 'image' => null, 'distance' => 1500.0, 'prettyDistance' => '1.5 km'],
+];
+
+
+// The detail of a feed stamp (no type, region, creation date nor image) shows its description, links and salespoints (#14, #4)
+$html = renderStampDetail($feedStamp, $salespoints, $closest);
+Assert::contains('First paragraph &lt;b&gt;bold&lt;/b&gt;<br>', $html); // escaped, newlines kept
+Assert::contains('Second paragraph', $html);
+Assert::contains('href="https://turisticke-znamky.cz/items/3535" target="_blank" rel="noopener"', $html);
+Assert::notContains('/znamky/-c', $html);
+foreach (['https://example.com/castle', 'https://cs.wikipedia.org/wiki/Hrad', 'https://www.facebook.com/hrad', 'https://example.com/shop'] as $link) {
+	Assert::contains('href="' . $link . '" target="_blank" rel="noopener"', $html);
+}
+Assert::contains('Pokladna hradu', $html);
+Assert::contains('Prodej dočasně pozastaven', $html);
+Assert::contains('"lat":"50.081"', $html); // salespoint with location goes to the map
+Assert::notContains('/images/stamps/"', $html); // no image without a file name, neither on the detail nor on the nearby card
+Assert::notMatch('~>\s*Rozhledna\s*<~', $html); // type is no longer displayed on cards (it stays only in the map data)
+
+
+// Type, region and creation date are no longer displayed; missing links and salespoints render nothing (#14)
+$html = renderStampDetail([
+	'id' => 1,
+	'name' => 'Praděd',
+	'type' => 'Rozhledna',
+	'region' => 'Jeseníky',
+	'created_at' => new DateTime('2001-02-03'),
+	'lat' => '50.08',
+	'lng' => '17.23',
+	'image' => '1-praded.jpg',
+	'description' => null,
+	'detail_url' => null,
+	'website' => null,
+	'wikipedia' => null,
+	'facebook' => null,
+]);
+Assert::contains('/images/stamps/1-praded.jpg"', $html);
+Assert::notMatch('~>\s*Rozhledna\s*<~', $html); // stays only in the map data
+Assert::notMatch('~>\s*Jeseníky\s*<~', $html);
+Assert::notContains('3. 2. 2001', $html);
+Assert::notContains('detail.detailsOn', $html);
+Assert::notContains('rel="noopener"', $html);
+Assert::notContains('detail.salespoints', $html);

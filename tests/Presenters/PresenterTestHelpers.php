@@ -12,6 +12,7 @@ use Nette\Application\UI\Presenter;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use Nette\Bridges\ApplicationLatte\TemplateFactory;
 use Nette\Bridges\ApplicationLatte\UIExtension;
+use Nette\Bridges\FormsLatte\FormsExtension;
 use Nette\Http\UrlScript;
 use Nette\Localization\Translator;
 use Nette\Security\IIdentity;
@@ -90,6 +91,7 @@ final class PresenterTestHelpers
 			{
 				$latte = new Latte\Engine;
 				$latte->addExtension(new UIExtension($control)); // layout lookup, as in the app's LatteExtension
+				$latte->addExtension(new FormsExtension); // {form} tags, as in the app's FormsExtension
 				return $latte;
 			}
 		};

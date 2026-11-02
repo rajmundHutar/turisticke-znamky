@@ -152,7 +152,7 @@ function initConfirmButtons() {
 }
 
 class StampMap {
-    constructor(divId, stamps, collection, lat, lng, baseUrl, apiKey) {
+    constructor(divId, stamps, collection, lat, lng, baseUrl, apiKey, salespoints = []) {
         this.divId = divId
         this.stamps = stamps
         this.collection = collection
@@ -160,6 +160,7 @@ class StampMap {
         this.lng = lng
         this.baseUrl = baseUrl
         this.apiKey = apiKey
+        this.salespoints = salespoints
         this.initMap()
     };
 
@@ -196,6 +197,13 @@ class StampMap {
             var isCollected = this.collection[stamp['id']] || null;
             var link = "<a href='" + this.baseUrl + '/stamp/' + stamp['id'] + "'>" + stamp['id'] + ' - ' + stamp['name'] + "</a>";
             L.marker([stamp['lat'], stamp['lng']], {icon: isCollected ? greenStamp : redStamp}).addTo(map).bindPopup(link);
+        }
+
+        // Salespoints of the stamp as small blue circles, distinct from the stamp markers
+        for (var salespoint of this.salespoints) {
+            var popup = document.createElement('span');
+            popup.textContent = salespoint['name'];
+            L.circleMarker([salespoint['lat'], salespoint['lng']], {radius: 8, color: '#3273dc', fillOpacity: 0.6}).addTo(map).bindPopup(popup);
         }
 
         /*
