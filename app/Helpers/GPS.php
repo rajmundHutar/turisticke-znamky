@@ -26,6 +26,15 @@ class GPS {
 
 	}
 
+	/**
+	 * Length of one degree of longitude relative to one degree of latitude at the given latitude.
+	 */
+	public static function lngScale(float $lat): float {
+
+		return cos(deg2rad($lat));
+
+	}
+
 	public static function prettyDistance(float $distance): string {
 
 		if ($distance < 100) {

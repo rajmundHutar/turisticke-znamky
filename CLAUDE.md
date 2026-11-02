@@ -10,7 +10,7 @@ Everything runs in Docker (PHP 8.5, `.docker/php/Dockerfile`); the host PHP is n
 - `docker compose run --rm app composer test` – Nette Tester suite in `tests/` (`*.phpt`)
 - `docker compose run --rm app composer phpstan` – static analysis, level 5, config in `phpstan.neon`
 - `docker compose run --rm app composer check` – PHPStan + tests; run before every PR
-- `docker compose up` – app on http://localhost:8082 (container listens on 8080), MySQL on port 13306 (schema from `.docker/db/init.sql`)
+- `docker compose up` – app on http://localhost:8082 (container listens on 8080), MySQL on port 13306 (schema from `.docker/db/init.sql`, applied only on the first start; data persists in the `db-data` volume, `docker compose down -v` resets it)
 
 Tests need no database. There are no DB/integration tests yet; acceptance criteria that need a DB are verified manually against the running app.
 
@@ -31,5 +31,5 @@ Runtime data on the server (`app/config/local.neon`, `log/`, `temp/`, downloaded
 - Tabs for indentation, match the style of the surrounding file.
 - `phpstan-baseline.neon` holds known pre-existing errors. When you fix one, remove its baseline entry (PHPStan fails on unmatched entries). Never add new entries to hide new errors.
 - New tests go to `tests/<same path as app/>/<Class>Test.phpt`.
-- `app/config/local.neon` (DB credentials) is not in the repo.
+- `app/config/local.neon` (DB credentials) is not in the repo; `app/config/local.neon.dist` is the template with the Docker DB credentials.
 - Issues are tracked on GitHub; tickets ready for implementation carry the `rtm` label.

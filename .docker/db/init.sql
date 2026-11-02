@@ -15,6 +15,7 @@ CREATE TABLE `tz_collection` (
                                  `user_id` int(11) NOT NULL,
                                  `date` datetime DEFAULT NULL,
                                  `comment` text COLLATE utf8mb4_czech_ci,
+                                 `file` text COLLATE utf8mb4_czech_ci,
                                  PRIMARY KEY (`id`),
                                  KEY `stamp_id` (`stamp_id`),
                                  KEY `user_id` (`user_id`),

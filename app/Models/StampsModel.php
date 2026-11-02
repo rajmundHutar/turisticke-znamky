@@ -88,7 +88,8 @@ class StampsModel {
 
 		$query = $this->db
 			->table(\Table::Stamps)
-			->select('*, SQRT(POW(ABS(? - lat), 2) + POW(ABS(? - lng), 2)) AS dist', $lat, $lng)
+			// equirectangular approximation in degrees, good enough for picking and ordering the nearest stamps
+			->select('*, SQRT(POW(? - lat, 2) + POW((? - lng) * ?, 2)) AS dist', $lat, $lng, GPS::lngScale($lat))
 			->order('dist')
 			->limit($num);
 
