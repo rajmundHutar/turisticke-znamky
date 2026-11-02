@@ -17,11 +17,14 @@
 	"require-dev": {
 		"nette/tester": "^v2.5",
 		"phpstan/phpstan": "^2",
-		"phpstan/phpstan-nette": "^2"
+		"phpstan/phpstan-nette": "^2",
+		"dresscode/dresscode": "dev-master"
 	},
 	"scripts": {
 		"test": "tester tests -C",
 		"phpstan": "phpstan analyse --memory-limit=1G",
+		"cs": "dresscode check",
+		"cs-fix": "dresscode fix",
 		"check": [
 			"@phpstan",
 			"@test"

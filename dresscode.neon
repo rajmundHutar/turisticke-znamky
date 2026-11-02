@@ -1,0 +1,57 @@
+# made to measure by `dresscode init`; run it again to see what has moved since, it writes nothing over this file
+use: perCs   # PER Coding Style, of the standards the one a fix changes the fewest files of your code under
+
+paths: [app, tests]
+fileExtensions: [php, phpt]
+
+# the namespaces of the scope declare no function and no constant, so an unqualified name in a namespace
+# is resolved for certain; one declared later is reported until it is listed
+nameResolution: certain
+
+typeAnalysis: phpstan   # phpstan/phpstan is installed, so the rules get the types of the code
+
+file:
+	finalLineEndings: keep            # not checked: your code has none of the 1 file agrees with any value
+	lineLength: 200                   # your code, all 57 files
+
+indentation:
+	unit: tab                         # your code, all 54 files
+	chain: nested                     # your code, all 2 places
+
+braces:
+	position:
+		class: keep                   # not checked: your code has nextLine in 58%, sameLine in 42% of 57 places
+		function: keep                # not checked: your code has nextLine in 63%, sameLine in 38% of 160 places
+	emptyBody:
+		function: expanded            # your code, all 31 places
+
+blankLines:
+	bodyStart:
+		class: 0-1                    # your code, 0 in 53%, 1 in 47% of 57 places
+	bodyEnd:
+		branch: keep                  # not checked: your code has 0 in 78%, 1 in 22% of 9 places
+		class: 0-2                    # your code, 0 in 53%, 1 in 46%, 2 in 2% of 57 places
+	afterTraitUses: keep              # not checked: your code has 1 in 89%, 0 in 11% of 9 places
+
+multiline:
+	items:
+		chain: fill                   # your code, all 25 places
+		ternary: fill                 # your code, 1 place
+		argument: keep                # not checked: your code has none of the 1 place agrees with any value
+	trailingComma:
+		argument: optional            # your code, all 10 places
+		parameter: optional           # your code, all 3 places
+	operatorPosition:
+		arithmetic: lineEnd           # your code, all 2 places
+
+spacing:
+	anonymousFunction: keep           # not checked: your code has spaced in 60%, compact in 40% of 10 places
+
+naming:
+	class: Pascal_Snake_Case          # your code, all 43 places
+	constant: Pascal_Snake_Case       # your code, all 13 places
+
+classes:
+	emptyParentheses:
+		instantiation: forbidden      # your code, 84% of 38 places
+	instantiationWrapping: required   # your code, all 15 places
