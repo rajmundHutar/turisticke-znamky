@@ -72,6 +72,17 @@ function createStampPresenter(StampFakeCollectionModel $collectionModel): TestSt
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']); // signals are CSRF protected
 	$presenter->injectCollectionModel($collectionModel);
 	$presenter->injectFormFactory($formFactory);
+	$presenter->injectStampsModel(new class extends StampsModel { // the stamp is loaded in the action
+		public function __construct()
+		{
+		}
+
+
+		public function fetch(int $id): ActiveRow
+		{
+			return createRow(['id' => $id]);
+		}
+	});
 	return $presenter;
 }
 
@@ -263,3 +274,28 @@ Assert::notContains('3. 2. 2001', $html);
 Assert::notContains('detail.detailsOn', $html);
 Assert::notContains('rel="noopener"', $html);
 Assert::notContains('detail.salespoints', $html);
+
+
+/** StampsModel double without a database that knows no stamp. */
+final class StampEmptyStampsModel extends StampsModel
+{
+	public function __construct()
+	{
+	}
+
+
+	public function fetch(int $id): ?ActiveRow
+	{
+		return null;
+	}
+}
+
+
+// An unknown stamp is a 404 raised in the action, before rendering (#7)
+$presenter = createStampPresenter(new StampFakeCollectionModel);
+$presenter->injectStampsModel(new StampEmptyStampsModel);
+$e = Assert::exception(
+	fn() => $presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => '999999'])),
+	Nette\Application\BadRequestException::class,
+);
+Assert::same(404, $e->getCode());
