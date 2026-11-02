@@ -58,7 +58,7 @@ final class HomepagePresenter extends Presenter
 			$filter,
 			$paginator->getLength(),
 			$paginator->getOffset()
-		);
+		) ?? [];
 		if ($filter['sort'] === 'date' && $onlyCollected) {
 			usort($stamps, function ($a, $b) {
 				return $this->userCollection[$a->id]->date <=> $this->userCollection[$b->id]->date;
