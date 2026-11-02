@@ -14,6 +14,7 @@ nameResolution: certain
 typeAnalysis: phpstan   # phpstan/phpstan is installed, so the rules get the types of the code
 
 file:
+	lineEnding: LF                    # all files use LF (.gitattributes enforces it in git too)
 	finalLineEndings: keep            # not checked: your code has none of the 1 file agrees with any value
 	lineLength: 200                   # your code, all 57 files
 
