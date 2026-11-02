@@ -33,8 +33,8 @@ $presenter = createLoginPresenter($user, ['Sec-Fetch-Site' => 'same-origin']);
 $response = $presenter->run(new Request('Login', 'GET', ['action' => 'default', 'do' => 'menu-logout']));
 Assert::false($user->isLoggedIn());
 Assert::type(RedirectResponse::class, $response);
-Assert::same('Homepage', $presenter->getLastCreatedRequest()?->getPresenterName());
-Assert::same('default', $presenter->getLastCreatedRequest()?->getParameter('action'));
+assert($response instanceof RedirectResponse);
+Assert::same('http://localhost/', $response->getUrl()); // homepage root
 
 
 // A logout link on a foreign page (cross-site request) does not log the user out
@@ -52,3 +52,37 @@ Assert::exception(
 	BadRequestException::class,
 );
 Assert::true($user->isLoggedIn());
+
+
+// Logging out from "My collection" lands on the unfiltered homepage, not on the (now empty) filtered collection
+$translator = PresenterTestHelpers::createTranslator();
+$formFactory = new App\Forms\FormFactory($translator);
+$formFactory->register(new App\Forms\FilterForm($translator));
+$presenter = new App\Presenters\HomepagePresenter($translator);
+$user = PresenterTestHelpers::createUser(['user']);
+PresenterTestHelpers::injectPrimary($presenter, $user, ['Sec-Fetch-Site' => 'same-origin']);
+$presenter->injectCollectionModel(new class extends App\Models\CollectionModel {
+	public function __construct()
+	{
+	}
+
+
+	public function fetchByUser(?int $userId): array
+	{
+		return [];
+	}
+});
+$presenter->injectFormFactory($formFactory);
+$response = $presenter->run(new Request('Homepage', 'GET', [
+	'action' => 'default',
+	'search' => 'Praha',
+	'sort' => '-date',
+	'onlyCollected' => '1',
+	'paginator-page' => '2',
+	'do' => 'menu-logout',
+]));
+Assert::false($user->isLoggedIn());
+Assert::type(RedirectResponse::class, $response);
+assert($response instanceof RedirectResponse);
+$url = new Nette\Http\Url($response->getUrl());
+Assert::same([], $url->getQueryParameters());

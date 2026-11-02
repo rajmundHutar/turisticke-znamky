@@ -17,8 +17,10 @@ class Menu extends Control {
 
 	public function handleLogout(): void {
 
-		$this->getPresenter()->getUser()->logout(true);
-		$this->getPresenter()->redirect('Homepage:');
+		$presenter = $this->getPresenter();
+		$presenter->getUser()->logout(true);
+		// the homepage root, so persistent filters (e.g. "My collection") don't survive the logout
+		$presenter->redirectUrl($presenter->getHttpRequest()->getUrl()->getBaseUrl());
 
 	}
 
