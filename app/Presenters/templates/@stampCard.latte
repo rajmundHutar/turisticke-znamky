@@ -80,7 +80,7 @@
                         <div class="field">
                             {label date, class => "label"/}
                             <div class="control">
-                                {input date, class => "input", value => $collection[$stamp['id']]->date, data-datepicker => ''}
+                                {input date, class => "input", value => $collection[$stamp['id']]->date?->format('Y-m-d'), data-datepicker => ''}
                             </div>
                         </div>
                         <div class="field">

@@ -64,4 +64,8 @@ $presenter->run(new Request(
 	['action' => 'default', 'id' => '1', 'do' => 'editStampForm-7-submit'],
 	['id' => '7', 'date' => '2024-05-01', 'comment' => 'Windy', 'ok' => 'general.submit'],
 ));
-Assert::same([[7, 1, ['date' => '2024-05-01', 'comment' => 'Windy']]], $collectionModel->updates);
+Assert::count(1, $collectionModel->updates);
+[$stampId, $userId, $data] = $collectionModel->updates[0];
+Assert::same([7, 1, 'Windy'], [$stampId, $userId, $data['comment']]);
+Assert::type(DateTimeInterface::class, $data['date']); // converted from Y-m-d (#11)
+Assert::same('2024-05-01', $data['date']->format('Y-m-d'));

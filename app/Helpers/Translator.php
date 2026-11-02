@@ -56,6 +56,7 @@ class Translator implements \Nette\Localization\Translator {
 		'form.filter.label' => 'Label',
 		'form.editStamp.date' => 'Date',
 		'form.editStamp.description' => 'Description',
+		'form.editStamp.invalidDate' => 'Invalid date, use YYYY-MM-DD.',
 
 	];
 
