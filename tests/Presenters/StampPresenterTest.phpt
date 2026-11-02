@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: StampPresenter edit forms store the values and redirect back (#3, #29); the detail shows the feed data (#14, #4)
+ * Test: StampPresenter edit forms store the values and redirect back (#3, #29), show invalid date errors (#31); the detail shows the feed data (#14, #4)
  */
 
 declare(strict_types=1);
@@ -299,3 +299,51 @@ $e = Assert::exception(
 	Nette\Application\BadRequestException::class,
 );
 Assert::same(404, $e->getCode());
+
+
+/**
+ * Submits an edit form with an invalid date as a logged-in user collecting the detail stamp and the nearby stamp 7; returns the rendered page.
+ * @param  array<string, mixed>  $stamp
+ * @param  array<int, array<string, mixed>>  $closest
+ */
+function submitInvalidDate(StampFakeCollectionModel $collectionModel, array $stamp, array $closest, string $formName, string $stampId): string
+{
+	$translator = new App\Helpers\Translator;
+	$formFactory = new FormFactory($translator);
+	$formFactory->register(new EditStampForm($translator));
+
+	$presenter = new StampPresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']);
+	$presenter->injectCollectionModel($collectionModel);
+	$presenter->injectFormFactory($formFactory);
+	$presenter->injectStampsModel(new StampFakeStampsModel($stamp, [], $closest));
+	$response = $presenter->run(new Request(
+		'Stamp',
+		'POST',
+		['action' => 'default', 'id' => (string) $stamp['id'], 'do' => "$formName-submit"],
+		['id' => $stampId, 'date' => '31. 2. 2024', 'comment' => 'Rainy', 'ok' => 'general.submit'],
+	));
+	Assert::type(TextResponse::class, $response);
+	assert($response instanceof TextResponse);
+	return (string) $response->getSource();
+}
+
+
+$collected = static fn(int $id) => new CollectedStampDto($id, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2024-05-01'), 'Windy', null);
+$detailStamp = ['id' => 1] + $feedStamp;
+
+
+// An invalid date in the detail's own edit form is not saved; the error is shown at the form with the entered value kept (#31)
+$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
+$html = submitInvalidDate($collectionModel, $detailStamp, $closest, 'editSingleStampForm', '1');
+Assert::same([], $collectionModel->updates);
+Assert::match('~<form[^>]+id="frm-editSingleStampForm".*value="31\. 2\. 2024".*Invalid date, use D\. M\. YYYY\..*</form>~s', $html);
+Assert::notContains('data-open', $html); // the nearby card's dialog stays closed
+
+
+// An invalid date in a nearby card's edit form is not saved; the error is shown in its dialog, which opens on page load (#31)
+$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
+$html = submitInvalidDate($collectionModel, $detailStamp, $closest, 'editStampForm-7', '7');
+Assert::same([], $collectionModel->updates);
+Assert::match('~<dialog class="modal" data-stampId="7" data-open>\s*.*value="31\. 2\. 2024".*Invalid date, use D\. M\. YYYY\..*</dialog>~s', $html);
+Assert::same(1, substr_count($html, 'Invalid date')); // not at the detail's own form
