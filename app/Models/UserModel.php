@@ -2,32 +2,30 @@
 
 namespace App\Models;
 
-use Nette\Database\Context;
+use Nette\Database\Explorer;
 use Nette\Security\AuthenticationException;
-use Nette\Security\IAuthenticator;
-use Nette\Security\Identity;
+use Nette\Security\Authenticator;
 use Nette\Security\IIdentity;
 use Nette\Security\Passwords;
+use Nette\Security\SimpleIdentity;
 
-class UserModel implements IAuthenticator {
+class UserModel implements Authenticator {
 
-	/** @var Context */
+	/** @var Explorer */
 	protected $db;
 
 	/** @var Passwords */
 	protected $passwords;
 
 	public function __construct(
-		Context $db,
+		Explorer $db,
 		Passwords $passwords
 	) {
 		$this->db = $db;
 		$this->passwords = $passwords;
 	}
 
-	public function authenticate(array $credentials): IIdentity {
-
-		[$email, $password] = $credentials;
+	public function authenticate(string $email, string $password): IIdentity {
 
 		$row = $this->fetchByEmail($email);
 
@@ -39,7 +37,7 @@ class UserModel implements IAuthenticator {
 			throw new AuthenticationException('Invalid password.');
 		}
 
-		return new Identity(
+		return new SimpleIdentity(
 			$row['id'],
 			$row['role'],
 			[
