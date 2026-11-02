@@ -192,3 +192,10 @@ foreach (homepageFilters(['user'], [3 => 'a', 8 => 'b'], ['onlyCollected' => '1'
 foreach (homepageFilters(['user'], [3 => 'a'], []) as $filter) {
 	Assert::false(array_key_exists('ids', $filter));
 }
+
+
+// Sorting an empty collection by date doesn't crash (search() returns null for no rows)
+foreach (['date', '-date'] as $sort) {
+	homepageFilters(null, [], ['onlyCollected' => '1', 'sort' => $sort]);
+	homepageFilters(['user'], [], ['onlyCollected' => '1', 'sort' => $sort]);
+}

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Dto\CollectedStampDto;
-use App\Dto\StampDto;
 use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 
