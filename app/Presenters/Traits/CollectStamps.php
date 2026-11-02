@@ -20,15 +20,15 @@ trait CollectStamps {
 	public function handleToggleCollect(int $id): void {
 		if ($this->user->isLoggedIn()) {
 			$this->collectionModel->toggleCollect($id, $this->user->getId());
-			$this->redirect($this->toggleCollectDestination($id));
+			$this->redirectAfterToggleCollect($id);
 		}
 	}
 
 	/**
-	 * Where to redirect after toggling a stamp; the card's anchor by default.
+	 * Redirects back after toggling a stamp; to the card's anchor by default.
 	 */
-	protected function toggleCollectDestination(int $id): string {
-		return "this#stamp-{$id}";
+	protected function redirectAfterToggleCollect(int $id): void {
+		$this->redirect("this#stamp-{$id}");
 	}
 
 	public function createComponentEditStampForm(): Multiplier {

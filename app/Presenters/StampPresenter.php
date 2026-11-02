@@ -38,9 +38,9 @@ class StampPresenter extends Presenter
 		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
 	}
 
-	protected function toggleCollectDestination(int $id): string
+	protected function redirectAfterToggleCollect(int $id): void
 	{
-		return 'this';
+		$this->redirect('this');
 	}
 
 	public function renderDefault(): void
