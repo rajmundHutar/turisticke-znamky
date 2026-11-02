@@ -7,11 +7,13 @@ namespace App\Presenters\Traits;
 use Nette\Application\UI\Presenter;
 use Nette\Localization\Translator;
 
-trait InjectTranslator {
+trait InjectTranslator
+{
 
 	protected Translator $translator;
 
-	public function __construct(Translator $translator) {
+	public function __construct(Translator $translator)
+	{
 		$this->translator = $translator;
 		$this->onStartup[] = function(Presenter $presenter) {
 			$presenter->template->setTranslator($this->translator);
@@ -21,7 +23,8 @@ trait InjectTranslator {
 	/**
 	 * Translator shortcut
 	 */
-	protected function t($message, ...$args): string {
+	protected function t($message, ...$args): string
+	{
 		return $this->translator->translate($message, ...$args);
 	}
 

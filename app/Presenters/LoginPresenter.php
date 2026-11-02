@@ -11,13 +11,15 @@ use App\Presenters\Traits\InjectTranslator;
 use Nette;
 use Nette\Security\AuthenticationException;
 
-final class LoginPresenter extends Nette\Application\UI\Presenter {
+final class LoginPresenter extends Nette\Application\UI\Presenter
+{
 
 	use InjectMenu;
 	use InjectTranslator;
 	use InjectFormFactory;
 
-	public function createComponentLoginForm() {
+	public function createComponentLoginForm()
+	{
 
 		return $this->formFactory->create(LoginForm::class, function($form, $values) {
 

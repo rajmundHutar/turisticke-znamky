@@ -7,12 +7,15 @@ namespace App\Controls;
 use Nette\Application\UI\Control;
 use Nette\Localization\Translator;
 
-class Menu extends Control {
+class Menu extends Control
+{
 
-	public function __construct(protected Translator $translator) {
+	public function __construct(protected Translator $translator)
+	{
 	}
 
-	public function handleLogout(): void {
+	public function handleLogout(): void
+	{
 
 		$presenter = $this->getPresenter();
 		$presenter->getUser()->logout(true);
@@ -20,7 +23,8 @@ class Menu extends Control {
 		$presenter->redirectUrl($presenter->getHttpRequest()->getUrl()->getBaseUrl());
 	}
 
-	public function render() {
+	public function render()
+	{
 
 		$this->template->setTranslator($this->translator);
 		$this->template->setFile(__DIR__ . '/Menu.latte');

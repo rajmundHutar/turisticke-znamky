@@ -7,18 +7,22 @@ namespace App\Forms;
 use Nette\Application\UI\Form;
 use Nette\Localization\Translator;
 
-class FormFactory {
+class FormFactory
+{
 
 	protected array $forms;
 
-	public function __construct(protected Translator $translator) {
+	public function __construct(protected Translator $translator)
+	{
 	}
 
-	public function register(BaseForm $form) {
+	public function register(BaseForm $form)
+	{
 		$this->forms[$form::class] = $form;
 	}
 
-	public function create(string $formClass, ...$args): Form {
+	public function create(string $formClass, ...$args): Form
+	{
 		$form = $this->forms[$formClass] ?? null;
 		if (!$form) {
 			throw new \UnexpectedValueException("Not registered form {$formClass}");

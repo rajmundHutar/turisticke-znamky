@@ -8,7 +8,8 @@ use Nette\Utils\DateTime;
 use Nette\Utils\Strings;
 use Tracy\Debugger;
 
-class ImportModel {
+class ImportModel
+{
 
 	public const IMAGES_PER_RUN = 500;
 	public const SALESPOINTS_CHUNK = 500;
@@ -20,7 +21,8 @@ class ImportModel {
 	) {
 	}
 
-	public function fetchLastLog(): ?ActiveRow {
+	public function fetchLastLog(): ?ActiveRow
+	{
 
 		return $this->db
 			->table(\Table::ImportLog)
@@ -42,7 +44,8 @@ class ImportModel {
 	 * @return array{int, int} [imported stamps, new stamps]
 	 * @throws \RuntimeException when the feed cannot be downloaded or parsed
 	 */
-	public function import(): array {
+	public function import(): array
+	{
 
 		Debugger::timer();
 
@@ -74,7 +77,8 @@ class ImportModel {
 	 * Upserts the stamps and replaces their salespoints in one transaction.
 	 * @return array{int, int} [imported stamps, new stamps]
 	 */
-	private function importFeed(StampFeedReader $reader): array {
+	private function importFeed(StampFeedReader $reader): array
+	{
 
 		$existingIds = array_flip($this->db
 			->table(\Table::Stamps)
@@ -133,7 +137,8 @@ class ImportModel {
 	 * Downloads missing stamp images from their feed URLs.
 	 * @return int number of downloaded images
 	 */
-	public function importImages(): int {
+	public function importImages(): int
+	{
 
 		$stamps = $this->db
 			->table(\Table::Stamps)
@@ -173,7 +178,8 @@ class ImportModel {
 	 * Downloads the URL into the target file; on failure deletes the file and throws.
 	 * @throws \RuntimeException
 	 */
-	private function download(string $url, string $target, int $timeout): void {
+	private function download(string $url, string $target, int $timeout): void
+	{
 
 		$fp = fopen($target, 'w');
 		if (!$fp) {

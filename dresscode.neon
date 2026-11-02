@@ -23,8 +23,8 @@ indentation:
 
 braces:
 	position:
-		class: keep                   # not checked: your code has nextLine in 58%, sameLine in 42% of 57 places
-		function: keep                # not checked: your code has nextLine in 63%, sameLine in 38% of 160 places
+		class: nextLine               # unified (was mixed: nextLine 58 %, sameLine 42 %)
+		function: nextLine            # unified (was mixed: nextLine 63 %, sameLine 38 %)
 	emptyBody:
 		function: expanded            # your code, all 31 places
 

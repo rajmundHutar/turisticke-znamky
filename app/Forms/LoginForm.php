@@ -6,9 +6,11 @@ namespace App\Forms;
 
 use Nette\Application\UI\Form;
 
-class LoginForm extends BaseForm {
+class LoginForm extends BaseForm
+{
 
-	public function create(callable $onSuccess) {
+	public function create(callable $onSuccess)
+	{
 
 		$this->form->addText('email', 'login.email');
 		$this->form->addPassword('password', 'login.password');

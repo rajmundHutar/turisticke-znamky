@@ -8,50 +8,60 @@ use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\Presenter;
 
-class Paginator extends Control {
+class Paginator extends Control
+{
 
 	#[Persistent]
 	public int $page = 1;
 
 	protected \Nette\Utils\Paginator $paginator;
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->paginator = new \Nette\Utils\Paginator;
 	}
 
-	public function setTranslator(\Nette\Localization\Translator $translator): void {
+	public function setTranslator(\Nette\Localization\Translator $translator): void
+	{
 
 		$this->monitor(Presenter::class, function() use ($translator) {
 			$this->template->setTranslator($translator);
 		});
 	}
 
-	public function getPage(): int {
+	public function getPage(): int
+	{
 		return $this->page;
 	}
 
-	public function getItemsPerPage(): int {
+	public function getItemsPerPage(): int
+	{
 		return $this->paginator->getItemsPerPage();
 	}
 
-	public function setItemsPerPage(int $num): void {
+	public function setItemsPerPage(int $num): void
+	{
 		$this->paginator->setItemsPerPage($num);
 	}
 
-	public function setItemCount(int $num): void {
+	public function setItemCount(int $num): void
+	{
 		$this->paginator->setItemCount($num);
 	}
 
-	public function getLength(): int {
+	public function getLength(): int
+	{
 		$this->paginator->setPage($this->page);
 		return $this->paginator->getLength();
 	}
-	public function getOffset(): int {
+	public function getOffset(): int
+	{
 		$this->paginator->setPage($this->page);
 		return $this->paginator->getOffset();
 	}
 
-	public function render(): void {
+	public function render(): void
+	{
 
 		$this->paginator->setPage($this->page);
 

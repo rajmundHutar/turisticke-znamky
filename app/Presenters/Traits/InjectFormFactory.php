@@ -6,11 +6,13 @@ namespace App\Presenters\Traits;
 
 use App\Forms\FormFactory;
 
-trait InjectFormFactory {
+trait InjectFormFactory
+{
 
 	protected FormFactory $formFactory;
 
-	public function injectFormFactory(FormFactory $formFactory): void {
+	public function injectFormFactory(FormFactory $formFactory): void
+	{
 		$this->formFactory = $formFactory;
 	}
 

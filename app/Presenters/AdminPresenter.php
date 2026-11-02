@@ -10,14 +10,16 @@ use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette;
 
-final class AdminPresenter extends Nette\Application\UI\Presenter {
+final class AdminPresenter extends Nette\Application\UI\Presenter
+{
 
 	use InjectMenu;
 	use InjectTranslator;
 	use InjectStampsModel;
 	use InjectImportModel;
 
-	protected function startup() {
+	protected function startup()
+	{
 
 		parent::startup();
 		if (!$this->user->isInRole('admin')) {
@@ -25,7 +27,8 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 		}
 	}
 
-	public function handleImportStamps() {
+	public function handleImportStamps()
+	{
 
 		try {
 			[$total, $new] = $this->importModel->import();
@@ -36,14 +39,16 @@ final class AdminPresenter extends Nette\Application\UI\Presenter {
 		$this->redirect('default');
 	}
 
-	public function handleImportImages() {
+	public function handleImportImages()
+	{
 
 		$new = $this->importModel->importImages();
 		$this->flashMessage($this->t('admin.{count}loadedImages', ['count' => $new]));
 		$this->redirect('default');
 	}
 
-	public function renderDefault() {
+	public function renderDefault()
+	{
 
 		$lastLog = $this->importModel->fetchLastLog();
 

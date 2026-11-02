@@ -1,6 +1,7 @@
 <?php
 
-class Table {
+class Table
+{
 
 	public const Stamps = 'tz_stamps';
 	public const ImportLog = 'tz_import_log';

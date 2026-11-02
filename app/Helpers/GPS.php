@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
-class GPS {
+class GPS
+{
 
-	public static function gpsDistance(float $lat1, float $lon1, float $lat2, float $lon2) {
+	public static function gpsDistance(float $lat1, float $lon1, float $lat2, float $lon2)
+	{
 
 		// See https://www.movable-type.co.uk/scripts/latlong.html
 		$R = 6371000; // metres
@@ -26,12 +28,14 @@ class GPS {
 	/**
 	 * Length of one degree of longitude relative to one degree of latitude at the given latitude.
 	 */
-	public static function lngScale(float $lat): float {
+	public static function lngScale(float $lat): float
+	{
 
 		return cos(deg2rad($lat));
 	}
 
-	public static function prettyDistance(float $distance): string {
+	public static function prettyDistance(float $distance): string
+	{
 
 		if ($distance < 100) {
 			return "< 100 m";

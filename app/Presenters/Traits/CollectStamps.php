@@ -13,11 +13,13 @@ use Nette\Application\UI\Multiplier;
  * Requires InjectCollectionModel and InjectFormFactory; the action loads $userCollection,
  * so the forms have their defaults also while processing a submit.
  */
-trait CollectStamps {
+trait CollectStamps
+{
 
 	protected array $userCollection = [];
 
-	public function handleToggleCollect(int $id): void {
+	public function handleToggleCollect(int $id): void
+	{
 		if ($this->user->isLoggedIn()) {
 			$this->collectionModel->toggleCollect($id, $this->user->getId());
 			$this->redirectAfterToggleCollect($id);
@@ -27,11 +29,13 @@ trait CollectStamps {
 	/**
 	 * Redirects back after toggling a stamp; to the card's anchor by default.
 	 */
-	protected function redirectAfterToggleCollect(int $id): void {
+	protected function redirectAfterToggleCollect(int $id): void
+	{
 		$this->redirect("this#stamp-{$id}");
 	}
 
-	public function createComponentEditStampForm(): Multiplier {
+	public function createComponentEditStampForm(): Multiplier
+	{
 		return new Multiplier(
 			fn(string $stampId) => $this->createEditStampForm((int) $stampId, "this#stamp-{$stampId}")
 		);
@@ -40,7 +44,8 @@ trait CollectStamps {
 	/**
 	 * Edit form of a collected stamp with its date and comment as defaults; redirects to $destination after saving.
 	 */
-	private function createEditStampForm(int $stampId, string $destination): Form {
+	private function createEditStampForm(int $stampId, string $destination): Form
+	{
 		$defaults = [];
 		if ($this->userCollection[$stampId] ?? null) {
 			$defaults['date'] = $this->userCollection[$stampId]->date;

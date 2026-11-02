@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
-class Translator implements \Nette\Localization\Translator {
+class Translator implements \Nette\Localization\Translator
+{
 
 	public const Translations = [
 		'general.turistStampsTitle' => 'Turistické známky',
@@ -65,7 +66,8 @@ class Translator implements \Nette\Localization\Translator {
 
 	];
 
-	public function translate($message, ...$parameters): string {
+	public function translate($message, ...$parameters): string
+	{
 
 		$translation = self::Translations[$message] ?? null;
 

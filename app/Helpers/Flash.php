@@ -1,6 +1,7 @@
 <?php
 
-class Flash {
+class Flash
+{
 
 	public const ERROR = 'danger';
 	public const SUCCESS = 'success';

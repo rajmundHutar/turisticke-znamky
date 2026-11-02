@@ -4,9 +4,11 @@ namespace App\Presenters\Traits;
 
 use App\Controls\Menu;
 
-trait InjectMenu {
+trait InjectMenu
+{
 
-	public function createComponentMenu() {
+	public function createComponentMenu()
+	{
 		return new Menu($this->translator);
 	}
 
