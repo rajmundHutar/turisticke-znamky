@@ -6,7 +6,6 @@ use App\Helpers\GPS;
 use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
-use Nette\Utils\Strings;
 
 class StampsModel {
 
@@ -75,21 +74,6 @@ class StampsModel {
 			->where('stamp_id', $stampId)
 			->order('sort IS NULL, sort, id')
 			->fetchAll();
-	}
-
-	public function fetchLabels(): array {
-
-		$labels = $this->db
-			->table(\Table::Stamps)
-			->select('DISTINCT type')
-			->where('type != ""')
-			->order('type')
-			->fetchPairs('type', 'type');
-
-		return array_map(function($item) {
-			return Strings::firstUpper(Strings::lower($item));
-		}, $labels);
-
 	}
 
 	public function fetchImageCount(): int {

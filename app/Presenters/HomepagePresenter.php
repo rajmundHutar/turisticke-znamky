@@ -34,8 +34,6 @@ final class HomepagePresenter extends Presenter
 	#[Persistent]
 	public ?string $sort = null;
 	#[Persistent]
-	public ?string $label = null;
-	#[Persistent]
 	public bool $onlyCollected = false;
 
 	protected array $userCollection = [];
