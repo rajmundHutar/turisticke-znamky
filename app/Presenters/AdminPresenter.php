@@ -22,6 +22,9 @@ final class AdminPresenter extends Nette\Application\UI\Presenter
 	{
 
 		parent::startup();
+		if (!$this->user->isLoggedIn()) {
+			$this->redirect('Login:', ['backlink' => $this->storeRequest()]);
+		}
 		if (!$this->user->isInRole('admin')) {
 			$this->error('Admin role is required.', Nette\Http\IResponse::S403_Forbidden);
 		}

@@ -18,6 +18,10 @@ final class LoginPresenter extends Nette\Application\UI\Presenter
 	use InjectTranslator;
 	use InjectFormFactory;
 
+	/** Key of the request stored by storeRequest() to return to after login */
+	#[Nette\Application\Attributes\Persistent]
+	public ?string $backlink = null;
+
 	public function createComponentLoginForm()
 	{
 
@@ -31,8 +35,12 @@ final class LoginPresenter extends Nette\Application\UI\Presenter
 			} catch (AuthenticationException $e) {
 				bdump($e);
 				$this->flashMessage($this->t('login.loginNotSuccessful'), \Flash::ERROR);
+				$this->redirect('this');
 			}
 
+			if ($this->backlink !== null) {
+				$this->restoreRequest($this->backlink);
+			}
 			$this->redirect('Homepage:');
 		});
 	}

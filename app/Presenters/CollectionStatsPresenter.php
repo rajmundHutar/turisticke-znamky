@@ -25,7 +25,7 @@ class CollectionStatsPresenter extends Presenter
 	{
 		parent::startup();
 		if (!$this->user->isLoggedIn()) {
-			$this->redirect('Login:');
+			$this->redirect('Login:', ['backlink' => $this->storeRequest()]);
 		}
 	}
 

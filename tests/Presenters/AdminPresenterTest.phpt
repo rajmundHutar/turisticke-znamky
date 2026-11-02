@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: AdminPresenter requires the admin role; imports are signals
+ * Test: AdminPresenter requires the admin role, anonymous users go to login; imports are signals
  */
 
 declare(strict_types=1);
@@ -83,17 +83,28 @@ $requests = [
 $sameOrigin = ['Sec-Fetch-Site' => 'same-origin'];
 
 
-// Anonymous and non-admin users get 403 for every action and signal, and nothing is imported
-foreach ([null, ['user']] as $roles) {
-	foreach ($requests as $params) {
-		$importModel = new FakeImportModel;
-		$e = Assert::exception(
-			fn() => runAdmin($roles, $params, $importModel, $sameOrigin),
-			BadRequestException::class,
-		);
-		Assert::same(403, $e->getCode());
-		Assert::same([], $importModel->calls);
-	}
+// Anonymous users are redirected to the login page with a backlink to the stored request, and nothing is imported (#22)
+foreach ($requests as $params) {
+	$importModel = new FakeImportModel;
+	$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+	$response = runAdmin(null, $params, $importModel, $sameOrigin, $presenter);
+	Assert::type(RedirectResponse::class, $response);
+	Assert::same('Login', $presenter->getLastCreatedRequest()?->getPresenterName());
+	Assert::same('default', $presenter->getLastCreatedRequest()?->getParameter('action'));
+	Assert::match('%[0-9a-z]{5}%', (string) $presenter->getLastCreatedRequest()?->getParameter('backlink'));
+	Assert::same([], $importModel->calls);
+}
+
+
+// Logged-in users without the admin role get 403 for every action and signal, and nothing is imported
+foreach ($requests as $params) {
+	$importModel = new FakeImportModel;
+	$e = Assert::exception(
+		fn() => runAdmin(['user'], $params, $importModel, $sameOrigin),
+		BadRequestException::class,
+	);
+	Assert::same(403, $e->getCode());
+	Assert::same([], $importModel->calls);
 }
 
 
