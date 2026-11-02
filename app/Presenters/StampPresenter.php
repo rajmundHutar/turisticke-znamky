@@ -55,6 +55,7 @@ class StampPresenter extends Presenter
 			self::NearbyStamps,
 			[$this->stampId]
 		);
+		$this->template->salespoints = $this->stampsModel->fetchSalespoints($this->stampId);
 		$this->template->collection = $this->userCollection;
 
 	}

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: HomepagePresenter persistent params and edit form redirect (#29)
+ * Test: HomepagePresenter persistent params and edit form redirect (#29); no type filter (#14)
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ final class HomepageFakeCollectionModel extends CollectionModel
 // Persistent params are declared via #[Persistent]; the @persistent annotation is deprecated since nette/application 3.3
 Assert::noError(function () {
 	Assert::same(
-		['search', 'sort', 'label', 'onlyCollected'],
+		['search', 'sort', 'onlyCollected'],
 		array_keys((new ComponentReflection(HomepagePresenter::class))->getPersistentParams()),
 	);
 });

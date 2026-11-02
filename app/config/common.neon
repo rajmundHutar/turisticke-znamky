@@ -1,5 +1,5 @@
 parameters:
-	csvPath: "https://www.turisticke-znamky.cz/export.php?item=1&type=csv"
+	feedUrl: "https://turisticke-znamky.cz/api/feeds/tourist-stamps.xml"
 	stampsImagesPath: "%appDir%/../www/images/stamps/"
 
 application:
@@ -25,7 +25,7 @@ services:
 
 	# Models
 	- App\Models\StampsModel
-	- App\Models\ImportModel(%csvPath%, %stampsImagesPath%)
+	- App\Models\ImportModel(%feedUrl%, %stampsImagesPath%)
 	- App\Models\UserModel
 	- App\Models\CollectionModel
 

@@ -34,16 +34,40 @@ CREATE TABLE `tz_import_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
 
 
+DROP TABLE IF EXISTS `tz_salespoints`;
+CREATE TABLE `tz_salespoints` (
+                                  `id` int(11) NOT NULL AUTO_INCREMENT,
+                                  `stamp_id` int(11) NOT NULL,
+                                  `source_id` int(11) NOT NULL,
+                                  `name` text COLLATE utf8mb4_czech_ci NOT NULL,
+                                  `lat` varchar(255) COLLATE utf8mb4_czech_ci DEFAULT NULL,
+                                  `lng` varchar(255) COLLATE utf8mb4_czech_ci DEFAULT NULL,
+                                  `website` text COLLATE utf8mb4_czech_ci,
+                                  `sort` int(11) DEFAULT NULL,
+                                  `system` tinyint(1) NOT NULL DEFAULT 0,
+                                  PRIMARY KEY (`id`),
+                                  KEY `stamp_id` (`stamp_id`),
+                                  CONSTRAINT `tz_salespoints_stamp` FOREIGN KEY (`stamp_id`) REFERENCES `tz_stamps` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
+
+
 DROP TABLE IF EXISTS `tz_stamps`;
 CREATE TABLE `tz_stamps` (
                              `id` int(11) NOT NULL AUTO_INCREMENT,
+                             `source_id` int(11) DEFAULT NULL,
                              `name` text COLLATE utf8mb4_czech_ci NOT NULL,
-                             `type` varchar(255) COLLATE utf8mb4_czech_ci NOT NULL,
-                             `region` varchar(255) COLLATE utf8mb4_czech_ci NOT NULL,
-                             `created_at` date NOT NULL,
+                             `type` varchar(255) COLLATE utf8mb4_czech_ci DEFAULT NULL,
+                             `region` varchar(255) COLLATE utf8mb4_czech_ci DEFAULT NULL,
+                             `created_at` date DEFAULT NULL,
                              `lat` varchar(255) COLLATE utf8mb4_czech_ci NOT NULL,
                              `lng` varchar(255) COLLATE utf8mb4_czech_ci NOT NULL,
                              `image` text COLLATE utf8mb4_czech_ci,
+                             `description` text COLLATE utf8mb4_czech_ci,
+                             `detail_url` text COLLATE utf8mb4_czech_ci,
+                             `website` text COLLATE utf8mb4_czech_ci,
+                             `wikipedia` text COLLATE utf8mb4_czech_ci,
+                             `facebook` text COLLATE utf8mb4_czech_ci,
+                             `image_url` text COLLATE utf8mb4_czech_ci,
                              PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
 

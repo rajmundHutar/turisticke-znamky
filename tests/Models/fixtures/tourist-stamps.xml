@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tourist_stamp_feed schema_version="1" data_version="101" generated_at="2026-10-30T15:30:04Z">
+	<content_hash algorithm="sha256">0000000000000000000000000000000000000000000000000000000000000000</content_hash>
+	<tourist_stamp_count>5</tourist_stamp_count>
+	<tourist_stamps>
+		<tourist_stamp id="3535">
+			<code>1000001</code>
+			<number>1</number>
+			<name>Praděd</name>
+			<description>Nejvyšší hora Moravy &amp; Slezska.</description>
+			<country id="1">
+				<code>CZ</code>
+				<name>Czech Republic</name>
+			</country>
+			<location>
+				<latitude>50.0832</latitude>
+				<longitude>17.2310</longitude>
+			</location>
+			<links>
+				<detail>https://turisticke-znamky.cz/items/3535</detail>
+				<website>https://www.praded.cz</website>
+				<wikipedia>https://cs.wikipedia.org/wiki/Prad%C4%9Bd</wikipedia>
+				<facebook>https://www.facebook.com/praded</facebook>
+			</links>
+			<primary_image id="1499">
+				<url>https://turisticke-znamky.cz/storage/item_images/medium/praded.png</url>
+			</primary_image>
+			<unknown_future_element attr="x"><nested>ignored</nested></unknown_future_element>
+			<salespoints count="2">
+				<salespoint id="789" system="false" sort="1">
+					<name>Informační centrum</name>
+					<location>
+						<latitude>50.0800</latitude>
+						<longitude>17.2300</longitude>
+					</location>
+					<website>https://ic.example.cz</website>
+				</salespoint>
+				<salespoint id="790" system="true">
+					<name>E-shop</name>
+				</salespoint>
+			</salespoints>
+		</tourist_stamp>
+		<tourist_stamp id="4000">
+			<number>2</number>
+			<name>Minimal</name>
+			<country id="1">
+				<code>CZ</code>
+				<name>Czech Republic</name>
+			</country>
+			<location>
+				<latitude>49.1</latitude>
+				<longitude>16.2</longitude>
+			</location>
+			<salespoints count="0"/>
+		</tourist_stamp>
+		<tourist_stamp id="5000">
+			<number>1</number>
+			<name>Slovak stamp</name>
+			<country id="2">
+				<code>SK</code>
+				<name>Slovakia</name>
+			</country>
+			<location>
+				<latitude>48.1</latitude>
+				<longitude>17.1</longitude>
+			</location>
+		</tourist_stamp>
+		<tourist_stamp id="6000">
+			<name>No country</name>
+		</tourist_stamp>
+		<tourist_stamp id="7000">
+			<number>3</number>
+			<name>CZ without location</name>
+			<country id="1">
+				<code>CZ</code>
+				<name>Czech Republic</name>
+			</country>
+		</tourist_stamp>
+		<tourist_stamp id="8000">
+			<name>CZ without number</name>
+			<country id="1">
+				<code>CZ</code>
+				<name>Czech Republic</name>
+			</country>
+			<location>
+				<latitude>49.5</latitude>
+				<longitude>15.5</longitude>
+			</location>
+		</tourist_stamp>
+	</tourist_stamps>
+</tourist_stamp_feed>

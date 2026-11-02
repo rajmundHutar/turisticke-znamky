@@ -32,18 +32,18 @@
 
     <div class="card-image stamp-image">
         <a n:href="Stamp:, id => $stamp['id']">
-            <figure class="image">
+            <figure n:if="$stamp['image']" class="image">
                 <img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
             </figure>
+            <span n:if="!$stamp['image']" class="icon is-large has-text-grey-lighter" title="{_'stamp.noImage'}">
+                <i class="fas fa-4x fa-image"></i>
+            </span>
         </a>
     </div>
     <div class="card-content">
         <div class="media">
             <div class="media-left">
                 <p class="title is-2">{$stamp['id']}</p>
-            </div>
-            <div class="media-content">
-                <p class="title is-6 has-text-right pt-5">{$stamp['type']}</p>
             </div>
         </div>
         <div class="media">
