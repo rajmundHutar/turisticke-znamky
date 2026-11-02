@@ -37,5 +37,7 @@ class CollectionStatsPresenter extends Presenter
 		$this->template->thisYearCollected = count(array_filter($collection, fn (CollectedStampDto $stamp) => $stamp->date?->format('Y') === date('Y')));
 		$this->template->percentage = CollectionStats::percentage($this->template->collectedCount, $this->template->totalCount);
 		$this->template->mostConsecutiveItems = CollectionStats::mostConsecutive($collection);
+		$this->template->lowestStamp = CollectionStats::lowest($collection);
+		$this->template->highestStamp = CollectionStats::highest($collection);
 	}
 }

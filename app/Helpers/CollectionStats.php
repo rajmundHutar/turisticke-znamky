@@ -40,6 +40,32 @@ final class CollectionStats
 	}
 
 
+	/** @param  CollectedStampDto[]  $items */
+	public static function lowest(array $items): ?CollectedStampDto
+	{
+		$lowest = null;
+		foreach ($items as $item) {
+			if ($lowest === null || $item->id < $lowest->id) {
+				$lowest = $item;
+			}
+		}
+		return $lowest;
+	}
+
+
+	/** @param  CollectedStampDto[]  $items */
+	public static function highest(array $items): ?CollectedStampDto
+	{
+		$highest = null;
+		foreach ($items as $item) {
+			if ($highest === null || $item->id > $highest->id) {
+				$highest = $item;
+			}
+		}
+		return $highest;
+	}
+
+
 	/** Percentage of collected stamps rounded to 2 decimals; 0 when there are no stamps. */
 	public static function percentage(int $collected, int $total): float
 	{

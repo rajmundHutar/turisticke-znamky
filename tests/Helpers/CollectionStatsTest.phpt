@@ -57,6 +57,15 @@ Assert::same([1, 2, 3], ids(CollectionStats::mostConsecutive(stamps([1, 2, 2, 3,
 Assert::same([4, 5, 6], ids(CollectionStats::mostConsecutive(stamps([6, 1, 5, 9, 4]))));
 
 
+// Lowest / highest stamp number
+Assert::null(CollectionStats::lowest([]));
+Assert::null(CollectionStats::highest([]));
+Assert::same(3, CollectionStats::lowest(stamps([42, 3, 17]))?->id);
+Assert::same(42, CollectionStats::highest(stamps([42, 3, 17]))?->id);
+Assert::same(5, CollectionStats::lowest(stamps([5]))?->id);
+Assert::same(5, CollectionStats::highest(stamps([5]))?->id);
+
+
 // Percentage of collected stamps; no stamps at all is 0 %, not a division by zero
 Assert::same(0.0, CollectionStats::percentage(0, 0));
 Assert::same(25.0, CollectionStats::percentage(1, 4));

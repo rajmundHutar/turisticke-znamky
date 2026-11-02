@@ -24,10 +24,26 @@
 				<p class="subtitle">{_'stats.collectedThisYear'}</p>
 			</article>
 		</div>
+	</div>
+	<div class="tile is-ancestor has-text-centered">
 		<div class="tile is-parent">
 			<article class="tile is-child box">
 				<p class="title" title="{array_map(fn ($item) => $item->id, $mostConsecutiveItems)|implode:', '}">{=count($mostConsecutiveItems)}</p>
 				<p class="subtitle">{_'stats.mostConsecutiveItems'}</p>
+			</article>
+		</div>
+		<div class="tile is-parent">
+			<article class="tile is-child box">
+				<p class="title">{if $lowestStamp}<a n:href="Stamp:default, id => $lowestStamp->id">{$lowestStamp->id}</a>{else}–{/if}</p>
+				<p n:if="$lowestStamp"><a n:href="Stamp:default, id => $lowestStamp->id">{$lowestStamp->name}</a></p>
+				<p class="subtitle">{_'stats.lowestNumber'}</p>
+			</article>
+		</div>
+		<div class="tile is-parent">
+			<article class="tile is-child box">
+				<p class="title">{if $highestStamp}<a n:href="Stamp:default, id => $highestStamp->id">{$highestStamp->id}</a>{else}–{/if}</p>
+				<p n:if="$highestStamp"><a n:href="Stamp:default, id => $highestStamp->id">{$highestStamp->name}</a></p>
+				<p class="subtitle">{_'stats.highestNumber'}</p>
 			</article>
 		</div>
 	</div>

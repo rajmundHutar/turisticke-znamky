@@ -14,4 +14,6 @@ class CollectionStatsDefaultTemplateParameters extends Template
 	public int $thisYearCollected;
 	/** @var list<\App\Dto\CollectedStampDto> */
 	public array $mostConsecutiveItems;
+	public ?\App\Dto\CollectedStampDto $lowestStamp;
+	public ?\App\Dto\CollectedStampDto $highestStamp;
 }
