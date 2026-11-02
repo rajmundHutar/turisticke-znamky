@@ -33,6 +33,7 @@ class StampPresenter extends Presenter
 	public function actionDefault(?string $id = null): void
 	{
 		$this->stampId = (int)$id;
+		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
 	}
 
 	public function handleToggleCollect(int $id)
@@ -54,7 +55,6 @@ class StampPresenter extends Presenter
 			self::NearbyStamps,
 			[$this->stampId]
 		);
-		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
 		$this->template->collection = $this->userCollection;
 
 	}
@@ -82,6 +82,7 @@ class StampPresenter extends Presenter
 					$this->user->getId(),
 					$values
 				);
+				$this->redirect('this');
 
 			});
 
@@ -113,6 +114,7 @@ class StampPresenter extends Presenter
 						$this->user->getId(),
 						$values
 					);
+					$this->redirect("this#stamp-{$stampId}");
 
 				});
 
