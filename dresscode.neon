@@ -2,6 +2,7 @@
 use:
 	- perCs   # PER Coding Style, of the standards the one a fix changes the fewest files of your code under
 	- modernizations
+	- deprecations
 
 paths: [app, tests]
 fileExtensions: [php, phpt]
@@ -57,3 +58,7 @@ classes:
 	emptyParentheses:
 		instantiation: forbidden      # your code, 84% of 38 places
 	instantiationWrapping: required   # your code, all 15 places
+	overridingMethod:
+		# set by `deprecations`, but renaming `UserModel::authenticate($email)` to `$username` is a risky fix
+		# (a call naming the argument `email:` would stop working); risky fixes are not used (#41)
+		parameterName: keep
