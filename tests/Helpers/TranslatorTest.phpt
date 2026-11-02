@@ -21,3 +21,7 @@ Assert::same(
 	'Loaded 3 new stamps out of 10.',
 	$translator->translate('admin.{new}stampsOutOf{total}', ['total' => 10, 'new' => 3]),
 );
+
+// Non-array parameter (form validator passes e.g. null as a count) returns the plain translation
+Assert::same('Submit', $translator->translate('general.submit', null));
+Assert::same('Submit', $translator->translate('general.submit', 3));

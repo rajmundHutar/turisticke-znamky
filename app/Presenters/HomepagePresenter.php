@@ -127,6 +127,7 @@ final class HomepagePresenter extends Presenter
 						$this->user->getId(),
 						$values
 					);
+					$this->redirect("this#stamp-{$stampId}");
 
 				});
 

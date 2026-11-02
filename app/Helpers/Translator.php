@@ -56,6 +56,7 @@ class Translator implements \Nette\Localization\Translator {
 		'form.filter.label' => 'Label',
 		'form.editStamp.date' => 'Date',
 		'form.editStamp.description' => 'Description',
+		'form.editStamp.invalidDate' => 'Invalid date, use D. M. YYYY.',
 
 	];
 
@@ -67,7 +68,8 @@ class Translator implements \Nette\Localization\Translator {
 			return $message;
 		}
 
-		if (!$parameters) {
+		// only an array of named placeholders is supported (form validators may pass e.g. a null count)
+		if (!is_array($parameters[0] ?? null)) {
 			return $translation;
 		}
 
