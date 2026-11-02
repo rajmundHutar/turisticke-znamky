@@ -31,5 +31,5 @@ Runtime data on the server (`app/config/local.neon`, `log/`, `temp/`, downloaded
 - Tabs for indentation, match the style of the surrounding file.
 - `phpstan-baseline.neon` holds known pre-existing errors. When you fix one, remove its baseline entry (PHPStan fails on unmatched entries). Never add new entries to hide new errors.
 - New tests go to `tests/<same path as app/>/<Class>Test.phpt`.
-- `app/config/local.neon` (DB credentials) is not in the repo.
+- `app/config/local.neon` (DB credentials) is not in the repo; `app/config/local.neon.dist` is the template with the Docker DB credentials.
 - Issues are tracked on GitHub; tickets ready for implementation carry the `rtm` label.
