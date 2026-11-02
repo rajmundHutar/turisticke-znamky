@@ -245,3 +245,14 @@ foreach (['date', '-date'] as $sort) {
 foreach (homepageFilters(null, [], ['onlyCollected' => '1', 'sort' => 'date']) as $filter) {
 	Assert::null($filter['userId'] ?? null);
 }
+
+
+// An unknown sort value, or a date sort outside "My collection" (the form doesn't offer it there), is ignored instead of crashing
+foreach (['nonsense', 'date', '-date'] as $sort) {
+	foreach (homepageFilters(['user'], [], ['sort' => $sort]) as $filter) {
+		Assert::null($filter['sort'], $sort);
+	}
+}
+foreach (homepageFilters(['user'], [], ['onlyCollected' => '1', 'sort' => 'nonsense']) as $filter) {
+	Assert::null($filter['sort']);
+}
