@@ -7,7 +7,6 @@ namespace App\Presenters;
 use App\Presenters\Traits\InjectTranslator;
 use Nette;
 
-
 final class Error4xxPresenter extends Nette\Application\UI\Presenter
 {
 	use InjectTranslator;

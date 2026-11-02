@@ -27,7 +27,8 @@
 		"cs-fix": "dresscode fix",
 		"check": [
 			"@phpstan",
-			"@test"
+			"@test",
+			"@cs"
 		]
 	},
 	"autoload": {

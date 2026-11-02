@@ -16,7 +16,7 @@ class Paginator extends Control {
 	protected \Nette\Utils\Paginator $paginator;
 
 	public function __construct() {
-		$this->paginator = new \Nette\Utils\Paginator();
+		$this->paginator = new \Nette\Utils\Paginator;
 	}
 
 	public function setTranslator(\Nette\Localization\Translator $translator): void {
@@ -24,7 +24,6 @@ class Paginator extends Control {
 		$this->monitor(Presenter::class, function() use ($translator) {
 			$this->template->setTranslator($translator);
 		});
-
 	}
 
 	public function getPage(): int {
@@ -60,7 +59,6 @@ class Paginator extends Control {
 
 		$this->template->setFile(__DIR__ . '/paginator.latte');
 		$this->template->render();
-
 	}
 
 

@@ -38,7 +38,6 @@ class EditStampForm extends BaseForm {
 		$this->form->setDefaults($defaults);
 
 		return $this->form;
-
 	}
 
 	/**

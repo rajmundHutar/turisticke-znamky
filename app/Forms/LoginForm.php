@@ -17,7 +17,6 @@ class LoginForm extends BaseForm {
 		$this->form->onSuccess[] = $onSuccess;
 
 		return $this->form;
-
 	}
 
 }

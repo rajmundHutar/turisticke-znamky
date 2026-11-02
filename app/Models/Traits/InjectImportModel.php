@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Models\Traits;
-
 
 use App\Models\ImportModel;
 
@@ -13,7 +11,6 @@ trait InjectImportModel {
 
 	public function injectImportModel(ImportModel $importModel) {
 		$this->importModel = $importModel;
-
 	}
 
 }

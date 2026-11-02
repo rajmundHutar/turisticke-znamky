@@ -10,8 +10,8 @@ use Tracy\Debugger;
 
 class ImportModel {
 
-	const IMAGES_PER_RUN = 500;
-	const SALESPOINTS_CHUNK = 500;
+	public const IMAGES_PER_RUN = 500;
+	public const SALESPOINTS_CHUNK = 500;
 
 	protected string $feedUrl;
 	protected string $stampsImagesPath;
@@ -26,7 +26,6 @@ class ImportModel {
 		$this->feedUrl = $feedUrl;
 		$this->stampsImagesPath = $stampsImagesPath;
 		$this->db = $db;
-
 	}
 
 	public function fetchLastLog(): ?ActiveRow {
@@ -36,7 +35,6 @@ class ImportModel {
 			->order('id DESC')
 			->limit(1)
 			->fetch();
-
 	}
 
 	public function fetchAllLogs(): array
@@ -71,14 +69,13 @@ class ImportModel {
 		$this->db
 			->table(\Table::ImportLog)
 			->insert([
-				'date' => new DateTime(),
+				'date' => new DateTime,
 				'parsed' => $countTotal,
 				'new' => $countNew,
 				'time' => (int) round(Debugger::timer()),
 			]);
 
 		return [$countTotal, $countNew];
-
 	}
 
 	/**
@@ -138,7 +135,6 @@ class ImportModel {
 		}
 
 		return [count($stampIds), $countNew];
-
 	}
 
 	/**
@@ -179,7 +175,6 @@ class ImportModel {
 		}
 
 		return $count;
-
 	}
 
 	/**
@@ -217,7 +212,6 @@ class ImportModel {
 			unlink($target);
 			throw new \RuntimeException($message);
 		}
-
 	}
 
 }

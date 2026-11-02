@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Models\Traits;
-
 
 use App\Models\CollectionModel;
 
@@ -13,7 +11,6 @@ trait InjectCollectionModel {
 
 	public function injectCollectionModel(CollectionModel $collectionModel) {
 		$this->collectionModel = $collectionModel;
-
 	}
 
 }

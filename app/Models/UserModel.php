@@ -44,7 +44,6 @@ class UserModel implements Authenticator {
 				'email' => $row['email'],
 			]
 		);
-
 	}
 
 	public function fetchByEmail(string $email) {
@@ -53,7 +52,6 @@ class UserModel implements Authenticator {
 			->table(\Table::Users)
 			->where('email', $email)
 			->fetch();
-
 	}
 
 }

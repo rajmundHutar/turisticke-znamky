@@ -19,12 +19,12 @@ use Nette\Application\UI\Presenter;
 final class HomepagePresenter extends Presenter
 {
 
-	use InjectMenu,
-		InjectFormFactory,
-		InjectTranslator,
-		InjectStampsModel,
-		InjectCollectionModel,
-		CollectStamps;
+	use InjectMenu;
+	use InjectFormFactory;
+	use InjectTranslator;
+	use InjectStampsModel;
+	use InjectCollectionModel;
+	use CollectStamps;
 
 	private const StampsPerPage = 200;
 
@@ -90,7 +90,7 @@ final class HomepagePresenter extends Presenter
 
 	public function createComponentPaginator(): Control
 	{
-		$paginator = new Paginator();
+		$paginator = new Paginator;
 		$paginator->setTranslator($this->translator);
 		return $paginator;
 	}

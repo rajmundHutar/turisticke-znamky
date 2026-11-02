@@ -19,7 +19,6 @@ class FilterForm extends BaseForm {
 		};
 
 		return $this->form;
-
 	}
 
 }

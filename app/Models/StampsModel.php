@@ -54,7 +54,6 @@ class StampsModel {
 		}
 
 		return $query;
-
 	}
 
 	public function fetch(int $id): ?ActiveRow {
@@ -113,7 +112,6 @@ class StampsModel {
 		}
 
 		return $closest;
-
 	}
 
 	private static function mysqlEscapeLike(string $string, string $wildcards = 'both'): string {
@@ -138,11 +136,9 @@ class StampsModel {
 		return sprintf(
 			$format,
 			addcslashes(
-				str_replace('\\', '\\\\', $string)
-				, "\x00\n\r'%_"
+				str_replace('\\', '\\\\', $string), "\x00\n\r'%_"
 			)
 		);
-
 	}
 
 }

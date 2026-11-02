@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-
 namespace App\Helpers;
-
 
 class GPS {
 
@@ -14,8 +12,8 @@ class GPS {
 		$R = 6371000; // metres
 		$sig1 = $lat1 * M_PI / 180; // sig, λ in radians
 		$sig2 = $lat2 * M_PI / 180;
-		$deltaSig = ($lat2 - $lat1) * M_PI/180;
-		$deltaLambda = ($lon2 - $lon1) * M_PI/180;
+		$deltaSig = ($lat2 - $lat1) * M_PI / 180;
+		$deltaLambda = ($lon2 - $lon1) * M_PI / 180;
 
 		$a = sin($deltaSig / 2) * sin($deltaSig / 2) +
 			cos($sig1) * cos($sig2) *
@@ -23,7 +21,6 @@ class GPS {
 		$c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
 		return $R * $c; // in metres
-
 	}
 
 	/**
@@ -32,7 +29,6 @@ class GPS {
 	public static function lngScale(float $lat): float {
 
 		return cos(deg2rad($lat));
-
 	}
 
 	public static function prettyDistance(float $distance): string {
@@ -46,7 +42,6 @@ class GPS {
 		}
 
 		return floor($distance / 1000) . " km";
-
 	}
 
 }

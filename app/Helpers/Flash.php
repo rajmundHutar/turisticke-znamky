@@ -2,8 +2,8 @@
 
 class Flash {
 
-	const ERROR = 'danger';
-	const SUCCESS = 'success';
-	const INFO = 'info';
+	public const ERROR = 'danger';
+	public const SUCCESS = 'success';
+	public const INFO = 'info';
 
 }

@@ -13,9 +13,8 @@ abstract class BaseForm extends Form {
 
 	public function __construct(Translator $translator) {
 
-		$this->form = new Form();
+		$this->form = new Form;
 		$this->form->setTranslator($translator);
-
 	}
 
 }

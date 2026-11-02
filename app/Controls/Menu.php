@@ -21,7 +21,6 @@ class Menu extends Control {
 		$presenter->getUser()->logout(true);
 		// the homepage root, so persistent filters (e.g. "My collection") don't survive the logout
 		$presenter->redirectUrl($presenter->getHttpRequest()->getUrl()->getBaseUrl());
-
 	}
 
 	public function render() {
@@ -29,7 +28,6 @@ class Menu extends Control {
 		$this->template->setTranslator($this->translator);
 		$this->template->setFile(__DIR__ . '/Menu.latte');
 		$this->template->render();
-
 	}
 
 }

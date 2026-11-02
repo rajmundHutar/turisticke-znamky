@@ -8,7 +8,7 @@ use Tester\Assert;
 require __DIR__ . '/../bootstrap.php';
 
 
-$translator = new Translator();
+$translator = new Translator;
 
 // Known key
 Assert::same('Submit', $translator->translate('general.submit'));

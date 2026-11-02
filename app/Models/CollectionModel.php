@@ -45,7 +45,6 @@ class CollectionModel {
 			->where('stamp_id', $stampId)
 			->where('user_id', $userId)
 			->update($data);
-
 	}
 
 	public function toggleCollect(int $id, int $userId): bool {
@@ -62,11 +61,10 @@ class CollectionModel {
 			->insert([
 				'stamp_id' => $id,
 				'user_id' => $userId,
-				'date' => new \DateTime(),
+				'date' => new \DateTime,
 			]);
 
 		return true;
-
 	}
 
 }

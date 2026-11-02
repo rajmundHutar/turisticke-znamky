@@ -23,14 +23,14 @@ class StampPresenter extends Presenter
 	use InjectCollectionModel;
 	use CollectStamps;
 
-	const NearbyStamps = 20;
+	public const NearbyStamps = 20;
 
 	protected ?int $stampId = null;
 	protected ?ActiveRow $stamp;
 
 	public function actionDefault(?string $id = null): void
 	{
-		$this->stampId = (int)$id;
+		$this->stampId = (int) $id;
 		$this->stamp = $this->stampsModel->fetch($this->stampId);
 		if (!$this->stamp) {
 			$this->error();
@@ -48,19 +48,18 @@ class StampPresenter extends Presenter
 
 		$this->template->stamp = $this->stamp;
 		$this->template->closest = $this->stampsModel->fetchClosest(
-			(float)$this->stamp['lat'],
-			(float)$this->stamp['lng'],
+			(float) $this->stamp['lat'],
+			(float) $this->stamp['lng'],
 			self::NearbyStamps,
 			[$this->stampId]
 		);
 		$this->template->salespoints = $this->stampsModel->fetchSalespoints($this->stampId);
 		$this->template->collection = $this->userCollection;
-
 	}
 
 	public function createComponentEditSingleStampForm()
 	{
-		return $this->createEditStampForm((int)$this->stampId, 'this');
+		return $this->createEditStampForm((int) $this->stampId, 'this');
 	}
 
 }
