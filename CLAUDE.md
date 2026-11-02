@@ -10,7 +10,7 @@ Everything runs in Docker (PHP 8.5, `.docker/php/Dockerfile`); the host PHP is n
 - `docker compose run --rm app composer test` – Nette Tester suite in `tests/` (`*.phpt`)
 - `docker compose run --rm app composer phpstan` – static analysis, level 5, config in `phpstan.neon`
 - `docker compose run --rm app composer check` – PHPStan + tests; run before every PR
-- `docker compose up` – app on http://localhost:8082 (container listens on 8080), MySQL on port 13306 (schema from `.docker/db/init.sql`)
+- `docker compose up` – app on http://localhost:8082 (container listens on 8080), MySQL on port 13306 (schema from `.docker/db/init.sql`, applied only on the first start; data persists in the `db-data` volume, `docker compose down -v` resets it)
 
 Tests need no database. There are no DB/integration tests yet; acceptance criteria that need a DB are verified manually against the running app.
 
