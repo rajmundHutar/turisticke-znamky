@@ -35,22 +35,29 @@ function initDatepicker() {
 
     const elems = document.querySelectorAll('input[data-datepicker]');
     elems.forEach((elem)=>{
+        const typed = elem.value
         const datepicker = new Datepicker(elem, {
             format: {
                 toValue(date, format, locale) {
                     // parse d. m. yyyy (or legacy Y-m-d) as a local calendar date
                     let m = date.match(/^\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\s*$/);
-                    if (m) {
-                        return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+                    const [year, month, day] = m ? [m[3], m[2], m[1]] : (date.match(/^(\d{4})-(\d{2})-(\d{2})$/) || []).slice(1);
+                    if (!year) {
+                        return undefined;
                     }
-                    m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                    return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : undefined;
+                    const value = new Date(Number(year), Number(month) - 1, Number(day));
+                    // reject impossible dates like 31. 2. instead of rolling them over to March
+                    return value.getMonth() === Number(month) - 1 && value.getDate() === Number(day) ? value : undefined;
                 },
                 toDisplay(date, format, locale) {
                     return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()}`;
                 },
             },
         });
+        // the datepicker clears a value it can't parse; keep what the user typed so the form error makes sense
+        if (typed && !elem.value) {
+            elem.value = typed
+        }
     })
 
 }
