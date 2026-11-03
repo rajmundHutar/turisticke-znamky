@@ -90,12 +90,15 @@ function login(User $user, Session $session, array $params = [], string $passwor
 }
 
 
-/** Opens the admin page as an anonymous user; returns the backlink of the redirect to login. */
-function openAdminAnonymously(Session $session): string
+/**
+ * Opens the admin page as an anonymous user; returns the backlink of the redirect to login.
+ * @param  array<string, string>  $params
+ */
+function openAdminAnonymously(Session $session, array $params = []): string
 {
 	$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null), [], $session);
-	$response = $presenter->run(new Request('Admin', 'GET', ['action' => 'default']));
+	$response = $presenter->run(new Request('Admin', 'GET', ['action' => 'default'] + $params));
 	Assert::type(RedirectResponse::class, $response);
 	assert($response instanceof RedirectResponse);
 	Assert::contains('/login', $response->getUrl());
@@ -115,6 +118,13 @@ Assert::true($user->isLoggedIn());
 Assert::same(1, $userModel->authenticateCalls);
 Assert::match('http://localhost/admin/?_fid=%[0-9a-z]+%', $url);
 Assert::same('login.loginSuccessful', $presenter->getTemplate()->flashes[0]->message);
+
+
+// A signal in the original request is dropped: login returns to the page, not to the signal (#22)
+$session = createSession();
+$backlink = openAdminAnonymously($session, ['do' => 'importStamps']);
+[, $url] = login(PresenterTestHelpers::createUser(null, new CountingUserModel), $session, ['backlink' => $backlink]);
+Assert::match('http://localhost/admin/?_fid=%[0-9a-z]+%', $url);
 
 
 // The stored request is used only once

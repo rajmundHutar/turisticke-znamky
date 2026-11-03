@@ -8,6 +8,7 @@ use App\Models\Traits\InjectImportModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
+use App\Presenters\Traits\RedirectToLogin;
 use Nette;
 
 final class AdminPresenter extends Nette\Application\UI\Presenter
@@ -15,6 +16,7 @@ final class AdminPresenter extends Nette\Application\UI\Presenter
 
 	use InjectMenu;
 	use InjectTranslator;
+	use RedirectToLogin;
 	use InjectStampsModel;
 	use InjectImportModel;
 
@@ -23,7 +25,7 @@ final class AdminPresenter extends Nette\Application\UI\Presenter
 
 		parent::startup();
 		if (!$this->user->isLoggedIn()) {
-			$this->redirect('Login:', ['backlink' => $this->storeRequest()]);
+			$this->redirectToLogin();
 		}
 		if (!$this->user->isInRole('admin')) {
 			$this->error('Admin role is required.', Nette\Http\IResponse::S403_Forbidden);

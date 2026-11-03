@@ -12,6 +12,7 @@ use App\Presenters\AdminPresenter;
 use Nette\Application\BadRequestException;
 use Nette\Application\Request;
 use Nette\Application\Responses\RedirectResponse;
+use Nette\Http\Session;
 use Tester\Assert;
 use Tests\Presenters\PresenterTestHelpers;
 
@@ -63,10 +64,10 @@ final class FakeImportModel extends ImportModel
  * @param  array<string, string>  $params
  * @param  array<string, string>  $headers
  */
-function runAdmin(?array $roles, array $params, FakeImportModel $importModel, array $headers = [], ?AdminPresenter $presenter = null): Nette\Application\Response
+function runAdmin(?array $roles, array $params, FakeImportModel $importModel, array $headers = [], ?AdminPresenter $presenter = null, ?Session $session = null): Nette\Application\Response
 {
 	$presenter ??= new AdminPresenter(PresenterTestHelpers::createTranslator());
-	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles), $headers);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles), $headers, $session);
 	$presenter->injectImportModel($importModel);
 	$presenter->injectStampsModel((new ReflectionClass(StampsModel::class))->newInstanceWithoutConstructor());
 	return $presenter->run(new Request('Admin', 'GET', $params));
@@ -92,6 +93,26 @@ foreach ($requests as $params) {
 	Assert::same('Login', $presenter->getLastCreatedRequest()?->getPresenterName());
 	Assert::same('default', $presenter->getLastCreatedRequest()?->getParameter('action'));
 	Assert::match('%[0-9a-z]{5}%', (string) $presenter->getLastCreatedRequest()?->getParameter('backlink'));
+	Assert::same([], $importModel->calls);
+}
+
+
+// A signal is never stored for after login: following an attacker's link anonymously and then logging in
+// would replay it from our own login page, passing the same-origin check (#22)
+foreach (['importStamps', 'importImages'] as $signal) {
+	$importModel = new FakeImportModel;
+	$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+	$session = new Session(new Nette\Http\Request(new Nette\Http\UrlScript('http://localhost/')), new Nette\Http\Response);
+	runAdmin(null, ['action' => 'default', 'do' => $signal], $importModel, ['Sec-Fetch-Site' => 'cross-site'], $presenter, $session);
+	$backlink = (string) $presenter->getLastCreatedRequest()?->getParameter('backlink');
+	$stored = $session->getSection('Nette.Application/requests')->get($backlink)[1];
+	Assert::type(Request::class, $stored);
+	Assert::same(['action' => 'default'], $stored->getParameters());
+	Assert::exception( // replaying the stored request as admin only renders the page
+		fn() => runAdmin(['admin'], $stored->getParameters(), $importModel, $sameOrigin),
+		LogicException::class,
+		'Not expected in this test.',
+	);
 	Assert::same([], $importModel->calls);
 }
 
