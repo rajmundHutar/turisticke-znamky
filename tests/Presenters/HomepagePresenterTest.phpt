@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: HomepagePresenter persistent params and collect form redirect (#29, #48); no type filter (#14)
+ * Test: HomepagePresenter persistent params and collect form redirect (#29, #48); no type filter (#14); jump to a stamp by its number (#48)
  */
 
 declare(strict_types=1);
@@ -336,3 +336,84 @@ Assert::contains('<div class="collect-sheet-photo"></div>', $html);
 Assert::notContains('class="card"', $html);
 Assert::notContains('ribbon', $html);
 
+
+/** StampsModel double knowing only the stamp 1984; lists nothing. */
+final class HomepageJumpStampsModel extends App\Models\StampsModel
+{
+	/** @var list<int> */
+	public array $fetched = [];
+
+
+	public function __construct()
+	{
+	}
+
+
+	public function fetch(int $id): ?Nette\Database\Table\ActiveRow
+	{
+		$this->fetched[] = $id;
+		if ($id !== 1984) {
+			return null;
+		}
+		$selection = (new ReflectionClass(Nette\Database\Table\Selection::class))->newInstanceWithoutConstructor();
+		(new ReflectionProperty(Nette\Database\Table\Selection::class, 'cache'))->setValue($selection, null);
+		return new Nette\Database\Table\ActiveRow(['id' => 1984], $selection);
+	}
+
+
+	public function search(array $filter, $limit = null, $offset = null): ?array
+	{
+		return null;
+	}
+
+
+	public function count(array $filter = []): int
+	{
+		return 0;
+	}
+}
+
+
+/**
+ * Submits the filter form (GET) with the given search term.
+ * @return array{?Nette\Application\Response, HomepageJumpStampsModel}
+ */
+function submitSearch(string $search): array
+{
+	$translator = PresenterTestHelpers::createTranslator();
+	$formFactory = new FormFactory($translator);
+	$formFactory->register(new App\Forms\FilterForm($translator));
+	$formFactory->register(new EditStampForm($translator));
+	$stampsModel = new HomepageJumpStampsModel;
+	$presenter = new HomepagePresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']);
+	$presenter->injectCollectionModel(new HomepageCollectionModelWith([]));
+	$presenter->injectStampsModel($stampsModel);
+	$presenter->injectFormFactory($formFactory);
+	$response = $presenter->run(new Request('Homepage', 'GET', [
+		'action' => 'default',
+		'search' => $search,
+		'sort' => 'id',
+		'do' => 'filterForm-submit',
+	]));
+	return [$response, $stampsModel];
+}
+
+
+// Searching for the exact number of an existing stamp goes straight to its detail (#48)
+foreach (['1984', ' 1984 '] as $search) {
+	[$response] = submitSearch($search);
+	Assert::type(RedirectResponse::class, $response, $search);
+	assert($response instanceof RedirectResponse);
+	Assert::same('/stamp/1984', (new Nette\Http\Url($response->getUrl()))->getPath());
+	Assert::null((new Nette\Http\Url($response->getUrl()))->getQueryParameter('search'));
+}
+
+
+// Not a pure number, or a number of no stamp: the normal search results (#48)
+foreach (['19x', '1984 Praha', '1985'] as $search) {
+	[$response, $stampsModel] = submitSearch($search);
+	Assert::type(Nette\Application\Responses\TextResponse::class, $response, $search);
+}
+[, $stampsModel] = submitSearch('19x');
+Assert::same([], $stampsModel->fetched); // no lookup for a term that is not a number

@@ -14,6 +14,7 @@ use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Control;
+use Nette\Application\UI\Form;
 use Nette\Application\UI\Presenter;
 
 final class HomepagePresenter extends Presenter
@@ -69,7 +70,15 @@ final class HomepagePresenter extends Presenter
 
 	public function createComponentFilterForm()
 	{
-		return $this->formFactory->create(FilterForm::class, $this->getSortOptions());
+		$form = $this->formFactory->create(FilterForm::class, $this->getSortOptions());
+		$form->onSubmit[] = function (Form $form): void {
+			// the exact number of a stamp goes straight to its detail
+			$search = trim((string) $form->getUntrustedValues('array')['search']);
+			if (preg_match('~^\d+$~', $search) && $this->stampsModel->fetch((int) $search)) {
+				$this->redirect('Stamp:', ['id' => (int) $search]);
+			}
+		};
+		return $form;
 	}
 
 	/**
