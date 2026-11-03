@@ -29,10 +29,10 @@
                     lng: position.coords.longitude,
                 })
             }, function () {
-                alert("Geolocation is not allowed by this browser.");
+                alert({{_'nearby.geolocationNotAllowed'}});
             });
         } else {
-            alert("Geolocation is not allowed by this browser.");
+            alert({{_'nearby.geolocationNotAllowed'}});
         }
     })
 </script>

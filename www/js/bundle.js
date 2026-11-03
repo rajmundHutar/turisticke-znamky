@@ -31,12 +31,27 @@ function ajax(url, params) {
         });
 }
 
+// Czech locale of vanillajs-datepicker (locale files are not bundled in datepicker-full.min.js)
+Datepicker.locales.cs = {
+    days: ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'],
+    daysShort: ['ned', 'pon', 'úte', 'stř', 'čtv', 'pát', 'sob'],
+    daysMin: ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'],
+    months: ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'],
+    monthsShort: ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro'],
+    today: 'Dnes',
+    clear: 'Vymazat',
+    titleFormat: 'MM y',
+    weekStart: 1,
+};
+
 function initDatepicker() {
 
     const elems = document.querySelectorAll('input[data-datepicker]');
     elems.forEach((elem)=>{
         const typed = elem.value
         const datepicker = new Datepicker(elem, {
+            language: 'cs',
+            weekStart: 1,
             format: {
                 toValue(date, format, locale) {
                     // parse d. m. yyyy (or legacy Y-m-d) as a local calendar date
@@ -152,7 +167,7 @@ function initConfirmButtons() {
     const elems = document.querySelectorAll('.confirm');
     elems.forEach((elem)=>{
         elem.addEventListener('click', (e) => {
-            const result = confirm('Really commit action?')
+            const result = confirm('Opravdu odebrat známku ze sbírky?')
             if (!result) {
                 e.preventDefault();
             }
