@@ -28,6 +28,7 @@ services:
 	- App\Models\ImportModel(%feedUrl%, %stampsImagesPath%)
 	- App\Models\UserModel
 	- App\Models\CollectionModel
+	- App\Models\LoginThrottle
 
 	# Controls
 	- App\Controls\Menu(@translator)

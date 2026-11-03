@@ -1,18 +1,20 @@
 <?php
 
 /**
- * Test: LoginPresenter returns to the stored request after login (#22)
+ * Test: LoginPresenter returns to the stored request after login (#22) and throttles failed logins (#38)
  */
 
 declare(strict_types=1);
 
 use App\Forms\FormFactory;
 use App\Forms\LoginForm;
+use App\Models\LoginThrottle;
 use App\Models\UserModel;
 use App\Presenters\AdminPresenter;
 use App\Presenters\LoginPresenter;
 use Nette\Application\Request;
 use Nette\Application\Responses\RedirectResponse;
+use Nette\Caching\Storages\MemoryStorage;
 use Nette\Http\Session;
 use Nette\Security\Passwords;
 use Nette\Security\User;
@@ -64,14 +66,15 @@ function createSession(): Session
  * @param  array<string, string>  $params
  * @return array{LoginPresenter, string}
  */
-function login(User $user, Session $session, array $params = [], string $password = 'secret'): array
+function login(User $user, Session $session, array $params = [], string $password = 'secret', ?LoginThrottle $throttle = null): array
 {
 	$translator = PresenterTestHelpers::createTranslator();
 	$formFactory = new FormFactory($translator);
 	$formFactory->register(new LoginForm($translator));
 	$presenter = new LoginPresenter($translator);
-	PresenterTestHelpers::injectPrimary($presenter, $user, ['Sec-Fetch-Site' => 'same-origin'], $session);
+	PresenterTestHelpers::injectPrimary($presenter, $user, ['Sec-Fetch-Site' => 'same-origin'], $session, '10.0.0.1');
 	$presenter->injectFormFactory($formFactory);
+	$presenter->injectLoginThrottle($throttle ?? new LoginThrottle(new MemoryStorage));
 	$response = $presenter->run(new Request(
 		'Login',
 		'POST',
@@ -148,6 +151,39 @@ $formFactory->register(new LoginForm($translator));
 $presenter = new LoginPresenter($translator);
 PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null), [], createSession());
 $presenter->injectFormFactory($formFactory);
+$presenter->injectLoginThrottle(new LoginThrottle(new MemoryStorage));
 $response = $presenter->run(new Request('Login', 'GET', ['action' => 'default', 'backlink' => 'abc12']));
 assert($response instanceof Nette\Application\Responses\TextResponse);
 Assert::match('%A%<form action="/login/?backlink=abc12" method="post"%A%', (string) $response->getSource());
+
+
+// After 5 failed attempts the next one is rejected without verifying the password, even a correct one (#38)
+$throttle = new LoginThrottle(new MemoryStorage);
+$userModel = new CountingUserModel;
+$user = PresenterTestHelpers::createUser(null, $userModel);
+for ($i = 0; $i < 5; $i++) {
+	[$presenter] = login($user, createSession(), [], 'wrong', $throttle);
+	Assert::same('login.loginNotSuccessful', $presenter->getTemplate()->flashes[0]->message);
+}
+Assert::same(5, $userModel->authenticateCalls);
+[$presenter, $url] = login($user, createSession(), [], 'secret', $throttle);
+Assert::same(5, $userModel->authenticateCalls);
+Assert::false($user->isLoggedIn());
+Assert::same('login.tooManyAttempts', $presenter->getTemplate()->flashes[0]->message);
+Assert::same(Flash::ERROR, $presenter->getTemplate()->flashes[0]->type);
+Assert::match('http://localhost/login/?_fid=%[0-9a-z]+%', $url);
+
+
+// A successful login resets the counter for the e-mail and the IP (#38)
+$throttle = new LoginThrottle(new MemoryStorage);
+$user = PresenterTestHelpers::createUser(null, new CountingUserModel);
+for ($i = 0; $i < 4; $i++) {
+	login($user, createSession(), [], 'wrong', $throttle);
+}
+login($user, createSession(), [], 'secret', $throttle);
+Assert::true($user->isLoggedIn());
+$user->logout(true);
+for ($i = 0; $i < 4; $i++) {
+	login($user, createSession(), [], 'wrong', $throttle);
+}
+Assert::false($throttle->isBlocked('jana@example.com', '10.0.0.1'));
