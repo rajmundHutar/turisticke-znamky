@@ -31,10 +31,13 @@ final class CountingUserModel extends UserModel
 {
 	public int $authenticateCalls = 0;
 
+	private string $hash;
+
 
 	public function __construct()
 	{
-		$this->passwords = new Passwords;
+		$this->passwords = new Passwords(PASSWORD_BCRYPT, ['cost' => 4]); // fast hashing, tests log in many times
+		$this->hash = $this->passwords->hash('secret');
 	}
 
 
@@ -48,7 +51,7 @@ final class CountingUserModel extends UserModel
 	public function fetchByEmail(string $email)
 	{
 		return $email === 'jana@example.com'
-			? ['id' => 1, 'email' => $email, 'password' => $this->passwords->hash('secret'), 'role' => 'admin']
+			? ['id' => 1, 'email' => $email, 'password' => $this->hash, 'role' => 'admin']
 			: null;
 	}
 }
