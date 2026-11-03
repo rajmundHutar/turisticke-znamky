@@ -45,7 +45,7 @@ class Translator implements \Nette\Localization\Translator
 		'detail.detailsOn' => 'Více na',
 		'detail.nearby' => 'Známky poblíž:',
 		'detail.website' => 'Web',
-		'detail.salespoints' => 'Prodejní místa:',
+		'detail.salespoints' => 'Kde koupit:',
 
 		'stats.numberOfCollected' => 'sebráno',
 		'stats.percentage' => 'procent',
