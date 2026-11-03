@@ -62,6 +62,8 @@ class Translator implements \Nette\Localization\Translator
 		'stamp.editInCollection' => 'Upravit ve sbírce',
 		'stamp.saveToCollection' => 'Uložit do sbírky',
 		'stamp.uncollectConfirm' => 'Opravdu odebrat známku ze sbírky?',
+		'stamp.sheet.add' => 'Přidat',
+		'stamp.sheet.edit' => 'Upravit',
 		'stamp.flash.added' => 'Známka přidána do sbírky.',
 		'stamp.flash.saved' => 'Uloženo.',
 		'stamp.flash.removed' => 'Známka odebrána ze sbírky.',

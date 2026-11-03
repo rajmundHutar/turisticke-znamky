@@ -338,7 +338,7 @@ foreach (['1', '7'] as $stampId) {
 	$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
 	$html = submitInvalidDate($collectionModel, $detailStamp, $closest, $stampId);
 	Assert::same([], $collectionModel->updates);
-	Assert::match('~<div id="collect-sheet" class="collect-sheet" hidden data-open>\s*<form[^>]+id="frm-collectForm".*value="31\. 2\. 2024".*Neplatné datum, zadejte D\. M\. RRRR\..*value="'
+	Assert::match('~<dialog id="collect-sheet" class="collect-sheet" [^>]*data-open>.*<form[^>]+id="frm-collectForm".*value="31\. 2\. 2024".*Neplatné datum, zadejte D\. M\. RRRR\..*value="'
 		. $stampId
 		. '".*</form>~s', $html);
 	Assert::same(1, substr_count($html, 'Neplatné datum'));
@@ -354,15 +354,15 @@ Assert::match(
 	$html,
 );
 Assert::match(
-	'~<div id="snippet--stamp-7">\s*<div class="card" id="stamp-7">.*class="button is-white stamp-edit-button js-collect" '
+	'~<div id="snippet--stamp-7">\s*<div class="card" id="stamp-7">.*class="button is-white stamp-card-button js-collect" '
 	. 'data-stamp-id="7" data-stamp-number="7" data-stamp-name="Bez obrázku" data-collected="0" data-date="" data-note=""~s',
 	$html,
 );
 Assert::contains('<div id="snippet--detailRibbon">', $html);
 Assert::notContains('toggleCollect', $html);
-Assert::notContains('<dialog', $html);
+Assert::same(1, substr_count($html, '<dialog'));
 Assert::same(1, substr_count($html, '<form'));
-Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm">', $html);
+Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm" class="ajax" data-naja-history="off">', $html);
 
 
 // An anonymous user gets no collect buttons nor the form

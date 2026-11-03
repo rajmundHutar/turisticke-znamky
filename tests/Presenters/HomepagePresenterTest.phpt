@@ -325,16 +325,33 @@ Assert::contains(
 );
 Assert::notContains('stamp.collectedOn', $rows[7]);
 
-// No per-row dialogs, forms or GET links changing the collection; one shared collect form per page (#48)
-Assert::notContains('<dialog', $html);
+// No per-row dialogs, forms or GET links changing the collection; one shared collect sheet and form per page (#48)
+Assert::same(1, substr_count($html, '<dialog'));
 Assert::notContains('toggleCollect', $html);
 Assert::same(2, substr_count($html, '<form')); // filter and collect form
-Assert::match('%A%<div id="snippet--collectSheet"><div id="collect-sheet" class="collect-sheet" hidden>%A%<form action="/?paginator-page=2" method="post" id="frm-collectForm">%A%', $html);
+Assert::match(
+	'%A%<div id="snippet--collectSheet"><dialog id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" '
+	. 'data-title-add="stamp.sheet.add" data-title-edit="stamp.sheet.edit">%A%'
+	. '<form action="/?paginator-page=2" method="post" id="frm-collectForm" class="ajax" data-naja-history="off">%A%',
+	$html,
+);
+Assert::contains('aria-label="general.closeDialog"', $html);
 Assert::contains('<div class="collect-sheet-photo"></div>', $html);
 
 // No old big cards on the homepage (#49)
 Assert::notContains('class="card"', $html);
 Assert::notContains('ribbon', $html);
+Assert::contains('<ul class="stamp-rows">', $html);
+
+// "My collection" marks the list, so bundle.js removes a stamp removed from the collection by AJAX (#48)
+$presenter = new HomepagePresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']));
+$presenter->injectCollectionModel(new HomepageCollectionModelWith([5 => collectedStamp(5, '2024-06-02')]));
+$presenter->injectStampsModel($stampsModel);
+$presenter->injectFormFactory($formFactory);
+$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'onlyCollected' => '1']));
+assert($response instanceof Nette\Application\Responses\TextResponse);
+Assert::contains('<ul class="stamp-rows" data-only-collected>', (string) $response->getSource());
 
 
 /** StampsModel double knowing only the stamp 1984; lists nothing. */

@@ -17,7 +17,7 @@
     </div>
 
     {if $user->isLoggedIn()}
-        {include "@collectButton.latte", stamp => $stamp, collection => $collection, class => 'button is-white stamp-edit-button'}
+        {include "@collectButton.latte", stamp => $stamp, collection => $collection, class => 'button is-white stamp-card-button'}
     {/if}
 
     <div class="card-image stamp-image">

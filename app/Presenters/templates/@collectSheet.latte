@@ -1,13 +1,15 @@
-{* The shared collect form, rendered once per page inside the 'collectSheet' snippet; the bottom sheet UI is built on it (#48).
-   The sheet fills the hidden id, date and note from the data attributes of the clicked .js-collect button. *}
-<div n:if="$user->isLoggedIn()" id="collect-sheet" class="collect-sheet" hidden{if $control['collectForm']->hasErrors()} data-open{/if}>
-	<form n:name="collectForm">
-		<p class="collect-sheet-title"></p>
+{* The shared collect form, rendered once per page inside the 'collectSheet' snippet, shown as a bottom sheet (#48).
+   bundle.js fills the hidden id, date, note and title from the data attributes of the clicked .js-collect button. *}
+<dialog n:if="$user->isLoggedIn()" id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" data-title-add="{_'stamp.sheet.add'}" data-title-edit="{_'stamp.sheet.edit'}"{if $control['collectForm']->hasErrors()} data-open{/if}>
+	<div class="collect-sheet-handle"></div>
+	<button type="button" class="delete is-medium collect-sheet-close" aria-label="{_'general.closeDialog'}"></button>
+	<form n:name="collectForm" class="ajax" data-naja-history="off">
+		<p class="collect-sheet-title" id="collect-sheet-title"></p>
 		<div class="collect-sheet-photo"></div>{* reserved for the photo of the stamp (#19) *}
 		<div class="field">
 			<label n:name="date" class="label" />
 			<div class="control">
-				<input n:name="date" class="input" data-datepicker>
+				<input n:name="date" class="input" data-datepicker autocomplete="off">
 			</div>
 			<p n:ifcontent class="help is-danger">{inputError date}</p>
 		</div>
@@ -18,9 +20,9 @@
 			</div>
 		</div>
 		<input n:name="id">
-		<div class="field">
+		<div class="field collect-sheet-buttons">
 			<input n:name="ok" class="button is-link">
-			<input n:name="remove" class="button is-pulled-right is-danger is-light" data-confirm="{_'stamp.uncollectConfirm'}">
+			<input n:name="remove" class="button is-danger is-light" data-confirm="{_'stamp.uncollectConfirm'}">
 		</div>
 	</form>
-</div>
+</dialog>

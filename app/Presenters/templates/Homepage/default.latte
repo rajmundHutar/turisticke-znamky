@@ -37,7 +37,8 @@
 
 		{control paginator}
 
-		<ul class="stamp-rows">
+		{* bundle.js removes a stamp removed from the collection from "My collection" *}
+		<ul class="stamp-rows"{if $presenter->onlyCollected} data-only-collected{/if}>
 			{snippetArea stamps}
 				{foreach $stamps as $stamp}
 					<li>
