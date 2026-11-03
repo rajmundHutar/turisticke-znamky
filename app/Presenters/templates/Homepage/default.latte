@@ -36,13 +36,13 @@
 
 		{control paginator}
 
-		<div class="columns is-multiline px-4">
+		<ul class="stamp-rows">
 			{foreach $stamps as $stamp}
-				<div class="column is-3">
-					{include "../@stampCard.latte", stamp => $stamp, collection => $collection}
-				</div>
+				<li>
+					{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
+				</li>
 			{/foreach}
-		</div>
+		</ul>
 
 		{control paginator}
 	{/if}

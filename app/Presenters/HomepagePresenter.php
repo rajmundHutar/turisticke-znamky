@@ -26,7 +26,7 @@ final class HomepagePresenter extends Presenter
 	use InjectCollectionModel;
 	use CollectStamps;
 
-	private const StampsPerPage = 200;
+	private const StampsPerPage = 60;
 
 	#[Persistent]
 	public ?string $search = '';

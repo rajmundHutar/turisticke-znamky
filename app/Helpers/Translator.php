@@ -58,6 +58,8 @@ class Translator implements \Nette\Localization\Translator
 		'stamp.collect' => 'Přidat do sbírky',
 		'stamp.uncollect' => 'Odebrat ze sbírky',
 		'stamp.noImage' => 'Zatím bez obrázku',
+		'stamp.collectedOn' => 'Sebráno',
+		'stamp.editInCollection' => 'Upravit ve sbírce',
 
 		'admin.{count}loadedImages' => 'Nové obrázky: {count}.',
 		'admin.{new}stampsOutOf{total}' => 'Nové známky: {new} z {total}.',
