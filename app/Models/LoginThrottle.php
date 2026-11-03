@@ -6,9 +6,11 @@ namespace App\Models;
 
 use Nette\Caching\Cache;
 use Nette\Caching\Storage;
+use Nette\Security\AuthenticationException;
+use Nette\Utils\Strings;
 
 /**
- * Counts failed logins per e-mail and per IP; blocks further attempts after too many failures in a sliding time window.
+ * Counts failed logins per account and per IP; blocks further attempts after too many failures in a sliding time window.
  */
 class LoginThrottle
 {
@@ -21,46 +23,67 @@ class LoginThrottle
 	private \Closure $clock;
 
 
-	/** @param  (\Closure(): int)|null  $clock  current Unix time, injectable for tests */
-	public function __construct(Storage $storage, ?\Closure $clock = null)
-	{
+	/**
+	 * @param  string  $lockFile  serializes attempts across concurrent requests
+	 * @param  (\Closure(): int)|null  $clock  current Unix time, injectable for tests
+	 */
+	public function __construct(
+		private string $lockFile,
+		Storage $storage,
+		private UserModel $userModel,
+		?\Closure $clock = null,
+	) {
 		$this->cache = new Cache($storage, 'loginThrottle');
 		$this->clock = $clock ?? time(...);
 	}
 
 
-	public function isBlocked(string $email, ?string $ip): bool
+	/**
+	 * Runs the authentication unless the account or IP is blocked, and records its outcome.
+	 * The whole check-authenticate-record sequence holds an exclusive lock, so parallel requests can't exceed the limit.
+	 * @param  callable(): void  $authenticate  throws AuthenticationException on wrong credentials
+	 * @throws LoginThrottledException  too many recent failures; $authenticate was not called
+	 * @throws AuthenticationException
+	 */
+	public function attempt(string $email, ?string $ip, callable $authenticate): void
 	{
-		return array_any($this->keys($email, $ip), fn($key) => count($this->recentFailures($key)) >= self::MaxFailures);
-	}
+		$lock = fopen($this->lockFile, 'c') ?: throw new \RuntimeException("Cannot open lock file '$this->lockFile'.");
+		try {
+			flock($lock, LOCK_EX);
+			$accountKey = $this->accountKey($email);
+			$keys = $ip !== null && $ip !== '' ? [$accountKey, 'ip:' . $ip] : [$accountKey];
+			if (array_any($keys, fn($key) => count($this->recentFailures($key)) >= self::MaxFailures)) {
+				throw new LoginThrottledException('Too many failed login attempts.');
+			}
 
+			try {
+				$authenticate();
+			} catch (AuthenticationException $e) {
+				foreach ($keys as $key) {
+					$failures = $this->recentFailures($key);
+					$failures[] = ($this->clock)();
+					$this->cache->save($key, $failures, [Cache::Expire => self::WindowSeconds]);
+				}
+				throw $e;
+			}
 
-	public function recordFailure(string $email, ?string $ip): void
-	{
-		foreach ($this->keys($email, $ip) as $key) {
-			$failures = $this->recentFailures($key);
-			$failures[] = ($this->clock)();
-			$this->cache->save($key, $failures, [Cache::Expire => self::WindowSeconds]);
+			// The IP counter is shared by all accounts and only expires, so logging into an own account can't hide password spraying
+			$this->cache->remove($accountKey);
+
+		} finally {
+			flock($lock, LOCK_UN);
+			fclose($lock);
 		}
 	}
 
 
-	public function reset(string $email, ?string $ip): void
+	/** Existing accounts are keyed by id, as the DB collation matches more spellings than any normalization here. */
+	private function accountKey(string $email): string
 	{
-		foreach ($this->keys($email, $ip) as $key) {
-			$this->cache->remove($key);
-		}
-	}
-
-
-	/** @return list<string> */
-	private function keys(string $email, ?string $ip): array
-	{
-		$keys = ['email:' . strtolower(trim($email))];
-		if ($ip !== null && $ip !== '') {
-			$keys[] = 'ip:' . $ip;
-		}
-		return $keys;
+		$row = $this->userModel->fetchByEmail($email);
+		return $row
+			? 'user:' . $row['id']
+			: 'email:' . strtolower(Strings::toAscii(trim($email)));
 	}
 
 

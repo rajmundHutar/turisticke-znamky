@@ -28,7 +28,7 @@ services:
 	- App\Models\ImportModel(%feedUrl%, %stampsImagesPath%)
 	- App\Models\UserModel
 	- App\Models\CollectionModel
-	- App\Models\LoginThrottle
+	- App\Models\LoginThrottle(%tempDir%/login-throttle.lock)
 
 	# Controls
 	- App\Controls\Menu(@translator)

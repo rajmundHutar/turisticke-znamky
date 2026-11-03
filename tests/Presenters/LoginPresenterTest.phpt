@@ -57,6 +57,12 @@ final class CountingUserModel extends UserModel
 }
 
 
+function createLoginThrottle(): LoginThrottle
+{
+	return new LoginThrottle((string) tempnam(sys_get_temp_dir(), 'login-throttle'), new MemoryStorage, new CountingUserModel);
+}
+
+
 function createSession(): Session
 {
 	$httpRequest = new Nette\Http\Request(new Nette\Http\UrlScript('http://localhost/'));
@@ -77,7 +83,7 @@ function login(User $user, Session $session, array $params = [], string $passwor
 	$presenter = new LoginPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, $user, ['Sec-Fetch-Site' => 'same-origin'], $session, '10.0.0.1');
 	$presenter->injectFormFactory($formFactory);
-	$presenter->injectLoginThrottle($throttle ?? new LoginThrottle(new MemoryStorage));
+	$presenter->injectLoginThrottle($throttle ?? createLoginThrottle());
 	$response = $presenter->run(new Request(
 		'Login',
 		'POST',
@@ -164,14 +170,14 @@ $formFactory->register(new LoginForm($translator));
 $presenter = new LoginPresenter($translator);
 PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null), [], createSession());
 $presenter->injectFormFactory($formFactory);
-$presenter->injectLoginThrottle(new LoginThrottle(new MemoryStorage));
+$presenter->injectLoginThrottle(createLoginThrottle());
 $response = $presenter->run(new Request('Login', 'GET', ['action' => 'default', 'backlink' => 'abc12']));
 assert($response instanceof Nette\Application\Responses\TextResponse);
 Assert::match('%A%<form action="/login/?backlink=abc12" method="post"%A%', (string) $response->getSource());
 
 
 // After 5 failed attempts the next one is rejected without verifying the password, even a correct one (#38)
-$throttle = new LoginThrottle(new MemoryStorage);
+$throttle = createLoginThrottle();
 $userModel = new CountingUserModel;
 $user = PresenterTestHelpers::createUser(null, $userModel);
 for ($i = 0; $i < 5; $i++) {
@@ -187,8 +193,8 @@ Assert::same(Flash::ERROR, $presenter->getTemplate()->flashes[0]->type);
 Assert::match('http://localhost/login/?_fid=%[0-9a-z]+%', $url);
 
 
-// A successful login resets the counter for the e-mail and the IP (#38)
-$throttle = new LoginThrottle(new MemoryStorage);
+// A successful login resets only the account counter; the shared IP counter keeps counting (#38)
+$throttle = createLoginThrottle();
 $user = PresenterTestHelpers::createUser(null, new CountingUserModel);
 for ($i = 0; $i < 4; $i++) {
 	login($user, createSession(), [], 'wrong', $throttle);
@@ -196,7 +202,8 @@ for ($i = 0; $i < 4; $i++) {
 login($user, createSession(), [], 'secret', $throttle);
 Assert::true($user->isLoggedIn());
 $user->logout(true);
-for ($i = 0; $i < 4; $i++) {
-	login($user, createSession(), [], 'wrong', $throttle);
-}
-Assert::false($throttle->isBlocked('jana@example.com', '10.0.0.1'));
+[$presenter] = login($user, createSession(), [], 'wrong', $throttle);
+Assert::same('login.loginNotSuccessful', $presenter->getTemplate()->flashes[0]->message);
+[$presenter] = login($user, createSession(), [], 'secret', $throttle);
+Assert::same('login.tooManyAttempts', $presenter->getTemplate()->flashes[0]->message);
+Assert::false($user->isLoggedIn());
