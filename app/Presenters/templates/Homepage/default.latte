@@ -37,12 +37,15 @@
 
 		{control paginator}
 
-		<ul class="stamp-rows">
-			{foreach $stamps as $stamp}
-				<li>
-					{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
-				</li>
-			{/foreach}
+		{* bundle.js removes a stamp removed from the collection from "My collection" *}
+		<ul class="stamp-rows"{if $presenter->onlyCollected} data-only-collected{/if}>
+			{snippetArea stamps}
+				{foreach $stamps as $stamp}
+					<li>
+						{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
+					</li>
+				{/foreach}
+			{/snippetArea}
 		</ul>
 
 		{control paginator}
@@ -58,5 +61,7 @@
 			</a>
 		</div>
 	</article>
+
+	<div n:snippet="collectSheet">{include "../@collectSheet.latte"}</div>
 
 </div>

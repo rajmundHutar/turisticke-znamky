@@ -44,6 +44,8 @@ class NearbyPresenter extends Presenter
 		$this->template->lat = $this->lat;
 		$this->template->lng = $this->lng;
 
+		// the whole 'stamps' snippet on every AJAX request (also after a collect form submit, not just the changed stamp):
+		// the collect sheet lives inside it, so its form action gets lat/lng once the location is known
 		if ($this->isAjax()) {
 			$this->redrawControl('stamps');
 		}

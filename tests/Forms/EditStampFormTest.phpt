@@ -54,7 +54,7 @@ function submitDate(string $date): array
 		'EditStampFormTest',
 		'POST',
 		['action' => 'default', 'do' => 'form-submit'],
-		['id' => '5', 'date' => $date, 'comment' => 'Windy', 'ok' => 'general.submit'],
+		['id' => '5', 'date' => $date, 'comment' => 'Windy', 'ok' => 'stamp.saveToCollection'],
 	));
 	return [$presenter->received, $presenter['form']];
 }

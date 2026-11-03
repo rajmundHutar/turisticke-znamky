@@ -6,67 +6,86 @@ namespace App\Presenters\Traits;
 
 use App\Forms\EditStampForm;
 use Nette\Application\UI\Form;
-use Nette\Application\UI\Multiplier;
+use Nette\Utils\DateTime;
 
 /**
- * Collect toggle and edit form of stamp cards, shared by the presenters listing stamps.
- * Requires InjectCollectionModel and InjectFormFactory; the action loads $userCollection,
- * so the forms have their defaults also while processing a submit.
+ * One collect form (POST) for adding, editing and removing a stamp, shared by the presenters listing stamps.
+ * Requires InjectCollectionModel, InjectStampsModel, InjectFormFactory and InjectTranslator; the action loads
+ * $userCollection, so the form knows whether the stamp is collected while processing a submit.
  */
 trait CollectStamps
 {
+	use RedirectToLogin;
 
 	protected array $userCollection = [];
 
-	public function handleToggleCollect(int $id): void
+	/**
+	 * Fields: date (Czech d. m. yyyy, today by default), comment, hidden id of the stamp;
+	 * buttons: ok saves (adds or updates), remove removes the stamp from the collection.
+	 */
+	public function createComponentCollectForm(): Form
 	{
-		if ($this->user->isLoggedIn()) {
-			$this->collectionModel->toggleCollect($id, $this->user->getId());
-			$this->redirectAfterToggleCollect($id);
-		}
+		$form = $this->formFactory->create(
+			EditStampForm::class,
+			null,
+			['date' => new DateTime('today')],
+			function (Form $form, array $values): void {
+				if (!$this->user->isLoggedIn()) {
+					$this->redirectToLogin();
+				}
+				$stampId = (int) $values['id'];
+				$remove = $form->isSubmitted() === $form['remove'];
+				$userId = $this->user->getId();
+
+				if ($remove) {
+					$this->collectionModel->remove($stampId, $userId);
+					$flash = 'stamp.flash.removed';
+				} elseif (isset($this->userCollection[$stampId]) || $this->collectionModel->isCollected($stampId, $userId)) {
+					// checked again right before writing: a double submit must not insert a duplicate row
+					$this->collectionModel->update($stampId, $userId, ['date' => $values['date'], 'comment' => $values['comment']]);
+					$flash = 'stamp.flash.saved';
+				} else {
+					if (!$this->stampsModel->fetch($stampId)) {
+						$this->error();
+					}
+					$this->collectionModel->add($stampId, $userId, $values['date'], $values['comment']);
+					$flash = 'stamp.flash.added';
+				}
+				$this->flashMessage($this->t($flash), \Flash::SUCCESS);
+
+				if (!$this->isAjax()) {
+					$this->redirectAfterCollectionChange($stampId);
+				}
+				$this->userCollection = $this->collectionModel->fetchByUser($userId); // rendered in this request
+				$this->payload->stampId = $stampId;
+				$this->payload->collected = !$remove;
+				$this->redrawControl('flashes');
+				$this->redrawAfterCollectionChange($stampId);
+			}
+		);
+		$form->onError[] = function (): void {
+			if ($this->isAjax()) {
+				$this->redrawControl('collectSheet');
+			}
+		};
+		return $form;
 	}
 
 	/**
-	 * Redirects back after toggling a stamp; to the card's anchor by default.
+	 * Redirects back after a change of the collection; to the stamp's anchor by default.
 	 */
-	protected function redirectAfterToggleCollect(int $id): void
+	protected function redirectAfterCollectionChange(int $id): void
 	{
 		$this->redirect("this#stamp-{$id}");
 	}
 
-	public function createComponentEditStampForm(): Multiplier
-	{
-		return new Multiplier(
-			fn(string $stampId) => $this->createEditStampForm((int) $stampId, "this#stamp-{$stampId}")
-		);
-	}
-
 	/**
-	 * Edit form of a collected stamp with its date and comment as defaults; redirects to $destination after saving.
+	 * Redraws the changed stamp after an AJAX change of the collection: its dynamic snippet in the 'stamps' area.
 	 */
-	private function createEditStampForm(int $stampId, string $destination): Form
+	protected function redrawAfterCollectionChange(int $id): void
 	{
-		$defaults = [];
-		if ($this->userCollection[$stampId] ?? null) {
-			$defaults['date'] = $this->userCollection[$stampId]->date;
-			$defaults['comment'] = $this->userCollection[$stampId]->comment;
-		}
-
-		return $this->formFactory->create(
-			EditStampForm::class,
-			$stampId,
-			$defaults,
-			function (Form $form, array $values) use ($destination) {
-				$stampId = $values['id'];
-				unset($values['id']);
-				$this->collectionModel->update(
-					(int) $stampId,
-					$this->user->getId(),
-					$values
-				);
-				$this->redirect($destination);
-			}
-		);
+		$this->redrawControl('stamps');
+		$this->redrawControl("stamp-{$id}");
 	}
 
 }

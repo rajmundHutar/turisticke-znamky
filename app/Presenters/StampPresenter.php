@@ -46,9 +46,20 @@ class StampPresenter extends Presenter
 		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
 	}
 
-	protected function redirectAfterToggleCollect(int $id): void
+	protected function redirectAfterCollectionChange(int $id): void
 	{
-		$this->redirect('this');
+		$this->redirect($id === $this->stampId ? 'this' : "this#stamp-{$id}");
+	}
+
+	protected function redrawAfterCollectionChange(int $id): void
+	{
+		if ($id === $this->stampId) {
+			$this->redrawControl('detailRibbon');
+			$this->redrawControl('detailCollection');
+		} else {
+			$this->redrawControl('stamps');
+			$this->redrawControl("stamp-{$id}");
+		}
 	}
 
 	public function renderDefault(): void
@@ -64,11 +75,6 @@ class StampPresenter extends Presenter
 		);
 		$this->template->salespoints = $this->stampsModel->fetchSalespoints($this->stampId);
 		$this->template->collection = $this->userCollection;
-	}
-
-	public function createComponentEditSingleStampForm()
-	{
-		return $this->createEditStampForm((int) $this->stampId, 'this');
 	}
 
 }

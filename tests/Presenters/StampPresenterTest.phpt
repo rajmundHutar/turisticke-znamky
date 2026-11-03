@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: StampPresenter edit forms store the values and redirect back (#3, #29), show invalid date errors (#31); the detail shows the feed data (#14, #4)
+ * Test: StampPresenter collect form stores the values and redirects back (#3, #29, #48), shows invalid date errors (#31); the detail shows the feed data (#14, #4)
  */
 
 declare(strict_types=1);
@@ -23,6 +23,7 @@ use Tests\Presenters\PresenterTestHelpers;
 
 require __DIR__ . '/../bootstrap.php';
 require __DIR__ . '/PresenterTestHelpers.php';
+require __DIR__ . '/../../app/Helpers/Flash.php'; // global class, loaded by RobotLoader in the app
 
 
 /** CollectionModel double without a database; records update calls. */
@@ -98,14 +99,17 @@ function assertUpdate(int $stampId, string $date, string $comment, array $update
 }
 
 
-// Submitting the edit form of a nearby stamp card stores the values and redirects back to the detail with the card's anchor
-$collectionModel = new StampFakeCollectionModel;
+$collected = static fn(int $id) => new CollectedStampDto($id, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2024-05-01'), 'Windy', null);
+
+
+// Submitting the collect form for a collected nearby stamp stores the values and redirects back to the detail with the card's anchor
+$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
 $presenter = createStampPresenter($collectionModel);
 $response = $presenter->run(new Request(
 	'Stamp',
 	'POST',
-	['action' => 'default', 'id' => '1', 'do' => 'editStampForm-7-submit'],
-	['id' => '7', 'date' => '1. 5. 2024', 'comment' => 'Windy', 'ok' => 'general.submit'],
+	['action' => 'default', 'id' => '1', 'do' => 'collectForm-submit'],
+	['id' => '7', 'date' => '1. 5. 2024', 'comment' => 'Windy', 'ok' => 'stamp.saveToCollection'],
 ));
 Assert::count(1, $collectionModel->updates);
 assertUpdate(7, '2024-05-01', 'Windy', $collectionModel->updates[0]);
@@ -117,14 +121,14 @@ Assert::same('stamp-7', $url->getFragment());
 Assert::null($url->getQueryParameter('do'));
 
 
-// Submitting the detail's own edit form stores the values and redirects back to the detail
-$collectionModel = new StampFakeCollectionModel;
+// Submitting the collect form for the collected detail stamp stores the values and redirects back to the detail
+$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
 $presenter = createStampPresenter($collectionModel);
 $response = $presenter->run(new Request(
 	'Stamp',
 	'POST',
-	['action' => 'default', 'id' => '1', 'do' => 'editSingleStampForm-submit'],
-	['id' => '1', 'date' => '2. 5. 2024', 'comment' => 'Foggy', 'ok' => 'general.submit'],
+	['action' => 'default', 'id' => '1', 'do' => 'collectForm-submit'],
+	['id' => '1', 'date' => '2. 5. 2024', 'comment' => 'Foggy', 'ok' => 'stamp.saveToCollection'],
 ));
 Assert::count(1, $collectionModel->updates);
 assertUpdate(1, '2024-05-02', 'Foggy', $collectionModel->updates[0]);
@@ -133,17 +137,6 @@ assert($response instanceof RedirectResponse);
 $url = new Nette\Http\Url($response->getUrl());
 Assert::same('/stamp/1', $url->getPath());
 Assert::null($url->getQueryParameter('do'));
-
-
-// The collection is loaded in the action, so the detail's edit form has its defaults before rendering (e.g. while processing a submit)
-$collectionModel = new StampFakeCollectionModel([
-	1 => new CollectedStampDto(1, 'Sněžka', 'type', 'region', new DateTime, '50.7', '15.7', 'img.jpg', new DateTime('2024-05-01'), 'Windy', null),
-]);
-$presenter = createStampPresenter($collectionModel);
-$presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => '1']));
-$form = $presenter['editSingleStampForm'];
-Assert::same('1. 5. 2024', $form['date']->getValue());
-Assert::same('Windy', $form['comment']->getValue());
 
 
 /** StampsModel double without a database. */
@@ -197,13 +190,19 @@ function createRow(array $data): ActiveRow
  * @param  array<string, mixed>  $stamp
  * @param  list<array<string, mixed>>  $salespoints
  * @param  array<int, array<string, mixed>>  $closest
+ * @param  list<string>|null  $roles
+ * @param  array<int, CollectedStampDto>  $collection
  */
-function renderStampDetail(array $stamp, array $salespoints = [], array $closest = [], string $mapyApiKey = ''): string
+function renderStampDetail(array $stamp, array $salespoints = [], array $closest = [], string $mapyApiKey = '', ?array $roles = null, array $collection = []): string
 {
-	$presenter = new StampPresenter(PresenterTestHelpers::createTranslator());
-	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null));
+	$translator = PresenterTestHelpers::createTranslator();
+	$formFactory = new FormFactory($translator);
+	$formFactory->register(new EditStampForm($translator));
+	$presenter = new StampPresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
 	$presenter->injectMapyConfig(new App\Helpers\MapyConfig($mapyApiKey));
-	$presenter->injectCollectionModel(new StampFakeCollectionModel);
+	$presenter->injectFormFactory($formFactory);
+	$presenter->injectCollectionModel(new StampFakeCollectionModel($collection));
 	$presenter->injectStampsModel(new StampFakeStampsModel($stamp, $salespoints, $closest));
 	$response = $presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => (string) $stamp['id']]));
 	Assert::type(TextResponse::class, $response);
@@ -303,11 +302,11 @@ Assert::same(404, $e->getCode());
 
 
 /**
- * Submits an edit form with an invalid date as a logged-in user collecting the detail stamp and the nearby stamp 7; returns the rendered page.
+ * Submits the collect form with an invalid date as a logged-in user collecting the detail stamp and the nearby stamp 7; returns the rendered page.
  * @param  array<string, mixed>  $stamp
  * @param  array<int, array<string, mixed>>  $closest
  */
-function submitInvalidDate(StampFakeCollectionModel $collectionModel, array $stamp, array $closest, string $formName, string $stampId): string
+function submitInvalidDate(StampFakeCollectionModel $collectionModel, array $stamp, array $closest, string $stampId): string
 {
 	$translator = new App\Helpers\Translator;
 	$formFactory = new FormFactory($translator);
@@ -321,8 +320,8 @@ function submitInvalidDate(StampFakeCollectionModel $collectionModel, array $sta
 	$response = $presenter->run(new Request(
 		'Stamp',
 		'POST',
-		['action' => 'default', 'id' => (string) $stamp['id'], 'do' => "$formName-submit"],
-		['id' => $stampId, 'date' => '31. 2. 2024', 'comment' => 'Rainy', 'ok' => 'general.submit'],
+		['action' => 'default', 'id' => (string) $stamp['id'], 'do' => 'collectForm-submit'],
+		['id' => $stampId, 'date' => '31. 2. 2024', 'comment' => 'Rainy', 'ok' => 'stamp.saveToCollection'],
 	));
 	Assert::type(TextResponse::class, $response);
 	assert($response instanceof TextResponse);
@@ -330,24 +329,46 @@ function submitInvalidDate(StampFakeCollectionModel $collectionModel, array $sta
 }
 
 
-$collected = static fn(int $id) => new CollectedStampDto($id, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2024-05-01'), 'Windy', null);
 $detailStamp = ['id' => 1] + $feedStamp;
 
 
-// An invalid date in the detail's own edit form is not saved; the error is shown at the form with the entered value kept (#31)
-$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
-$html = submitInvalidDate($collectionModel, $detailStamp, $closest, 'editSingleStampForm', '1');
-Assert::same([], $collectionModel->updates);
-Assert::match('~<form[^>]+id="frm-editSingleStampForm".*value="31\. 2\. 2024".*Neplatné datum, zadejte D\. M\. RRRR\..*</form>~s', $html);
-Assert::notContains('data-open', $html); // the nearby card's dialog stays closed
+// An invalid date in the collect form is not saved; the error is shown in the shared sheet with the entered value kept,
+// the sheet opens on page load (#31, #48)
+foreach (['1', '7'] as $stampId) {
+	$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
+	$html = submitInvalidDate($collectionModel, $detailStamp, $closest, $stampId);
+	Assert::same([], $collectionModel->updates);
+	Assert::match('~<dialog id="collect-sheet" class="collect-sheet" [^>]*data-open>.*<form[^>]+id="frm-collectForm".*value="31\. 2\. 2024".*Neplatné datum, zadejte D\. M\. RRRR\..*value="'
+		. $stampId
+		. '".*</form>~s', $html);
+	Assert::same(1, substr_count($html, 'Neplatné datum'));
+}
 
 
-// An invalid date in a nearby card's edit form is not saved; the error is shown in its dialog, which opens on page load (#31)
-$collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
-$html = submitInvalidDate($collectionModel, $detailStamp, $closest, 'editStampForm-7', '7');
-Assert::same([], $collectionModel->updates);
-Assert::match('~<dialog class="modal" data-stampId="7" data-open>\s*.*value="31\. 2\. 2024".*Neplatné datum, zadejte D\. M\. RRRR\..*</dialog>~s', $html);
-Assert::same(1, substr_count($html, 'Neplatné datum')); // not at the detail's own form
+// A logged-in user sees the date and note of the collected detail stamp and buttons with the data for the shared sheet;
+// no GET links nor per-card forms change the collection (#48)
+$html = renderStampDetail($detailStamp, [], $closest, roles: ['user'], collection: [1 => $collected(1)]);
+Assert::match(
+	'~<div class="column px-6" id="snippet--detailCollection">.*stamp.collectedOn 1. 5. 2024.*Windy.*'
+	. 'data-stamp-id="1" data-stamp-number="1" data-stamp-name="Nová známka" data-collected="1" data-date="1. 5. 2024" data-note="Windy"~s',
+	$html,
+);
+Assert::match(
+	'~<div id="snippet--stamp-7">\s*<div class="card" id="stamp-7">.*class="button is-white stamp-card-button js-collect" '
+	. 'data-stamp-id="7" data-stamp-number="7" data-stamp-name="Bez obrázku" data-collected="0" data-date="" data-note=""~s',
+	$html,
+);
+Assert::contains('<div id="snippet--detailRibbon">', $html);
+Assert::notContains('toggleCollect', $html);
+Assert::same(1, substr_count($html, '<dialog'));
+Assert::same(1, substr_count($html, '<form'));
+Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>', $html);
+
+
+// An anonymous user gets no collect buttons nor the form
+$html = renderStampDetail($detailStamp, [], $closest);
+Assert::notContains('js-collect', $html);
+Assert::notContains('<form', $html);
 
 
 // The Mapy.cz API key comes from the configuration, not from the template (#39)

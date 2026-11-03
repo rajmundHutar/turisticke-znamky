@@ -1,35 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    initDatepicker()
+    initDatepicker(document)
     initNavbarBurger()
-    initModalWindows()
-    initConfirmButtons()
+    initCollectSheet()
 
 });
 
-function ajax(url, params) {
-
-    const searchParams = new URLSearchParams(params);
-
-    const options = {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-    }
-
-    fetch(url + '?' + searchParams.toString(), options)
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(myJson) {
-
-            // Render snippets
-            for (const [key, value] of Object.entries(myJson.snippets || {})) {
-                document.getElementById(key).innerHTML = value;
-            }
-
-        });
-}
+// AJAX for forms and links with the class 'ajax' (https://naja.js.org)
+naja.initialize()
+naja.snippetHandler.addEventListener('afterUpdate', (event) => initDatepicker(event.detail.snippet))
 
 // Czech locale of vanillajs-datepicker (locale files are not bundled in datepicker-full.min.js)
 Datepicker.locales.cs = {
@@ -44,14 +23,19 @@ Datepicker.locales.cs = {
     weekStart: 1,
 };
 
-function initDatepicker() {
+// binds the datepicker to the date inputs in the element, skipping inputs that already have one
+function initDatepicker(element) {
 
-    const elems = document.querySelectorAll('input[data-datepicker]');
+    const elems = element.querySelectorAll('input[data-datepicker]');
     elems.forEach((elem)=>{
+        if (elem.datepicker) {
+            return
+        }
         const typed = elem.value
         const datepicker = new Datepicker(elem, {
             language: 'cs',
             weekStart: 1,
+            orientation: 'top', // the input is in the bottom sheet, there is no room below it
             format: {
                 toValue(date, format, locale) {
                     // parse d. m. yyyy (or legacy Y-m-d) as a local calendar date
@@ -99,80 +83,169 @@ function initNavbarBurger() {
 
 }
 
-function initModalWindows() {
+// The bottom sheet with the shared collect form (#48). Everything is delegated from the document, because the
+// .js-collect buttons and the sheet itself are replaced by snippet redraws.
+function initCollectSheet() {
 
-    document.querySelectorAll('.stamp-edit-button').forEach((el) => {
-        var stampid = el.dataset.stampid
-        el.addEventListener('click', () => {
+    let trigger = null // the .js-collect button that opened the sheet
 
-            var modal = document.querySelector(`dialog[data-stampid="${stampid}"]`)
-            openModal(modal)
-            /*modal.showModal();
-            modal.classList.add('is-active')*/
-        })
-    })
+    const findSheet = () => document.getElementById('collect-sheet')
+    const findButton = (stampId) => document.querySelector(`.js-collect[data-stamp-id="${CSS.escape(stampId)}"]`)
 
-    // Reopen dialogs whose form failed validation
-    document.querySelectorAll('dialog[data-open]').forEach(openModal)
-
-    // Functions to open and close a modal
-    function openModal($el) {
-        $el.classList.add('is-active');
-        $el.showModal();
+    // today in the Czech format of the form, j. n. Y, in local time
+    function today() {
+        const date = new Date()
+        return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()}`
     }
 
-    function closeModal($el) {
-        $el.classList.remove('is-active');
-        $el.close();
-    }
-
-    function closeAllModals() {
-        (document.querySelectorAll('.modal') || []).forEach(($modal) => {
-            closeModal($modal);
-        });
-    }
-
-    // Add a click event on buttons to open a specific modal
-    (document.querySelectorAll('.js-modal-trigger') || []).forEach(($trigger) => {
-        const modal = $trigger.dataset.target;
-        const $target = document.getElementById(modal);
-
-        $trigger.addEventListener('click', () => {
-            openModal($target);
-        });
-    });
-
-    // Add a click event on various child elements to close the parent modal
-    (document.querySelectorAll('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot .button') || []).forEach(($close) => {
-        const $target = $close.closest('.modal');
-
-        $close.addEventListener('click', () => {
-            closeModal($target);
-        });
-    });
-
-    // Add a keyboard event to close all modals
-    document.addEventListener('keydown', (event) => {
-        const e = event || window.event;
-
-        if (e.keyCode === 27) { // Escape key
-            closeAllModals();
+    // fills the sheet for the stamp of the button; values only when opening, not when showing a form with errors
+    function fill(sheet, button, withValues) {
+        const form = sheet.querySelector('form')
+        const collected = button.dataset.collected === '1'
+        const title = collected ? sheet.dataset.titleEdit : sheet.dataset.titleAdd
+        sheet.querySelector('.collect-sheet-title').textContent = `${title} #${button.dataset.stampNumber} ${button.dataset.stampName}`
+        form.elements.namedItem('remove').classList.toggle('is-hidden', !collected)
+        if (!withValues) {
+            return
         }
-    });
+        form.elements.namedItem('id').value = button.dataset.stampId
+        const date = form.elements.namedItem('date')
+        date.value = collected ? button.dataset.date : today()
+        date.datepicker?.update()
+        form.elements.namedItem('comment').value = button.dataset.note
+        sheet.querySelectorAll('.help.is-danger, .collect-sheet-error').forEach((error) => error.remove())
+    }
 
-}
+    function show(sheet) {
+        if (!sheet.open) {
+            sheet.showModal()
+        }
+    }
 
-function initConfirmButtons() {
+    // a sheet rendered with a form error (on page load or by a snippet redraw) opens for the stamp in its form
+    function showWithErrors(sheet) {
+        if (!sheet?.hasAttribute('data-open')) {
+            return
+        }
+        const button = findButton(sheet.querySelector('form').elements.namedItem('id').value)
+        if (button) {
+            fill(sheet, button, false)
+        }
+        show(sheet)
+        // the invalid input instead of the first focusable element (the close button) that showModal() focused
+        const form = sheet.querySelector('form')
+        const invalid = form.querySelector('[aria-invalid="true"]') ?? form.elements.namedItem('date')
+        invalid.focus()
+    }
 
-    const elems = document.querySelectorAll('.confirm');
-    elems.forEach((elem)=>{
-        elem.addEventListener('click', (e) => {
-            const result = confirm('Opravdu odebrat známku ze sbírky?')
-            if (!result) {
-                e.preventDefault();
+    // disables or enables the submit buttons of the sheet, against a double submit while a request is pending
+    function setPending(pending) {
+        findSheet()?.querySelectorAll('form [type="submit"]').forEach((submit) => submit.disabled = pending)
+    }
+
+    // a failed request (network or server error) keeps the sheet open with a short message
+    function showError() {
+        const sheet = findSheet()
+        if (!sheet) {
+            return
+        }
+        let error = sheet.querySelector('.collect-sheet-error')
+        if (!error) {
+            error = document.createElement('div')
+            error.className = 'notification is-danger is-light collect-sheet-error'
+            error.setAttribute('role', 'alert')
+            error.textContent = sheet.dataset.errorText
+            sheet.querySelector('form').prepend(error)
+        }
+        show(sheet)
+    }
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('.js-collect')
+        const sheet = findSheet()
+        if (button && sheet) {
+            trigger = button
+            fill(sheet, button, true)
+            show(sheet)
+            return
+        }
+
+        const confirmed = event.target.closest('[data-confirm]')
+        if (confirmed && !confirm(confirmed.dataset.confirm)) {
+            event.preventDefault()
+            return
+        }
+
+        // the close button, or a click on the backdrop (outside the sheet's box)
+        if (event.target.closest('.collect-sheet-close')) {
+            sheet.close()
+        } else if (event.target === sheet) {
+            const box = sheet.getBoundingClientRect()
+            if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) {
+                sheet.close()
             }
-        });
+        }
     })
+
+    // Esc closes the open datepicker (its own handler) first, not the whole sheet
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && event.target.datepicker?.active) {
+            event.preventDefault()
+        }
+    }, true)
+
+    // the dialog returns the focus to the trigger itself; a trigger replaced by a snippet redraw gets it here
+    function focusReplacedTrigger() {
+        if (trigger && !trigger.isConnected) {
+            findButton(trigger.dataset.stampId)?.focus()
+        }
+    }
+
+    document.addEventListener('close', (event) => {
+        if (event.target.id === 'collect-sheet') {
+            focusReplacedTrigger()
+        }
+    }, true)
+
+    naja.snippetHandler.addEventListener('afterUpdate', (event) => showWithErrors(event.detail.snippet.querySelector('#collect-sheet')))
+
+    // requests of the collect form (the form itself or its submit button) are marked in their options
+    naja.uiHandler.addEventListener('interaction', (event) => {
+        if (event.detail.element.closest('#collect-sheet')) {
+            event.detail.options.collectSheet = true
+        }
+    })
+    naja.addEventListener('start', (event) => {
+        if (event.detail.options.collectSheet) {
+            setPending(true)
+        }
+    })
+    // also after an error or an abort (Esc)
+    naja.addEventListener('complete', (event) => {
+        if (event.detail.options.collectSheet) {
+            setPending(false)
+        }
+    })
+    naja.addEventListener('error', (event) => {
+        if (event.detail.options.collectSheet) {
+            showError()
+        }
+    })
+
+    naja.addEventListener('success', (event) => {
+        const { payload } = event.detail
+        if (payload.stampId === undefined) {
+            return
+        }
+        findSheet()?.close()
+        focusReplacedTrigger() // also when the open sheet itself was replaced by the redraw (Nearby)
+        // "My collection" lists collected stamps only; the server sends no snippet for a removed one
+        if (payload.collected === false) {
+            document.querySelector(`[data-only-collected] #stamp-${payload.stampId}`)?.closest('li')?.remove()
+        }
+    })
+
+    showWithErrors(findSheet())
 
 }
 

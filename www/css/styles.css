@@ -10,7 +10,7 @@
     position: relative;
 }
 
-.stamp-edit-button {
+.stamp-card-button {
     position: absolute;
     top: 15px;
     left: 15px;
@@ -230,9 +230,73 @@ dialog {
     padding: 0;
 }
 
-.stamp-row .stamp-edit-button {
-    position: static;
+/* bottom sheet of the shared collect form (#48); a theme (#53) restyles it through the variables */
+:root {
+    --collect-sheet-background: #fff;
+    --collect-sheet-color: #4a4a4a;
+    --collect-sheet-handle: #dbdbdb;
+    --collect-sheet-radius: 16px;
 }
+
+body:has(.collect-sheet[open]) {
+    overflow: hidden;
+}
+
+.collect-sheet {
+    position: fixed;
+    inset: auto 0 0 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0.5rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+    overflow: visible; /* the datepicker opens above its input, over the sheet's edge */
+    border-radius: var(--collect-sheet-radius) var(--collect-sheet-radius) 0 0;
+    background: var(--collect-sheet-background);
+    color: var(--collect-sheet-color);
+}
+
+.collect-sheet[open] {
+    animation: collect-sheet-up 0.2s ease-out;
+}
+
+@keyframes collect-sheet-up {
+    from {
+        transform: translateY(100%);
+    }
+}
+
+.collect-sheet-handle {
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 0.75rem;
+    border-radius: 2px;
+    background: var(--collect-sheet-handle);
+}
+
+.collect-sheet-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.collect-sheet-title {
+    margin-bottom: 1rem;
+    padding-right: 2.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: inherit;
+}
+
+.collect-sheet-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.collect-sheet-buttons .is-link {
+    flex: 1;
+}
+
 /* larger screens: the same single column, just scaled up */
 @media screen and (min-width: 1024px) {
     .stamp-list-page {
@@ -267,5 +331,25 @@ dialog {
         width: 56px;
         height: 56px;
         font-size: 1.25rem;
+    }
+}
+
+/* larger screens: the sheet is a centered dialog */
+@media screen and (min-width: 1024px) {
+    .collect-sheet {
+        inset: 0;
+        max-width: 480px;
+        height: fit-content;
+        margin: auto;
+        padding-top: 1.25rem;
+        border-radius: var(--collect-sheet-radius);
+    }
+
+    .collect-sheet[open] {
+        animation: none;
+    }
+
+    .collect-sheet-handle {
+        display: none;
     }
 }

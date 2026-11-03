@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: HomepagePresenter persistent params and edit form redirect (#29); no type filter (#14)
+ * Test: HomepagePresenter persistent params and collect form redirect (#29, #48); no type filter (#14); jump to a stamp by its number (#48)
  */
 
 declare(strict_types=1);
@@ -18,23 +18,27 @@ use Tests\Presenters\PresenterTestHelpers;
 
 require __DIR__ . '/../bootstrap.php';
 require __DIR__ . '/PresenterTestHelpers.php';
+require __DIR__ . '/../../app/Helpers/Flash.php'; // global class, loaded by RobotLoader in the app
 
 
-/** CollectionModel double without a database; records update calls. */
+/** CollectionModel double without a database with the stamp 5 collected; records update calls. */
 final class HomepageFakeCollectionModel extends CollectionModel
 {
 	/** @var list<array{int, int, array<string, mixed>}> */
 	public array $updates = [];
 
+	private array $collection;
+
 
 	public function __construct()
 	{
+		$this->collection = [5 => collectedStamp(5, '2024-01-01')];
 	}
 
 
 	public function fetchByUser(?int $userId): array
 	{
-		return [];
+		return $this->collection;
 	}
 
 
@@ -54,7 +58,8 @@ Assert::noError(function () {
 });
 
 
-// Submitting the edit form stores the values and redirects back (no stale collection rendered), keeping filter, sort and page (#29)
+// Submitting the collect form for a collected stamp stores the values and redirects back (no stale collection rendered),
+// keeping filter, sort and page (#29, #48)
 $translator = PresenterTestHelpers::createTranslator();
 $formFactory = new FormFactory($translator);
 $formFactory->register(new EditStampForm($translator));
@@ -75,9 +80,9 @@ $response = $presenter->run(new Request(
 		'sort' => '-date',
 		'onlyCollected' => '1',
 		'paginator-page' => '3',
-		'do' => 'editStampForm-5-submit',
+		'do' => 'collectForm-submit',
 	],
-	['id' => '5', 'date' => '2. 6. 2024', 'comment' => 'Sunny', 'ok' => 'general.submit'],
+	['id' => '5', 'date' => '2. 6. 2024', 'comment' => 'Sunny', 'ok' => 'stamp.saveToCollection'],
 ));
 Assert::count(1, $collectionModel->updates);
 [$stampId, $userId, $data] = $collectionModel->updates[0];
@@ -161,6 +166,7 @@ function homepageFilters(?array $roles, array $collection, array $params): array
 	$translator = PresenterTestHelpers::createTranslator();
 	$formFactory = new FormFactory($translator);
 	$formFactory->register(new App\Forms\FilterForm($translator));
+	$formFactory->register(new EditStampForm($translator)); // the collect form of a logged-in user
 	$stampsModel = new HomepageFakeStampsModel;
 
 	$presenter = new HomepagePresenter($translator);
@@ -300,22 +306,133 @@ foreach ($rows as $id => $row) {
 }
 Assert::contains('/images/stamps/stamp-5.jpg" alt="Stamp 5"', $rows[5]);
 
-// A collected stamp shows its date and a check button opening the edit dialog with the edit form (#49)
+// A collected stamp shows its date and a check button carrying the data for the shared collect sheet (#49, #48)
 Assert::contains('stamp.collectedOn 2. 6. 2024', $rows[5]);
-Assert::contains('class="button stamp-row-button is-success stamp-edit-button" data-stampid="5" aria-label="stamp.editInCollection"', $rows[5]);
-Assert::contains('<dialog class="modal" data-stampId="5"', $rows[5]);
-Assert::contains('name="_do" value="editStampForm-5-submit"', $rows[5]);
+Assert::contains(
+	'<button type="button" class="button stamp-row-button js-collect is-success" data-stamp-id="5" data-stamp-number="5" '
+	. 'data-stamp-name="Stamp 5" data-collected="1" data-date="2. 6. 2024" data-note="" aria-label="stamp.editInCollection"',
+	$rows[5],
+);
 // ... without a date just "collected" (#49)
 Assert::match('%A%stamp.collectedOn</span>%A%', $rows[9]);
-Assert::contains('data-stampid="9"', $rows[9]);
-Assert::contains('name="_do" value="editStampForm-9-submit"', $rows[9]);
+Assert::contains('data-stamp-id="9" data-stamp-number="9" data-stamp-name="Stamp 9" data-collected="1" data-date=""', $rows[9]);
 
-// A not collected stamp has the "+" collect toggle link and no edit dialog (#49)
-Assert::contains('href="/homepage/default/7?paginator-page=2&amp;do=toggleCollect" class="button stamp-row-button" aria-label="stamp.collect"', $rows[7]);
+// A not collected stamp has the "+" button for adding (#49, #48)
+Assert::contains(
+	'<button type="button" class="button stamp-row-button js-collect" data-stamp-id="7" data-stamp-number="7" '
+	. 'data-stamp-name="Stamp 7" data-collected="0" data-date="" data-note="" aria-label="stamp.collect"',
+	$rows[7],
+);
 Assert::notContains('stamp.collectedOn', $rows[7]);
-Assert::notContains('<dialog', $rows[7]);
-Assert::notContains('stamp-edit-button', $rows[7]);
+
+// No per-row dialogs, forms or GET links changing the collection; one shared collect sheet and form per page (#48)
+Assert::same(1, substr_count($html, '<dialog'));
+Assert::notContains('toggleCollect', $html);
+Assert::same(2, substr_count($html, '<form')); // filter and collect form
+Assert::match(
+	'%A%<div id="snippet--collectSheet"><dialog id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" '
+	. 'data-title-add="stamp.sheet.add" data-title-edit="stamp.sheet.edit" data-error-text="stamp.sheet.saveFailed">%A%'
+	. '<form action="/?paginator-page=2" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>%A%',
+	$html,
+);
+Assert::contains('aria-label="general.closeDialog"', $html);
+Assert::contains('<div class="collect-sheet-photo"></div>', $html);
 
 // No old big cards on the homepage (#49)
 Assert::notContains('class="card"', $html);
 Assert::notContains('ribbon', $html);
+Assert::contains('<ul class="stamp-rows">', $html);
+
+// "My collection" marks the list, so bundle.js removes a stamp removed from the collection by AJAX (#48)
+$presenter = new HomepagePresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']));
+$presenter->injectCollectionModel(new HomepageCollectionModelWith([5 => collectedStamp(5, '2024-06-02')]));
+$presenter->injectStampsModel($stampsModel);
+$presenter->injectFormFactory($formFactory);
+$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'onlyCollected' => '1']));
+assert($response instanceof Nette\Application\Responses\TextResponse);
+Assert::contains('<ul class="stamp-rows" data-only-collected>', (string) $response->getSource());
+
+
+/** StampsModel double knowing only the stamp 1984; lists nothing. */
+final class HomepageJumpStampsModel extends App\Models\StampsModel
+{
+	/** @var list<int> */
+	public array $fetched = [];
+
+
+	public function __construct()
+	{
+	}
+
+
+	public function fetch(int $id): ?Nette\Database\Table\ActiveRow
+	{
+		$this->fetched[] = $id;
+		if ($id !== 1984) {
+			return null;
+		}
+		$selection = (new ReflectionClass(Nette\Database\Table\Selection::class))->newInstanceWithoutConstructor();
+		(new ReflectionProperty(Nette\Database\Table\Selection::class, 'cache'))->setValue($selection, null);
+		return new Nette\Database\Table\ActiveRow(['id' => 1984], $selection);
+	}
+
+
+	public function search(array $filter, $limit = null, $offset = null): ?array
+	{
+		return null;
+	}
+
+
+	public function count(array $filter = []): int
+	{
+		return 0;
+	}
+}
+
+
+/**
+ * Submits the filter form (GET) with the given search term.
+ * @return array{?Nette\Application\Response, HomepageJumpStampsModel}
+ */
+function submitSearch(string $search): array
+{
+	$translator = PresenterTestHelpers::createTranslator();
+	$formFactory = new FormFactory($translator);
+	$formFactory->register(new App\Forms\FilterForm($translator));
+	$formFactory->register(new EditStampForm($translator));
+	$stampsModel = new HomepageJumpStampsModel;
+	$presenter = new HomepagePresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']);
+	$presenter->injectCollectionModel(new HomepageCollectionModelWith([]));
+	$presenter->injectStampsModel($stampsModel);
+	$presenter->injectFormFactory($formFactory);
+	$response = $presenter->run(new Request('Homepage', 'GET', [
+		'action' => 'default',
+		'search' => $search,
+		'sort' => 'id',
+		'do' => 'filterForm-submit',
+	]));
+	return [$response, $stampsModel];
+}
+
+
+// Searching for the exact number of an existing stamp goes straight to its detail, also with leading zeros (#48)
+foreach (['1984', ' 1984 ', '01984', '001984'] as $search) {
+	[$response] = submitSearch($search);
+	Assert::type(RedirectResponse::class, $response, $search);
+	assert($response instanceof RedirectResponse);
+	Assert::same('/stamp/1984', (new Nette\Http\Url($response->getUrl()))->getPath());
+	Assert::null((new Nette\Http\Url($response->getUrl()))->getQueryParameter('search'));
+}
+
+
+// Not a pure number, or a number of no stamp: the normal search results (#48)
+foreach (['19x', '1984 Praha', '1985', '0', '99999999999999999999'] as $search) {
+	Assert::noError(function () use ($search): void {
+		[$response] = submitSearch($search);
+		Assert::type(Nette\Application\Responses\TextResponse::class, $response, $search);
+	});
+}
+[, $stampsModel] = submitSearch('19x');
+Assert::same([], $stampsModel->fetched); // no lookup for a term that is not a number
