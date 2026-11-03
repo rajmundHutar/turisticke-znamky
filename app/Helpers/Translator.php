@@ -60,6 +60,11 @@ class Translator implements \Nette\Localization\Translator
 		'stamp.noImage' => 'Zatím bez obrázku',
 		'stamp.collectedOn' => 'Sebráno',
 		'stamp.editInCollection' => 'Upravit ve sbírce',
+		'stamp.saveToCollection' => 'Uložit do sbírky',
+		'stamp.uncollectConfirm' => 'Opravdu odebrat známku ze sbírky?',
+		'stamp.flash.added' => 'Známka přidána do sbírky.',
+		'stamp.flash.saved' => 'Uloženo.',
+		'stamp.flash.removed' => 'Známka odebrána ze sbírky.',
 
 		'admin.{count}loadedImages' => 'Nové obrázky: {count}.',
 		'admin.{new}stampsOutOf{total}' => 'Nové známky: {new} z {total}.',

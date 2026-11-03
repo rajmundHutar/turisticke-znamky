@@ -1,0 +1,26 @@
+{* The shared collect form, rendered once per page inside the 'collectSheet' snippet; the bottom sheet UI is built on it (#48).
+   The sheet fills the hidden id, date and note from the data attributes of the clicked .js-collect button. *}
+<div n:if="$user->isLoggedIn()" id="collect-sheet" class="collect-sheet" hidden{if $control['collectForm']->hasErrors()} data-open{/if}>
+	<form n:name="collectForm">
+		<p class="collect-sheet-title"></p>
+		<div class="collect-sheet-photo"></div>{* reserved for the photo of the stamp (#19) *}
+		<div class="field">
+			<label n:name="date" class="label" />
+			<div class="control">
+				<input n:name="date" class="input" data-datepicker>
+			</div>
+			<p n:ifcontent class="help is-danger">{inputError date}</p>
+		</div>
+		<div class="field">
+			<label n:name="comment" class="label" />
+			<div class="control">
+				<textarea n:name="comment" class="textarea" rows="2"></textarea>
+			</div>
+		</div>
+		<input n:name="id">
+		<div class="field">
+			<input n:name="ok" class="button is-link">
+			<input n:name="remove" class="button is-pulled-right is-danger is-light" data-confirm="{_'stamp.uncollectConfirm'}">
+		</div>
+	</form>
+</div>

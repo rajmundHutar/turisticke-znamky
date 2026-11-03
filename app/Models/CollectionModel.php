@@ -49,25 +49,27 @@ class CollectionModel
 			->update($data);
 	}
 
-	public function toggleCollect(int $id, int $userId): bool
+	public function add(int $stampId, int $userId, ?\DateTimeInterface $date, ?string $comment): void
 	{
-
-		$stamp = $this->fetch($id, $userId);
-
-		if ($stamp) {
-			$stamp->delete();
-			return false;
-		}
 
 		$this->db
 			->table(\Table::Collection)
 			->insert([
-				'stamp_id' => $id,
+				'stamp_id' => $stampId,
 				'user_id' => $userId,
-				'date' => new \DateTime,
+				'date' => $date,
+				'comment' => $comment,
 			]);
+	}
 
-		return true;
+	public function remove(int $stampId, int $userId): void
+	{
+
+		$this->db
+			->table(\Table::Collection)
+			->where('stamp_id', $stampId)
+			->where('user_id', $userId)
+			->delete();
 	}
 
 }

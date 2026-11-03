@@ -38,11 +38,13 @@
 		{control paginator}
 
 		<ul class="stamp-rows">
-			{foreach $stamps as $stamp}
-				<li>
-					{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
-				</li>
-			{/foreach}
+			{snippetArea stamps}
+				{foreach $stamps as $stamp}
+					<li>
+						{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
+					</li>
+				{/foreach}
+			{/snippetArea}
 		</ul>
 
 		{control paginator}
@@ -58,5 +60,7 @@
 			</a>
 		</div>
 	</article>
+
+	<div n:snippet="collectSheet">{include "../@collectSheet.latte"}</div>
 
 </div>

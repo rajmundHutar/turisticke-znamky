@@ -12,7 +12,7 @@ class EditStampForm extends BaseForm
 	private const DateFormat = 'j. n. Y';
 
 	public function create(
-		int $stampId,
+		?int $stampId,
 		array $defaults,
 		callable $onSuccess
 	): Form {
@@ -25,10 +25,14 @@ class EditStampForm extends BaseForm
 					'form.editStamp.invalidDate'
 				)
 				->addFilter(fn(string $value) => self::parseDate($value));
-		$this->form->addTextArea('comment', 'form.editStamp.description');
-		$this->form->addHidden('id', $stampId);
+		$this->form->addTextArea('comment', 'form.editStamp.description')
+			->setNullable();
+		$id = $this->form->addHidden('id', $stampId);
 
-		$this->form->addSubmit('ok', 'general.submit');
+		$this->form->addSubmit('ok', 'stamp.saveToCollection');
+		// removing needs just the stamp id, an invalid date in the form must not block it
+		$this->form->addSubmit('remove', 'stamp.uncollect')
+			->setValidationScope([$id]);
 
 		$this->form->onSuccess[] = $onSuccess;
 
