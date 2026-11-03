@@ -14,7 +14,7 @@ class LoginForm extends BaseForm
 
 		$this->form->addText('email', 'login.email');
 		$this->form->addPassword('password', 'login.password');
-		$this->form->addSubmit('ok', 'general.submit');
+		$this->form->addSubmit('ok', 'login.submit');
 
 		$this->form->onSuccess[] = $onSuccess;
 

@@ -338,7 +338,7 @@ $detailStamp = ['id' => 1] + $feedStamp;
 $collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
 $html = submitInvalidDate($collectionModel, $detailStamp, $closest, 'editSingleStampForm', '1');
 Assert::same([], $collectionModel->updates);
-Assert::match('~<form[^>]+id="frm-editSingleStampForm".*value="31\. 2\. 2024".*Invalid date, use D\. M\. YYYY\..*</form>~s', $html);
+Assert::match('~<form[^>]+id="frm-editSingleStampForm".*value="31\. 2\. 2024".*Neplatné datum, zadejte D\. M\. RRRR\..*</form>~s', $html);
 Assert::notContains('data-open', $html); // the nearby card's dialog stays closed
 
 
@@ -346,8 +346,8 @@ Assert::notContains('data-open', $html); // the nearby card's dialog stays close
 $collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
 $html = submitInvalidDate($collectionModel, $detailStamp, $closest, 'editStampForm-7', '7');
 Assert::same([], $collectionModel->updates);
-Assert::match('~<dialog class="modal" data-stampId="7" data-open>\s*.*value="31\. 2\. 2024".*Invalid date, use D\. M\. YYYY\..*</dialog>~s', $html);
-Assert::same(1, substr_count($html, 'Invalid date')); // not at the detail's own form
+Assert::match('~<dialog class="modal" data-stampId="7" data-open>\s*.*value="31\. 2\. 2024".*Neplatné datum, zadejte D\. M\. RRRR\..*</dialog>~s', $html);
+Assert::same(1, substr_count($html, 'Neplatné datum')); // not at the detail's own form
 
 
 // The Mapy.cz API key comes from the configuration, not from the template (#39)
