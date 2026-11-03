@@ -151,10 +151,16 @@ dialog {
 }
 
 /* compact stamp rows (#49) */
-.stamp-rows {
+/* the whole stamp list page (filter, pagination, rows) is one centered column, also on desktop */
+.stamp-list-page {
     max-width: 720px;
     margin: 0 auto;
     padding: 0 0.75rem;
+}
+
+.stamp-rows {
+    margin: 0;
+    padding: 0;
 }
 
 .stamp-row {
@@ -226,4 +232,40 @@ dialog {
 
 .stamp-row .stamp-edit-button {
     position: static;
+}
+/* larger screens: the same single column, just scaled up */
+@media screen and (min-width: 1024px) {
+    .stamp-list-page {
+        max-width: 960px;
+    }
+
+    .stamp-row {
+        gap: 1.25rem;
+        padding: 0.75rem 0;
+    }
+
+    .stamp-row-link {
+        gap: 1.25rem;
+    }
+
+    .stamp-row-thumb {
+        width: 176px;
+        height: 100px;
+        border-radius: 6px;
+    }
+
+    .stamp-row-number,
+    .stamp-row-date {
+        font-size: 0.95rem;
+    }
+
+    .stamp-row-name {
+        font-size: 1.35rem;
+    }
+
+    .stamp-row-button {
+        width: 56px;
+        height: 56px;
+        font-size: 1.25rem;
+    }
 }
