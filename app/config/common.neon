@@ -1,6 +1,7 @@
 parameters:
 	feedUrl: "https://turisticke-znamky.cz/api/feeds/tourist-stamps.xml"
 	stampsImagesPath: "%appDir%/../www/images/stamps/"
+	mapyApiKey: ""  # set in local.neon (not in git), restricted to the site's referrers in the Mapy.cz account
 
 application:
 	errorPresenter: Error
@@ -22,6 +23,7 @@ services:
 
 	# Helpers
 	translator: App\Helpers\Translator
+	- App\Helpers\MapyConfig(%mapyApiKey%)
 
 	# Models
 	- App\Models\StampsModel

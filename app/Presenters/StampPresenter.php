@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presenters;
 
+use App\Helpers\MapyConfig;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\CollectStamps;
@@ -28,6 +29,13 @@ class StampPresenter extends Presenter
 	protected ?int $stampId = null;
 	protected ?ActiveRow $stamp;
 
+	private string $mapyApiKey = '';
+
+	public function injectMapyConfig(MapyConfig $mapyConfig): void
+	{
+		$this->mapyApiKey = $mapyConfig->apiKey;
+	}
+
 	public function actionDefault(?string $id = null): void
 	{
 		$this->stampId = (int) $id;
@@ -47,6 +55,7 @@ class StampPresenter extends Presenter
 	{
 
 		$this->template->stamp = $this->stamp;
+		$this->template->mapyApiKey = $this->mapyApiKey;
 		$this->template->closest = $this->stampsModel->fetchClosest(
 			(float) $this->stamp['lat'],
 			(float) $this->stamp['lng'],

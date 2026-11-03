@@ -107,8 +107,7 @@
 {/block}
 
 <script n:syntax="double" n:block=userScript>
-	// replace with your own API key
-	const API_KEY = 'qsdduL32xP7zUe8rj174i2LSClOB0JlpArnIk3fG_3Y';
+	const API_KEY = {{$mapyApiKey}};
 	{{var $allStamps = array_merge([$stamp->toArray()], array_values($closest))}}
 	{{var $salespointMarkers = array_values(array_filter(array_map(fn($salespoint) => $salespoint->toArray(), $salespoints), fn($salespoint) => $salespoint['lat'] !== null && $salespoint['lng'] !== null))}}
 	new StampMap('map', {{$allStamps}}, {{$collection}}, {{$stamp['lat']}}, {{$stamp['lng']}}, {{$baseUrl}}, API_KEY, {{$salespointMarkers}});
