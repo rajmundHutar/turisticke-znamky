@@ -49,7 +49,9 @@ class LoginThrottle
 	{
 		$lock = fopen($this->lockFile, 'c') ?: throw new \RuntimeException("Cannot open lock file '$this->lockFile'.");
 		try {
-			flock($lock, LOCK_EX);
+			if (!flock($lock, LOCK_EX)) {
+				throw new \RuntimeException("Cannot lock '$this->lockFile'."); // never authenticate without the lock
+			}
 			$accountKey = $this->accountKey($email);
 			$keys = $ip !== null && $ip !== '' ? [$accountKey, 'ip:' . $ip] : [$accountKey];
 			if (array_any($keys, fn($key) => count($this->recentFailures($key)) >= self::MaxFailures)) {

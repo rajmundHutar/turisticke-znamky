@@ -117,6 +117,24 @@ foreach (['importStamps', 'importImages'] as $signal) {
 }
 
 
+// The same for a signal sent in a cross-site POST body (_do): only a plain GET of the page is stored (#22)
+$importModel = new FakeImportModel;
+$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+$session = new Session(new Nette\Http\Request(new Nette\Http\UrlScript('http://localhost/')), new Nette\Http\Response);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null), ['Sec-Fetch-Site' => 'cross-site'], $session);
+$presenter->injectImportModel($importModel);
+$presenter->injectStampsModel((new ReflectionClass(StampsModel::class))->newInstanceWithoutConstructor());
+$presenter->run(new Request('Admin', 'POST', ['action' => 'default'], ['_do' => 'importStamps'], ['file' => 'x']));
+$backlink = (string) $presenter->getLastCreatedRequest()?->getParameter('backlink');
+$stored = $session->getSection('Nette.Application/requests')->get($backlink)[1];
+Assert::type(Request::class, $stored);
+Assert::same('GET', $stored->getMethod());
+Assert::same(['action' => 'default'], $stored->getParameters());
+Assert::same([], $stored->getPost());
+Assert::same([], $stored->getFiles());
+Assert::same([], $importModel->calls);
+
+
 // Logged-in users without the admin role get 403 for every action and signal, and nothing is imported
 foreach ($requests as $params) {
 	$importModel = new FakeImportModel;
