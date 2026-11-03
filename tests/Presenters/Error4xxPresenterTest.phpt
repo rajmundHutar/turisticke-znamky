@@ -30,7 +30,7 @@ function renderError(int $code): string
 }
 
 
-foreach ([404 => 'Page Not Found', 403 => 'Access Denied'] as $code => $heading) {
+foreach ([404 => 'Stránka nenalezena', 403 => 'Přístup odepřen'] as $code => $heading) {
 	$html = renderError($code);
 	Assert::contains("<h1>$heading</h1>", $html);
 	Assert::contains('general.turistStampsTitle', $html); // layout title, translated by the identity translator

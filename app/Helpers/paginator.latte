@@ -1,4 +1,4 @@
-<nav n:if="$paginator->getPageCount() > 1" class="pagination" role="navigation" aria-label="pagination">
+<nav n:if="$paginator->getPageCount() > 1" class="pagination" role="navigation" aria-label="{_'general.pagination'}">
 
 	{var $currentPage = $paginator->getPage()}
 
@@ -13,7 +13,7 @@
 			<a
 				n:href="this, page => $paginator->getFirstPage()"
 				n:class="pagination-link, $paginator->isFirst() ? is-current"
-				aria-label="Goto page {$paginator->getFirstPage()}"
+				aria-label="{_'general.goToPage{page}', ['page' => $paginator->getFirstPage()]}"
 			>
 				{$paginator->getFirstPage()}
 			</a>
@@ -25,16 +25,16 @@
 			<a
 				n:href="this, page => $paginator->getPage() - 1"
 				class="pagination-link"
-				aria-label="Goto page {$paginator->getPage() - 1}"
+				aria-label="{_'general.goToPage{page}', ['page' => $paginator->getPage() - 1]}"
 			>
 				{$paginator->getPage() - 1}
 			</a>
 		</li>
 		<li n:if="!$paginator->isLast() && !$paginator->isFirst()">
-			<a class="pagination-link is-current" aria-label="Page {$paginator->getPage()}" aria-current="page">{$paginator->getPage()}</a>
+			<a class="pagination-link is-current" aria-label="{_'general.page{page}', ['page' => $paginator->getPage()]}" aria-current="page">{$paginator->getPage()}</a>
 		</li>
 		<li n:if="$paginator->getPage() + 1 < $paginator->getLastPage()">
-			<a n:href="this, page => $paginator->getPage() + 1" class="pagination-link" aria-label="Goto page {$paginator->getPage() + 1}">{$paginator->getPage() + 1}</a>
+			<a n:href="this, page => $paginator->getPage() + 1" class="pagination-link" aria-label="{_'general.goToPage{page}', ['page' => $paginator->getPage() + 1]}">{$paginator->getPage() + 1}</a>
 		</li>
 		<li n:if="$paginator->getPage() + 2 < $paginator->getLastPage()">
 			<span class="pagination-ellipsis">&hellip;</span>
@@ -43,7 +43,7 @@
 			<a
 				n:href="this, page => $paginator->getLastPage()"
 				n:class="pagination-link, $paginator->isLast() ? is-current"
-				aria-label="Goto page {$paginator->getLastPage()}"
+				aria-label="{_'general.goToPage{page}', ['page' => $paginator->getLastPage()]}"
 			>
 				{$paginator->getLastPage()}
 			</a>

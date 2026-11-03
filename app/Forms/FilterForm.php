@@ -15,7 +15,7 @@ class FilterForm extends BaseForm
 			->getControlPrototype()
 			->placeholder('form.filter.search');
 		$this->form->addSelect('sort', 'form.filter.sortBy', $sortBy);
-		$this->form->addSubmit('ok', 'general.submit');
+		$this->form->addSubmit('ok', 'form.filter.submit');
 		$this->form->onSuccess[] = function() {
 			// Empty, will be handled in action method
 		};
