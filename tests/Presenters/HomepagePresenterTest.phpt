@@ -101,10 +101,17 @@ final class HomepageFakeStampsModel extends App\Models\StampsModel
 	/** @var list<array<string, mixed>> */
 	public array $filters = [];
 
+	/** @var list<array{mixed, mixed}> limit and offset of each search() call */
+	public array $pages = [];
 
-	/** @param  list<mixed>  $stamps  returned by search() as they are */
+
+	/**
+	 * @param  list<mixed>  $stamps  returned by search() as they are
+	 * @param  ?int  $total  returned by count(), defaults to the number of $stamps
+	 */
 	public function __construct(
 		private array $stamps = [],
+		private ?int $total = null,
 	) {
 	}
 
@@ -112,6 +119,7 @@ final class HomepageFakeStampsModel extends App\Models\StampsModel
 	public function search(array $filter, $limit = null, $offset = null): ?array
 	{
 		$this->filters[] = $filter;
+		$this->pages[] = [$limit, $offset];
 		return $this->stamps ?: null;
 	}
 
@@ -119,7 +127,7 @@ final class HomepageFakeStampsModel extends App\Models\StampsModel
 	public function count(array $filter = []): int
 	{
 		$this->filters[] = $filter;
-		return count($this->stamps);
+		return $this->total ?? count($this->stamps);
 	}
 }
 
@@ -256,3 +264,58 @@ foreach (['nonsense', 'date', '-date'] as $sort) {
 foreach (homepageFilters(['user'], [], ['onlyCollected' => '1', 'sort' => 'nonsense']) as $filter) {
 	Assert::null($filter['sort']);
 }
+
+
+// The list shows 60 stamps per page; the second page starts at the 61st stamp (#49)
+$translator = PresenterTestHelpers::createTranslator();
+$formFactory = new FormFactory($translator);
+$formFactory->register(new App\Forms\FilterForm($translator));
+$formFactory->register(new EditStampForm($translator));
+$stampsModel = new HomepageFakeStampsModel(array_map(
+	fn(int $id) => Nette\Utils\ArrayHash::from(['id' => $id, 'name' => "Stamp $id", 'image' => $id === 5 ? 'stamp-5.jpg' : null]),
+	[5, 7, 9],
+), 150);
+$presenter = new HomepagePresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']));
+$presenter->injectCollectionModel(new HomepageCollectionModelWith([5 => collectedStamp(5, '2024-06-02'), 9 => collectedStamp(9, null)]));
+$presenter->injectStampsModel($stampsModel);
+$presenter->injectFormFactory($formFactory);
+$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'paginator-page' => '2']));
+assert($response instanceof Nette\Application\Responses\TextResponse);
+$html = (string) $response->getSource();
+
+$paginator = $presenter['paginator'];
+assert($paginator instanceof App\Helpers\Paginator);
+Assert::same(60, $paginator->getItemsPerPage());
+Assert::same([[60, 60]], $stampsModel->pages);
+
+// Each stamp is a compact row linking to its detail, with the number and the name (#49)
+preg_match_all('~<article class="stamp-row" id="stamp-(\d+)">.*?</article>~s', $html, $m);
+$rows = array_combine(array_map('intval', $m[1]), $m[0]);
+Assert::same([5, 7, 9], array_keys($rows));
+foreach ($rows as $id => $row) {
+	Assert::contains("href=\"/stamp/$id\"", $row);
+	Assert::contains("#$id", $row);
+	Assert::contains("Stamp $id", $row);
+}
+Assert::contains('/images/stamps/stamp-5.jpg" alt="Stamp 5"', $rows[5]);
+
+// A collected stamp shows its date and a check button opening the edit dialog with the edit form (#49)
+Assert::contains('stamp.collectedOn 2. 6. 2024', $rows[5]);
+Assert::contains('class="button stamp-row-button is-success stamp-edit-button" data-stampid="5" aria-label="stamp.editInCollection"', $rows[5]);
+Assert::contains('<dialog class="modal" data-stampId="5"', $rows[5]);
+Assert::contains('name="_do" value="editStampForm-5-submit"', $rows[5]);
+// ... without a date just "collected" (#49)
+Assert::match('%A%stamp.collectedOn</span>%A%', $rows[9]);
+Assert::contains('data-stampid="9"', $rows[9]);
+Assert::contains('name="_do" value="editStampForm-9-submit"', $rows[9]);
+
+// A not collected stamp has the "+" collect toggle link and no edit dialog (#49)
+Assert::contains('href="/homepage/default/7?paginator-page=2&amp;do=toggleCollect" class="button stamp-row-button" aria-label="stamp.collect"', $rows[7]);
+Assert::notContains('stamp.collectedOn', $rows[7]);
+Assert::notContains('<dialog', $rows[7]);
+Assert::notContains('stamp-edit-button', $rows[7]);
+
+// No old big cards on the homepage (#49)
+Assert::notContains('class="card"', $html);
+Assert::notContains('ribbon', $html);
