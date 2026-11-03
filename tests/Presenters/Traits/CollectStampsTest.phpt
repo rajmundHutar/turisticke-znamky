@@ -38,6 +38,9 @@ final class CollectFakeCollectionModel extends CollectionModel
 	/** @var list<list<mixed>> operation, stamp id, user id and the written values */
 	public array $writes = [];
 
+	/** @var list<int> stamps stored after the action loaded the collection, e.g. by a double submit */
+	public array $storedMeanwhile = [];
+
 
 	/** @param  array<int, CollectedStampDto>  $collection */
 	public function __construct(
@@ -49,6 +52,12 @@ final class CollectFakeCollectionModel extends CollectionModel
 	public function fetchByUser(?int $userId): array
 	{
 		return $this->collection;
+	}
+
+
+	public function isCollected(int $stampId, int $userId): bool
+	{
+		return isset($this->collection[$stampId]) || in_array($stampId, $this->storedMeanwhile, true);
 	}
 
 
@@ -232,6 +241,22 @@ Assert::same('stamp-5', $url->getFragment());
 Assert::null($url->getQueryParameter('do'));
 
 
+// Add of a stamp stored meanwhile (a double submit) updates it instead of inserting a duplicate row (#48)
+$collectionModel = new CollectFakeCollectionModel;
+$collectionModel->storedMeanwhile = [5];
+$presenter = new HomepagePresenter($translator);
+redirectUrl(runCollect($presenter, 'Homepage', ['user'], $collectionModel, $homepageParams, [
+	'id' => '5',
+	'date' => '2. 6. 2024',
+	'comment' => 'Sunny',
+	'ok' => 'stamp.saveToCollection',
+]));
+Assert::count(1, $collectionModel->writes);
+Assert::same(['update', 5, 1], array_slice($collectionModel->writes[0], 0, 3));
+Assert::same('Sunny', $collectionModel->writes[0][3]['comment']);
+Assert::same('stamp.flash.saved', $presenter->getTemplate()->flashes[0]->message ?? null);
+
+
 // Add without a date and a note stores nulls
 $collectionModel = new CollectFakeCollectionModel;
 runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, [
@@ -336,6 +361,20 @@ foreach ([['remove' => 'stamp.uncollect'], ['ok' => 'stamp.saveToCollection']] a
 }
 
 
+// An expired session at an AJAX submit sends the browser to log in: the payload carries the login redirect,
+// which Naja follows by a full page load thanks to data-naja-force-redirect on the form (#48)
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5)]);
+$presenter = new CollectTestStampPresenter($translator);
+$response = runCollect($presenter, 'Stamp', null, $collectionModel, [
+	'action' => 'default',
+	'id' => '1',
+	'do' => 'collectForm-submit',
+], ['id' => '5', 'date' => '', 'comment' => '', 'ok' => 'stamp.saveToCollection'], ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
+Assert::type(Nette\Application\Responses\JsonResponse::class, $response);
+Assert::same([], $collectionModel->writes);
+Assert::same('/login/', (new Nette\Http\Url($presenter->getPayload()->redirect))->getPath());
+
+
 // The old GET toggle no longer exists: no handler, nothing changes (#48)
 $collectionModel = new CollectFakeCollectionModel;
 Assert::exception(
@@ -428,6 +467,7 @@ $snippets = (array) $presenter->getPayload()->snippets;
 Assert::same(['snippet--collectSheet'], array_keys($snippets));
 Assert::contains('form.editStamp.invalidDate', $snippets['snippet--collectSheet']);
 Assert::contains('value="31. 2. 2024"', $snippets['snippet--collectSheet']);
+Assert::contains('aria-invalid="true"', $snippets['snippet--collectSheet']); // bundle.js focuses the invalid input
 
 
 // Stamp detail via AJAX: the detail's own collection block is redrawn when its stamp changes (#48)

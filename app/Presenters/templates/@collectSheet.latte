@@ -1,15 +1,16 @@
 {* The shared collect form, rendered once per page inside the 'collectSheet' snippet, shown as a bottom sheet (#48).
-   bundle.js fills the hidden id, date, note and title from the data attributes of the clicked .js-collect button. *}
-<dialog n:if="$user->isLoggedIn()" id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" data-title-add="{_'stamp.sheet.add'}" data-title-edit="{_'stamp.sheet.edit'}"{if $control['collectForm']->hasErrors()} data-open{/if}>
+   bundle.js fills the hidden id, date, note and title from the data attributes of the clicked .js-collect button.
+   The only redirect of an AJAX submit is to log in after an expired session; data-naja-force-redirect loads it as a page. *}
+<dialog n:if="$user->isLoggedIn()" id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" data-title-add="{_'stamp.sheet.add'}" data-title-edit="{_'stamp.sheet.edit'}" data-error-text="{_'stamp.sheet.saveFailed'}"{if $control['collectForm']->hasErrors()} data-open{/if}>
 	<div class="collect-sheet-handle"></div>
 	<button type="button" class="delete is-medium collect-sheet-close" aria-label="{_'general.closeDialog'}"></button>
-	<form n:name="collectForm" class="ajax" data-naja-history="off">
+	<form n:name="collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>
 		<p class="collect-sheet-title" id="collect-sheet-title"></p>
 		<div class="collect-sheet-photo"></div>{* reserved for the photo of the stamp (#19) *}
 		<div class="field">
 			<label n:name="date" class="label" />
 			<div class="control">
-				<input n:name="date" class="input" data-datepicker autocomplete="off">
+				<input n:name="date" class="input" data-datepicker autocomplete="off" n:attr="aria-invalid => $control['collectForm']['date']->hasErrors() ? 'true'">
 			</div>
 			<p n:ifcontent class="help is-danger">{inputError date}</p>
 		</div>

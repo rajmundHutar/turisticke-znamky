@@ -70,6 +70,12 @@ final class NearbyFakeCollectionModel extends CollectionModel
 	}
 
 
+	public function isCollected(int $stampId, int $userId): bool
+	{
+		return isset($this->collection[$stampId]);
+	}
+
+
 	public function add(int $stampId, int $userId, ?DateTimeInterface $date, ?string $comment): void
 	{
 		$this->added[] = [$stampId, $userId, $date, $comment];
@@ -163,4 +169,4 @@ $presenter->injectFormFactory($formFactory);
 $presenter->run(new Request('Nearby', 'GET', ['action' => 'default', 'lat' => '50.1', 'lng' => '14.4']));
 $snippets = (array) $presenter->getPayload()->snippets;
 Assert::same(['snippet--stamps'], array_keys($snippets));
-Assert::contains('<form action="/nearby/?lat=50.1&amp;lng=14.4" method="post" id="frm-collectForm" class="ajax" data-naja-history="off">', $snippets['snippet--stamps']);
+Assert::contains('<form action="/nearby/?lat=50.1&amp;lng=14.4" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>', $snippets['snippet--stamps']);

@@ -331,8 +331,8 @@ Assert::notContains('toggleCollect', $html);
 Assert::same(2, substr_count($html, '<form')); // filter and collect form
 Assert::match(
 	'%A%<div id="snippet--collectSheet"><dialog id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" '
-	. 'data-title-add="stamp.sheet.add" data-title-edit="stamp.sheet.edit">%A%'
-	. '<form action="/?paginator-page=2" method="post" id="frm-collectForm" class="ajax" data-naja-history="off">%A%',
+	. 'data-title-add="stamp.sheet.add" data-title-edit="stamp.sheet.edit" data-error-text="stamp.sheet.saveFailed">%A%'
+	. '<form action="/?paginator-page=2" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>%A%',
 	$html,
 );
 Assert::contains('aria-label="general.closeDialog"', $html);
@@ -417,8 +417,8 @@ function submitSearch(string $search): array
 }
 
 
-// Searching for the exact number of an existing stamp goes straight to its detail (#48)
-foreach (['1984', ' 1984 '] as $search) {
+// Searching for the exact number of an existing stamp goes straight to its detail, also with leading zeros (#48)
+foreach (['1984', ' 1984 ', '01984', '001984'] as $search) {
 	[$response] = submitSearch($search);
 	Assert::type(RedirectResponse::class, $response, $search);
 	assert($response instanceof RedirectResponse);
@@ -428,9 +428,11 @@ foreach (['1984', ' 1984 '] as $search) {
 
 
 // Not a pure number, or a number of no stamp: the normal search results (#48)
-foreach (['19x', '1984 Praha', '1985'] as $search) {
-	[$response, $stampsModel] = submitSearch($search);
-	Assert::type(Nette\Application\Responses\TextResponse::class, $response, $search);
+foreach (['19x', '1984 Praha', '1985', '0', '99999999999999999999'] as $search) {
+	Assert::noError(function () use ($search): void {
+		[$response] = submitSearch($search);
+		Assert::type(Nette\Application\Responses\TextResponse::class, $response, $search);
+	});
 }
 [, $stampsModel] = submitSearch('19x');
 Assert::same([], $stampsModel->fetched); // no lookup for a term that is not a number

@@ -113,7 +113,7 @@ function initCollectSheet() {
         date.value = collected ? button.dataset.date : today()
         date.datepicker?.update()
         form.elements.namedItem('comment').value = button.dataset.note
-        sheet.querySelectorAll('.help.is-danger').forEach((error) => error.remove())
+        sheet.querySelectorAll('.help.is-danger, .collect-sheet-error').forEach((error) => error.remove())
     }
 
     function show(sheet) {
@@ -130,6 +130,32 @@ function initCollectSheet() {
         const button = findButton(sheet.querySelector('form').elements.namedItem('id').value)
         if (button) {
             fill(sheet, button, false)
+        }
+        show(sheet)
+        // the invalid input instead of the first focusable element (the close button) that showModal() focused
+        const form = sheet.querySelector('form')
+        const invalid = form.querySelector('[aria-invalid="true"]') ?? form.elements.namedItem('date')
+        invalid.focus()
+    }
+
+    // disables or enables the submit buttons of the sheet, against a double submit while a request is pending
+    function setPending(pending) {
+        findSheet()?.querySelectorAll('form [type="submit"]').forEach((submit) => submit.disabled = pending)
+    }
+
+    // a failed request (network or server error) keeps the sheet open with a short message
+    function showError() {
+        const sheet = findSheet()
+        if (!sheet) {
+            return
+        }
+        let error = sheet.querySelector('.collect-sheet-error')
+        if (!error) {
+            error = document.createElement('div')
+            error.className = 'notification is-danger is-light collect-sheet-error'
+            error.setAttribute('role', 'alert')
+            error.textContent = sheet.dataset.errorText
+            sheet.querySelector('form').prepend(error)
         }
         show(sheet)
     }
@@ -182,6 +208,29 @@ function initCollectSheet() {
     }, true)
 
     naja.snippetHandler.addEventListener('afterUpdate', (event) => showWithErrors(event.detail.snippet.querySelector('#collect-sheet')))
+
+    // requests of the collect form (the form itself or its submit button) are marked in their options
+    naja.uiHandler.addEventListener('interaction', (event) => {
+        if (event.detail.element.closest('#collect-sheet')) {
+            event.detail.options.collectSheet = true
+        }
+    })
+    naja.addEventListener('start', (event) => {
+        if (event.detail.options.collectSheet) {
+            setPending(true)
+        }
+    })
+    // also after an error or an abort (Esc)
+    naja.addEventListener('complete', (event) => {
+        if (event.detail.options.collectSheet) {
+            setPending(false)
+        }
+    })
+    naja.addEventListener('error', (event) => {
+        if (event.detail.options.collectSheet) {
+            showError()
+        }
+    })
 
     naja.addEventListener('success', (event) => {
         const { payload } = event.detail

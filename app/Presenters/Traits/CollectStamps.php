@@ -40,7 +40,8 @@ trait CollectStamps
 				if ($remove) {
 					$this->collectionModel->remove($stampId, $userId);
 					$flash = 'stamp.flash.removed';
-				} elseif (isset($this->userCollection[$stampId])) {
+				} elseif (isset($this->userCollection[$stampId]) || $this->collectionModel->isCollected($stampId, $userId)) {
+					// checked again right before writing: a double submit must not insert a duplicate row
 					$this->collectionModel->update($stampId, $userId, ['date' => $values['date'], 'comment' => $values['comment']]);
 					$flash = 'stamp.flash.saved';
 				} else {

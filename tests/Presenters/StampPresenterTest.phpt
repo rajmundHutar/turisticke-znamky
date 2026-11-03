@@ -362,7 +362,7 @@ Assert::contains('<div id="snippet--detailRibbon">', $html);
 Assert::notContains('toggleCollect', $html);
 Assert::same(1, substr_count($html, '<dialog'));
 Assert::same(1, substr_count($html, '<form'));
-Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm" class="ajax" data-naja-history="off">', $html);
+Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>', $html);
 
 
 // An anonymous user gets no collect buttons nor the form

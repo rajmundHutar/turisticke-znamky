@@ -23,6 +23,12 @@ class CollectionModel
 			->fetch();
 	}
 
+	public function isCollected(int $stampId, int $userId): bool
+	{
+
+		return $this->fetch($stampId, $userId) !== null;
+	}
+
 	/**
 	 * @param int|null $userId
 	 * @return list<CollectedStampDto>
