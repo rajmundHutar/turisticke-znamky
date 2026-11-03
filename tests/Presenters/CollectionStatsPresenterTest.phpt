@@ -50,13 +50,14 @@ function createStatsPresenter(?array $roles, FakeCollectionModel $collectionMode
 }
 
 
-// Anonymous user is redirected to the login page and no stats are fetched
+// Anonymous user is redirected to the login page with a backlink to the stored request and no stats are fetched (#22)
 $collectionModel = new FakeCollectionModel;
 $presenter = createStatsPresenter(null, $collectionModel);
 $response = $presenter->run(new Request('CollectionStats', 'GET', ['action' => 'default']));
 Assert::type(RedirectResponse::class, $response);
 Assert::same('Login', $presenter->getLastCreatedRequest()?->getPresenterName());
 Assert::same('default', $presenter->getLastCreatedRequest()?->getParameter('action'));
+Assert::match('%[0-9a-z]{5}%', (string) $presenter->getLastCreatedRequest()?->getParameter('backlink'));
 Assert::same([], $collectionModel->fetchedUsers);
 
 

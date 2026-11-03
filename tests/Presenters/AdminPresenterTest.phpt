@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Test: AdminPresenter requires the admin role; imports are signals
+ * Test: AdminPresenter requires the admin role, anonymous users go to login; imports are signals
  */
 
 declare(strict_types=1);
@@ -12,6 +12,7 @@ use App\Presenters\AdminPresenter;
 use Nette\Application\BadRequestException;
 use Nette\Application\Request;
 use Nette\Application\Responses\RedirectResponse;
+use Nette\Http\Session;
 use Tester\Assert;
 use Tests\Presenters\PresenterTestHelpers;
 
@@ -63,10 +64,10 @@ final class FakeImportModel extends ImportModel
  * @param  array<string, string>  $params
  * @param  array<string, string>  $headers
  */
-function runAdmin(?array $roles, array $params, FakeImportModel $importModel, array $headers = [], ?AdminPresenter $presenter = null): Nette\Application\Response
+function runAdmin(?array $roles, array $params, FakeImportModel $importModel, array $headers = [], ?AdminPresenter $presenter = null, ?Session $session = null): Nette\Application\Response
 {
 	$presenter ??= new AdminPresenter(PresenterTestHelpers::createTranslator());
-	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles), $headers);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles), $headers, $session);
 	$presenter->injectImportModel($importModel);
 	$presenter->injectStampsModel((new ReflectionClass(StampsModel::class))->newInstanceWithoutConstructor());
 	return $presenter->run(new Request('Admin', 'GET', $params));
@@ -83,17 +84,66 @@ $requests = [
 $sameOrigin = ['Sec-Fetch-Site' => 'same-origin'];
 
 
-// Anonymous and non-admin users get 403 for every action and signal, and nothing is imported
-foreach ([null, ['user']] as $roles) {
-	foreach ($requests as $params) {
-		$importModel = new FakeImportModel;
-		$e = Assert::exception(
-			fn() => runAdmin($roles, $params, $importModel, $sameOrigin),
-			BadRequestException::class,
-		);
-		Assert::same(403, $e->getCode());
-		Assert::same([], $importModel->calls);
-	}
+// Anonymous users are redirected to the login page with a backlink to the stored request, and nothing is imported (#22)
+foreach ($requests as $params) {
+	$importModel = new FakeImportModel;
+	$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+	$response = runAdmin(null, $params, $importModel, $sameOrigin, $presenter);
+	Assert::type(RedirectResponse::class, $response);
+	Assert::same('Login', $presenter->getLastCreatedRequest()?->getPresenterName());
+	Assert::same('default', $presenter->getLastCreatedRequest()?->getParameter('action'));
+	Assert::match('%[0-9a-z]{5}%', (string) $presenter->getLastCreatedRequest()?->getParameter('backlink'));
+	Assert::same([], $importModel->calls);
+}
+
+
+// A signal is never stored for after login: following an attacker's link anonymously and then logging in
+// would replay it from our own login page, passing the same-origin check (#22)
+foreach (['importStamps', 'importImages'] as $signal) {
+	$importModel = new FakeImportModel;
+	$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+	$session = new Session(new Nette\Http\Request(new Nette\Http\UrlScript('http://localhost/')), new Nette\Http\Response);
+	runAdmin(null, ['action' => 'default', 'do' => $signal], $importModel, ['Sec-Fetch-Site' => 'cross-site'], $presenter, $session);
+	$backlink = (string) $presenter->getLastCreatedRequest()?->getParameter('backlink');
+	$stored = $session->getSection('Nette.Application/requests')->get($backlink)[1];
+	Assert::type(Request::class, $stored);
+	Assert::same(['action' => 'default'], $stored->getParameters());
+	Assert::exception( // replaying the stored request as admin only renders the page
+		fn() => runAdmin(['admin'], $stored->getParameters(), $importModel, $sameOrigin),
+		LogicException::class,
+		'Not expected in this test.',
+	);
+	Assert::same([], $importModel->calls);
+}
+
+
+// The same for a signal sent in a cross-site POST body (_do): only a plain GET of the page is stored (#22)
+$importModel = new FakeImportModel;
+$presenter = new AdminPresenter(PresenterTestHelpers::createTranslator());
+$session = new Session(new Nette\Http\Request(new Nette\Http\UrlScript('http://localhost/')), new Nette\Http\Response);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null), ['Sec-Fetch-Site' => 'cross-site'], $session);
+$presenter->injectImportModel($importModel);
+$presenter->injectStampsModel((new ReflectionClass(StampsModel::class))->newInstanceWithoutConstructor());
+$presenter->run(new Request('Admin', 'POST', ['action' => 'default'], ['_do' => 'importStamps'], ['file' => 'x']));
+$backlink = (string) $presenter->getLastCreatedRequest()?->getParameter('backlink');
+$stored = $session->getSection('Nette.Application/requests')->get($backlink)[1];
+Assert::type(Request::class, $stored);
+Assert::same('GET', $stored->getMethod());
+Assert::same(['action' => 'default'], $stored->getParameters());
+Assert::same([], $stored->getPost());
+Assert::same([], $stored->getFiles());
+Assert::same([], $importModel->calls);
+
+
+// Logged-in users without the admin role get 403 for every action and signal, and nothing is imported
+foreach ($requests as $params) {
+	$importModel = new FakeImportModel;
+	$e = Assert::exception(
+		fn() => runAdmin(['user'], $params, $importModel, $sameOrigin),
+		BadRequestException::class,
+	);
+	Assert::same(403, $e->getCode());
+	Assert::same([], $importModel->calls);
 }
 
 

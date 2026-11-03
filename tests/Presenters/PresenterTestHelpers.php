@@ -14,7 +14,9 @@ use Nette\Bridges\ApplicationLatte\TemplateFactory;
 use Nette\Bridges\ApplicationLatte\UIExtension;
 use Nette\Bridges\FormsLatte\FormsExtension;
 use Nette\Http\UrlScript;
+use Nette\Http\Session;
 use Nette\Localization\Translator;
+use Nette\Security\Authenticator;
 use Nette\Security\IIdentity;
 use Nette\Security\SimpleIdentity;
 use Nette\Security\User;
@@ -39,7 +41,7 @@ final class PresenterTestHelpers
 	/**
 	 * @param  list<string>|null  $roles  null = anonymous user
 	 */
-	public static function createUser(?array $roles): User
+	public static function createUser(?array $roles, ?Authenticator $authenticator = null): User
 	{
 		$identity = $roles === null ? null : new SimpleIdentity(1, $roles);
 		$storage = new class ($identity) implements UserStorage {
@@ -72,16 +74,17 @@ final class PresenterTestHelpers
 			}
 		};
 
-		return new User($storage);
+		return new User($storage, $authenticator);
 	}
 
 
 	/**
 	 * @param  array<string, string>  $headers
+	 * @param  ?Session  $session  pass the same session to share stored requests between presenters
 	 */
-	public static function injectPrimary(Presenter $presenter, User $user, array $headers = []): void
+	public static function injectPrimary(Presenter $presenter, User $user, array $headers = [], ?Session $session = null, ?string $remoteAddress = null): void
 	{
-		$httpRequest = new Nette\Http\Request(new UrlScript('http://localhost/'), headers: $headers);
+		$httpRequest = new Nette\Http\Request(new UrlScript('http://localhost/'), headers: $headers, remoteAddress: $remoteAddress);
 		$httpResponse = new Nette\Http\Response;
 		$presenterFactory = new Nette\Application\PresenterFactory;
 		$presenterFactory->setMapping(['*' => 'App\*Module\Presenters\*Presenter']);
@@ -100,7 +103,7 @@ final class PresenterTestHelpers
 			$httpResponse,
 			$presenterFactory,
 			RouterFactory::createRouter(),
-			new Nette\Http\Session($httpRequest, $httpResponse),
+			$session ?? new Session($httpRequest, $httpResponse),
 			$user,
 			new TemplateFactory($latteFactory, $httpRequest, $user),
 		);

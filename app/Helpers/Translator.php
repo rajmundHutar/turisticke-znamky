@@ -25,6 +25,7 @@ class Translator implements \Nette\Localization\Translator
 		'login.password' => 'Password',
 		'login.loginSuccessful' => 'User successfully logged in.',
 		'login.loginNotSuccessful' => 'Incorrect password or user e-mail.',
+		'login.tooManyAttempts' => 'Too many login attempts, try again later.',
 
 		'menu.allStamps' => 'All stamps',
 		'menu.nearby' => 'Nearby',

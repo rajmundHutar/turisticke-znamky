@@ -8,6 +8,7 @@ use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
+use App\Presenters\Traits\RedirectToLogin;
 use App\Templates\CollectionStats\CollectionStatsDefaultTemplateParameters;
 use Nette\Application\UI\Presenter;
 
@@ -18,6 +19,7 @@ class CollectionStatsPresenter extends Presenter
 {
 	use InjectMenu;
 	use InjectTranslator;
+	use RedirectToLogin;
 	use InjectCollectionModel;
 	use InjectStampsModel;
 
@@ -25,7 +27,7 @@ class CollectionStatsPresenter extends Presenter
 	{
 		parent::startup();
 		if (!$this->user->isLoggedIn()) {
-			$this->redirect('Login:');
+			$this->redirectToLogin();
 		}
 	}
 
