@@ -198,10 +198,11 @@ function createRow(array $data): ActiveRow
  * @param  list<array<string, mixed>>  $salespoints
  * @param  array<int, array<string, mixed>>  $closest
  */
-function renderStampDetail(array $stamp, array $salespoints = [], array $closest = []): string
+function renderStampDetail(array $stamp, array $salespoints = [], array $closest = [], string $mapyApiKey = ''): string
 {
 	$presenter = new StampPresenter(PresenterTestHelpers::createTranslator());
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null));
+	$presenter->injectMapyConfig(new App\Helpers\MapyConfig($mapyApiKey));
 	$presenter->injectCollectionModel(new StampFakeCollectionModel);
 	$presenter->injectStampsModel(new StampFakeStampsModel($stamp, $salespoints, $closest));
 	$response = $presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => (string) $stamp['id']]));
@@ -347,3 +348,9 @@ $html = submitInvalidDate($collectionModel, $detailStamp, $closest, 'editStampFo
 Assert::same([], $collectionModel->updates);
 Assert::match('~<dialog class="modal" data-stampId="7" data-open>\s*.*value="31\. 2\. 2024".*Invalid date, use D\. M\. YYYY\..*</dialog>~s', $html);
 Assert::same(1, substr_count($html, 'Invalid date')); // not at the detail's own form
+
+
+// The Mapy.cz API key comes from the configuration, not from the template (#39)
+$html = renderStampDetail($feedStamp, mapyApiKey: 'test-key-123');
+Assert::contains('const API_KEY = "test-key-123";', $html);
+Assert::notContains('qsdduL32xP7zUe8rj174i2LSClOB0JlpArnIk3fG_3Y', $html);

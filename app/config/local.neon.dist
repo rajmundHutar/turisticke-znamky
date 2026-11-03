@@ -2,3 +2,7 @@ database:
 	dsn: 'mysql:host=db;dbname=tz'
 	user: root
 	password: root
+
+parameters:
+	# Mapy.cz API key for the map tiles: https://developer.mapy.com/ (restrict it to Referrers, e.g. localhost)
+	mapyApiKey: ""
