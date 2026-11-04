@@ -202,3 +202,45 @@ Assert::same('login.loginNotSuccessful', $presenter->getTemplate()->flashes[0]->
 [$presenter] = login($user, createSession(), [], 'secret', $throttle);
 Assert::same('login.tooManyAttempts', $presenter->getTemplate()->flashes[0]->message);
 Assert::false($user->isLoggedIn());
+
+
+/** Renders the login page (GET) in the given session; returns the HTML. */
+function renderLoginPage(Session $session, array $params = []): string
+{
+	$translator = PresenterTestHelpers::createTranslator();
+	$presenter = new LoginPresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null), [], $session);
+	$presenter->injectLoginForm(new LoginForm($translator));
+	$presenter->injectLoginThrottle(createLoginThrottle());
+	$response = $presenter->run(new Request('Login', 'GET', ['action' => 'default'] + $params));
+	assert($response instanceof Nette\Application\Responses\TextResponse);
+	return html_entity_decode((string) $response->getSource()); // Latte encodes "@" in attributes
+}
+
+
+// After a failed login the e-mail stays filled in (not in the URL), the password is empty and focused (#58)
+foreach (['without backlink' => [], 'with backlink' => ['backlink' => 'abc12']] as $case => $params) {
+	$session = createSession();
+	[, $url] = login(PresenterTestHelpers::createUser(null, new CountingUserModel), $session, $params, 'wrong');
+	Assert::notContains('jana', $url, $case);
+	$html = renderLoginPage($session, $params);
+	Assert::match('%A%<input type="text" name="email"%A%value="jana@example.com"%A%', $html, $case);
+	Assert::notContains('wrong', $html, $case);
+	Assert::match('%A%<input type="password" name="password"%A%autofocus%A%', $html, $case);
+	// shown once: a later plain visit has an empty form again
+	Assert::notContains('jana@example.com', renderLoginPage($session, $params), $case);
+}
+
+// The same after a login rejected by the attempt limit (#58)
+$session = createSession();
+$throttle = createLoginThrottle();
+$user = PresenterTestHelpers::createUser(null, new CountingUserModel);
+for ($i = 0; $i < 6; $i++) {
+	login($user, $session, [], 'wrong', $throttle);
+}
+Assert::contains('value="jana@example.com"', renderLoginPage($session));
+
+// A plain visit has an empty form without autofocus on the password
+$html = renderLoginPage(createSession());
+Assert::notContains('jana@example.com', $html);
+Assert::notMatch('%A%<input type="password" name="password"%A%autofocus%A%', $html);
