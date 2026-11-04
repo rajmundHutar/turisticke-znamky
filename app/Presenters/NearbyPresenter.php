@@ -7,7 +7,6 @@ namespace App\Presenters;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\CollectStamps;
-use App\Presenters\Traits\InjectFormFactory;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette\Application\UI\Presenter;
@@ -19,7 +18,6 @@ class NearbyPresenter extends Presenter
 	use InjectCollectionModel;
 	use InjectTranslator;
 	use InjectMenu;
-	use InjectFormFactory;
 	use CollectStamps;
 	protected array $closest = [];
 	protected ?string $lat = null;

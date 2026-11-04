@@ -56,8 +56,6 @@ Assert::true($user->isLoggedIn());
 
 // Logging out from "My collection" lands on the unfiltered homepage, not on the (now empty) filtered collection
 $translator = PresenterTestHelpers::createTranslator();
-$formFactory = new App\Forms\FormFactory($translator);
-$formFactory->register(new App\Forms\FilterForm($translator));
 $presenter = new App\Presenters\HomepagePresenter($translator);
 $user = PresenterTestHelpers::createUser(['user']);
 PresenterTestHelpers::injectPrimary($presenter, $user, ['Sec-Fetch-Site' => 'same-origin']);
@@ -72,7 +70,7 @@ $presenter->injectCollectionModel(new class extends App\Models\CollectionModel {
 		return [];
 	}
 });
-$presenter->injectFormFactory($formFactory);
+$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
 $response = $presenter->run(new Request('Homepage', 'GET', [
 	'action' => 'default',
 	'search' => 'Praha',

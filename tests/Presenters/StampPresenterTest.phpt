@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 use App\Dto\CollectedStampDto;
 use App\Forms\EditStampForm;
-use App\Forms\FormFactory;
 use App\Models\CollectionModel;
 use App\Models\StampsModel;
 use App\Presenters\StampPresenter;
@@ -66,13 +65,11 @@ final class TestStampPresenter extends StampPresenter
 function createStampPresenter(StampFakeCollectionModel $collectionModel): TestStampPresenter
 {
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new EditStampForm($translator));
 
 	$presenter = new TestStampPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']); // signals are CSRF protected
 	$presenter->injectCollectionModel($collectionModel);
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectEditStampForm(new EditStampForm($translator));
 	$presenter->injectStampsModel(new class extends StampsModel { // the stamp is loaded in the action
 		public function __construct()
 		{
@@ -196,12 +193,10 @@ function createRow(array $data): ActiveRow
 function renderStampDetail(array $stamp, array $salespoints = [], array $closest = [], string $mapyApiKey = '', ?array $roles = null, array $collection = []): string
 {
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new EditStampForm($translator));
 	$presenter = new StampPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
 	$presenter->injectMapyConfig(new App\Helpers\MapyConfig($mapyApiKey));
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectEditStampForm(new EditStampForm($translator));
 	$presenter->injectCollectionModel(new StampFakeCollectionModel($collection));
 	$presenter->injectStampsModel(new StampFakeStampsModel($stamp, $salespoints, $closest));
 	$response = $presenter->run(new Request('Stamp', 'GET', ['action' => 'default', 'id' => (string) $stamp['id']]));
@@ -309,13 +304,11 @@ Assert::same(404, $e->getCode());
 function submitInvalidDate(StampFakeCollectionModel $collectionModel, array $stamp, array $closest, string $stampId): string
 {
 	$translator = new App\Helpers\Translator;
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new EditStampForm($translator));
 
 	$presenter = new StampPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']);
 	$presenter->injectCollectionModel($collectionModel);
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectEditStampForm(new EditStampForm($translator));
 	$presenter->injectStampsModel(new StampFakeStampsModel($stamp, [], $closest));
 	$response = $presenter->run(new Request(
 		'Stamp',

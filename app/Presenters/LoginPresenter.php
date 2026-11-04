@@ -7,7 +7,6 @@ namespace App\Presenters;
 use App\Forms\LoginForm;
 use App\Models\LoginThrottledException;
 use App\Models\Traits\InjectLoginThrottle;
-use App\Presenters\Traits\InjectFormFactory;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette;
@@ -18,17 +17,25 @@ final class LoginPresenter extends Nette\Application\UI\Presenter
 
 	use InjectMenu;
 	use InjectTranslator;
-	use InjectFormFactory;
 	use InjectLoginThrottle;
 
 	/** Key of the request stored by storeRequest() to return to after login */
 	#[Nette\Application\Attributes\Persistent]
 	public ?string $backlink = null;
 
+	private LoginForm $loginForm;
+
+
+	public function injectLoginForm(LoginForm $loginForm): void
+	{
+		$this->loginForm = $loginForm;
+	}
+
+
 	public function createComponentLoginForm()
 	{
 
-		return $this->formFactory->create(LoginForm::class, function($form, $values) {
+		return $this->loginForm->create(function($form, $values) {
 
 			try {
 				$this->loginThrottle->attempt($values->email, $this->getHttpRequest()->getRemoteAddress(), function () use ($values) {

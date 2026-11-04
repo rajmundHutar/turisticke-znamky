@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 use App\Dto\CollectedStampDto;
 use App\Forms\EditStampForm;
-use App\Forms\FormFactory;
 use App\Models\CollectionModel;
 use App\Models\StampsModel;
 use App\Presenters\NearbyPresenter;
@@ -102,14 +101,12 @@ final class TestNearbyPresenter extends NearbyPresenter
 function createNearbyPresenter(NearbyFakeCollectionModel $collectionModel): TestNearbyPresenter
 {
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new EditStampForm($translator));
 
 	$presenter = new TestNearbyPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']); // signals are CSRF protected
 	$presenter->injectStampsModel(new NearbyFakeStampsModel);
 	$presenter->injectCollectionModel($collectionModel);
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectEditStampForm(new EditStampForm($translator));
 	return $presenter;
 }
 
@@ -159,13 +156,11 @@ Assert::same('stamp-5', $url->getFragment());
 
 // The AJAX redraw after the location is known carries the collect form, whose action keeps lat/lng (#48)
 $translator = PresenterTestHelpers::createTranslator();
-$formFactory = new FormFactory($translator);
-$formFactory->register(new EditStampForm($translator));
 $presenter = new NearbyPresenter($translator);
 PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['X-Requested-With' => 'XMLHttpRequest']);
 $presenter->injectStampsModel(new NearbyFakeStampsModel);
 $presenter->injectCollectionModel(new NearbyFakeCollectionModel);
-$presenter->injectFormFactory($formFactory);
+$presenter->injectEditStampForm(new EditStampForm($translator));
 $presenter->run(new Request('Nearby', 'GET', ['action' => 'default', 'lat' => '50.1', 'lng' => '14.4']));
 $snippets = (array) $presenter->getPayload()->snippets;
 Assert::same(['snippet--stamps'], array_keys($snippets));

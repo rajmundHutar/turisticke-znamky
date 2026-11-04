@@ -6,7 +6,6 @@
 
 declare(strict_types=1);
 
-use App\Forms\FormFactory;
 use App\Forms\LoginForm;
 use App\Models\LoginThrottle;
 use App\Models\UserModel;
@@ -78,11 +77,9 @@ function createSession(): Session
 function login(User $user, Session $session, array $params = [], string $password = 'secret', ?LoginThrottle $throttle = null): array
 {
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new LoginForm($translator));
 	$presenter = new LoginPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, $user, ['Sec-Fetch-Site' => 'same-origin'], $session, '10.0.0.1');
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectLoginForm(new LoginForm($translator));
 	$presenter->injectLoginThrottle($throttle ?? createLoginThrottle());
 	$response = $presenter->run(new Request(
 		'Login',
@@ -165,11 +162,9 @@ Assert::match('http://localhost/admin/?_fid=%[0-9a-z]+%', $url);
 
 // The login form posts back with the backlink
 $translator = PresenterTestHelpers::createTranslator();
-$formFactory = new FormFactory($translator);
-$formFactory->register(new LoginForm($translator));
 $presenter = new LoginPresenter($translator);
 PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(null), [], createSession());
-$presenter->injectFormFactory($formFactory);
+$presenter->injectLoginForm(new LoginForm($translator));
 $presenter->injectLoginThrottle(createLoginThrottle());
 $response = $presenter->run(new Request('Login', 'GET', ['action' => 'default', 'backlink' => 'abc12']));
 assert($response instanceof Nette\Application\Responses\TextResponse);

@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 use App\Dto\CollectedStampDto;
 use App\Forms\EditStampForm;
-use App\Forms\FormFactory;
 use App\Models\CollectionModel;
 use App\Models\StampsModel;
 use App\Presenters\HomepagePresenter;
@@ -157,13 +156,13 @@ function runCollect(
 ): Nette\Application\Response {
 	assert($presenter instanceof HomepagePresenter || $presenter instanceof NearbyPresenter || $presenter instanceof StampPresenter);
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new EditStampForm($translator));
-	$formFactory->register(new App\Forms\FilterForm($translator));
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles), $headers);
 	$presenter->injectCollectionModel($collectionModel);
 	$presenter->injectStampsModel(new CollectFakeStampsModel);
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectEditStampForm(new EditStampForm($translator));
+	if ($presenter instanceof HomepagePresenter) {
+		$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+	}
 	return $presenter->run(new Request($name, $post === null ? 'GET' : 'POST', $params, $post ?? []));
 }
 

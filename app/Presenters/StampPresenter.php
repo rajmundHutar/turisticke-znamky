@@ -8,7 +8,6 @@ use App\Helpers\MapyConfig;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\CollectStamps;
-use App\Presenters\Traits\InjectFormFactory;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette\Application\UI\Presenter;
@@ -19,7 +18,6 @@ class StampPresenter extends Presenter
 
 	use InjectTranslator;
 	use InjectMenu;
-	use InjectFormFactory;
 	use InjectStampsModel;
 	use InjectCollectionModel;
 	use CollectStamps;

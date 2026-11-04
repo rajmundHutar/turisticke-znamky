@@ -10,7 +10,7 @@ use Nette\Utils\DateTime;
 
 /**
  * One collect form (POST) for adding, editing and removing a stamp, shared by the presenters listing stamps.
- * Requires InjectCollectionModel, InjectStampsModel, InjectFormFactory and InjectTranslator; the action loads
+ * Requires InjectCollectionModel, InjectStampsModel and InjectTranslator; the action loads
  * $userCollection, so the form knows whether the stamp is collected while processing a submit.
  */
 trait CollectStamps
@@ -19,14 +19,21 @@ trait CollectStamps
 
 	protected array $userCollection = [];
 
+	protected EditStampForm $editStampForm;
+
+
+	public function injectEditStampForm(EditStampForm $editStampForm): void
+	{
+		$this->editStampForm = $editStampForm;
+	}
+
 	/**
 	 * Fields: date (Czech d. m. yyyy, today by default), comment, hidden id of the stamp;
 	 * buttons: ok saves (adds or updates), remove removes the stamp from the collection.
 	 */
 	public function createComponentCollectForm(): Form
 	{
-		$form = $this->formFactory->create(
-			EditStampForm::class,
+		$form = $this->editStampForm->create(
 			null,
 			['date' => new DateTime('today')],
 			function (Form $form, array $values): void {
