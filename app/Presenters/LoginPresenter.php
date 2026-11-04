@@ -18,6 +18,7 @@ final class LoginPresenter extends Nette\Application\UI\Presenter
 	use InjectMenu;
 	use InjectTranslator;
 	use InjectLoginThrottle;
+	private const FailedLoginSection = 'failedLogin';
 
 	/** Key of the request stored by storeRequest() to return to after login */
 	#[Nette\Application\Attributes\Persistent]
@@ -35,7 +36,7 @@ final class LoginPresenter extends Nette\Application\UI\Presenter
 	public function createComponentLoginForm()
 	{
 
-		return $this->loginForm->create(function($form, $values) {
+		$form = $this->loginForm->create(function($form, $values) {
 
 			try {
 				$this->loginThrottle->attempt($values->email, $this->getHttpRequest()->getRemoteAddress(), function () use ($values) {
@@ -46,11 +47,13 @@ final class LoginPresenter extends Nette\Application\UI\Presenter
 
 			} catch (LoginThrottledException) {
 				$this->flashMessage($this->t('login.tooManyAttempts'), \Flash::ERROR);
+				$this->rememberFailedEmail($values->email);
 				$this->redirect('this');
 
 			} catch (AuthenticationException $e) {
 				bdump($e);
 				$this->flashMessage($this->t('login.loginNotSuccessful'), \Flash::ERROR);
+				$this->rememberFailedEmail($values->email);
 				$this->redirect('this');
 			}
 
@@ -59,6 +62,24 @@ final class LoginPresenter extends Nette\Application\UI\Presenter
 			}
 			$this->redirect('Homepage:');
 		});
+
+		// prefill the e-mail of the previous failed attempt once, the password is never kept
+		$email = $this->getSession(self::FailedLoginSection)->get('email');
+		if ($email !== null && $this->getRequest()->isMethod('GET')) {
+			$this->getSession(self::FailedLoginSection)->remove('email');
+			$form->setDefaults(['email' => $email]);
+			$form->getComponent('password')->setHtmlAttribute('autofocus', true);
+		}
+
+		return $form;
+	}
+
+	/**
+	 * Keeps the e-mail of a failed login for the next render of the form, in the session rather than the URL.
+	 */
+	private function rememberFailedEmail(string $email): void
+	{
+		$this->getSession(self::FailedLoginSection)->set('email', $email, '5 minutes');
 	}
 
 }
