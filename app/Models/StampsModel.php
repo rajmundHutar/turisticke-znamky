@@ -113,7 +113,10 @@ class StampsModel
 			->count('id');
 	}
 
-	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): ?array
+	/**
+	 * The nearest stamps, without the $exclude ones; only the $ids ones if given (an empty list matches no stamps).
+	 */
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null, ?array $ids = null): ?array
 	{
 
 		$query = $this->db
@@ -125,6 +128,10 @@ class StampsModel
 
 		if ($exclude) {
 			$query->where('id NOT IN ?', $exclude);
+		}
+
+		if ($ids !== null) {
+			$query->where('id', $ids);
 		}
 
 		$rows = $query->fetchAll();

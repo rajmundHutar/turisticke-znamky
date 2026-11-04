@@ -115,7 +115,7 @@ final class CollectFakeStampsModel extends StampsModel
 	}
 
 
-	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): array
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null, ?array $ids = null): array
 	{
 		return [];
 	}
@@ -486,7 +486,6 @@ runCollect($presenter, 'Stamp', ['user'], new CollectFakeCollectionModel, [
 	'do' => 'collectForm-submit',
 ], ['id' => '1', 'date' => '', 'comment' => '', 'ok' => 'stamp.saveToCollection'], ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
 Assert::true($presenter->isControlInvalid('detailCollection'));
-Assert::true($presenter->isControlInvalid('detailRibbon'));
 
 $presenter = new CollectTestStampPresenter($translator);
 runCollect($presenter, 'Stamp', ['user'], new CollectFakeCollectionModel, [

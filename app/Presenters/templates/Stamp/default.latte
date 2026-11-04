@@ -5,69 +5,65 @@
 {block content}
 <div class="container">
 
-	<div class="columns">
-		<div class="column is-one-third px-6">
-			<figure class="image">
-				<div n:snippet="detailRibbon">
-					<div n:if="$collection[$stamp['id']] ?? null" class="ribbon ribbon-top-right">
-								<span>
-									{_'stamp.collected'}
-								</span>
-					</div>
-				</div>
-				<a n:if="$stamp['image']" data-fslightbox href="{$baseUrl}/images/stamps/{$stamp['image']}" target="_blank">
-					<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
-				</a>
-				<div n:if="!$stamp['image']" class="stamp-image">
-					<span class="icon is-large has-text-grey-lighter" title="{_'stamp.noImage'}">
-						<i class="fas fa-4x fa-image"></i>
-					</span>
-				</div>
-			</figure>
-		</div>
-		<div class="column px-6">
-			<div class="content">
-				<p class="title is-3">
-					{$stamp['id']} - {$stamp['name']}
-				</p>
+	<article class="stamp-detail-page">
+		<figure class="stamp-detail-image">
+			<a n:if="$stamp['image']" data-fslightbox href="{$baseUrl}/images/stamps/{$stamp['image']}" target="_blank">
+				<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}">
+			</a>
+			<div n:if="!$stamp['image']" class="stamp-image">
+				<span class="icon is-large has-text-grey-lighter" title="{_'stamp.noImage'}">
+					<i class="fas fa-4x fa-image"></i>
+				</span>
 			</div>
-			<div n:if="$stamp['description']" class="content">
-				<p>{$stamp['description']|breaklines}</p>
-			</div>
-			<div n:if="$stamp['website'] || $stamp['wikipedia'] || $stamp['facebook']" class="content">
-				<a n:if="$stamp['website']" href="{$stamp['website']}" target="_blank" rel="noopener" class="mr-4">{_'detail.website'}</a>
-				<a n:if="$stamp['wikipedia']" href="{$stamp['wikipedia']}" target="_blank" rel="noopener" class="mr-4">Wikipedia</a>
-				<a n:if="$stamp['facebook']" href="{$stamp['facebook']}" target="_blank" rel="noopener">Facebook</a>
-			</div>
-			<div n:if="$salespoints" class="content">
-				<p class="title is-6">{_'detail.salespoints'}</p>
-				<ul>
-					<li n:foreach="$salespoints as $salespoint" n:class="$salespoint['system'] ? 'has-text-grey is-italic'">
-						{$salespoint['name']}
-						<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
-					</li>
-				</ul>
-			</div>
-			<div n:if="$stamp['detail_url']" class="content">
-				{_'detail.detailsOn'}
-				<a href="{$stamp['detail_url']}" target="_blank" rel="noopener">
-					Turistické známky.cz
-				</a>
-			</div>
-		</div>
-		<div class="column px-6" n:snippet="detailCollection">
-			{var $collected = $collection[$stamp['id']] ?? null}
-			<p n:if="$collected">
-				{_'stamp.collectedOn'}{if $collected->date !== null} {$collected->date->format('j. n. Y')}{/if}
-			</p>
-			<p n:if="$collected?->comment">{$collected->comment|breaklines}</p>
-			{if $user->isLoggedIn()}
-				{include "../@collectButton.latte", stamp => $stamp, collection => $collection, class => 'button is-light'}
-			{/if}
-		</div>
-	</div>
+		</figure>
+		<p class="stamp-detail-number">{_'detail.stampNumber{number}', ['number' => '#' . $stamp['id']]}</p>
+		<h1 class="title is-3">{$stamp['name']}</h1>
 
-	<div id="map" class="mx-6" style="height:500px"></div>
+		<section class="stamp-detail-collection" n:snippet="detailCollection">
+			{var $collected = $collection[$stamp['id']] ?? null}
+			{if $collected}
+				<div class="stamp-detail-collected">
+					<span class="icon has-text-success" aria-hidden="true"><i class="fas fa-lg fa-check"></i></span>
+					<div class="stamp-detail-collected-text">
+						<p class="has-text-weight-semibold">{if $collected->date !== null}{_'detail.inCollectionSince{date}', ['date' => $collected->date->format('j. n. Y')]}{else}{_'detail.inCollection'}{/if}</p>
+						<p n:if="$collected->comment">{$collected->comment|breaklines}</p>
+					</div>
+					{include "../@collectButton.latte", stamp => $stamp, collection => $collection, class => 'button is-light', label => ('stamp.sheet.edit'|translate)}
+				</div>
+			{elseif $user->isLoggedIn()}
+				{include "../@collectButton.latte", stamp => $stamp, collection => $collection, class => 'button is-link is-fullwidth', label => ('stamp.collect'|translate)}
+			{/if}
+		</section>
+
+		<section n:if="$salespoints" class="stamp-detail-section">
+			<h2 class="title is-5">{_'detail.salespoints'}</h2>
+			<ul class="stamp-detail-salespoints">
+				<li n:foreach="$salespoints as $salespoint" n:class="$salespoint['system'] ? 'has-text-grey is-italic'">
+					{$salespoint['name']}
+					<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
+				</li>
+			</ul>
+		</section>
+
+		{* the full text without JS; bundle.js shortens it to a few lines with a button to expand it *}
+		<section n:if="$stamp['description']" class="stamp-detail-section">
+			<h2 class="title is-5">{_'detail.about'}</h2>
+			<div class="stamp-description js-description">{$stamp['description']|breaklines}</div>
+			<button type="button" class="button is-small is-text stamp-description-toggle js-description-toggle" hidden aria-expanded="false" data-more="{_'detail.showFullDescription'}" data-less="{_'detail.showLessDescription'}">{_'detail.showFullDescription'}</button>
+		</section>
+
+		<div id="map" class="stamp-detail-map"></div>
+
+		<div n:if="$stamp['website'] || $stamp['wikipedia'] || $stamp['facebook'] || $stamp['detail_url']" class="stamp-detail-links">
+			<a n:if="$stamp['website']" href="{$stamp['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
+			<a n:if="$stamp['wikipedia']" href="{$stamp['wikipedia']}" target="_blank" rel="noopener">Wikipedia</a>
+			<a n:if="$stamp['facebook']" href="{$stamp['facebook']}" target="_blank" rel="noopener">Facebook</a>
+			<span n:if="$stamp['detail_url']">
+				{_'detail.detailsOn'}
+				<a href="{$stamp['detail_url']}" target="_blank" rel="noopener">Turistické známky.cz</a>
+			</span>
+		</div>
+	</article>
 
 	<div class="columns is-multiline px-4">
 		<div class="column is-12">
@@ -94,4 +90,5 @@
 	{{var $allStamps = array_merge([$stamp->toArray()], array_values($closest))}}
 	{{var $salespointMarkers = array_values(array_filter(array_map(fn($salespoint) => $salespoint->toArray(), $salespoints), fn($salespoint) => $salespoint['lat'] !== null && $salespoint['lng'] !== null))}}
 	new StampMap('map', {{$allStamps}}, {{$collection}}, {{$stamp['lat']}}, {{$stamp['lng']}}, {{$baseUrl}}, API_KEY, {{$salespointMarkers}});
+	initDescription();
 </script>

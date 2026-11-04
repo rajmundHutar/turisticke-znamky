@@ -13,6 +13,8 @@
 		<span class="stamp-row-text">
 			<span class="stamp-row-number">#{$stamp['id']}</span>
 			<span class="stamp-row-name">{$stamp['name']}</span>
+			{* only the arrays of fetchClosest(); an unknown column of an ActiveRow would refetch the rows *}
+			<span n:if="is_array($stamp) && isset($stamp['prettyDistance'])" class="stamp-row-distance"><span class="icon is-small"><i class="fas fa-map-marker-alt"></i></span> {$stamp['prettyDistance']}</span>
 			<span n:if="$isCollected" class="stamp-row-date">{_'stamp.collectedOn'}{if $isCollected->date !== null} {$isCollected->date->format('j. n. Y')}{/if}</span>
 		</span>
 	</a>

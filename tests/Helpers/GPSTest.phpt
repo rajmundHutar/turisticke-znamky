@@ -21,12 +21,17 @@ Assert::same(
 	GPS::gpsDistance(49.1951, 16.6079, 50.0875, 14.4213),
 );
 
-Assert::same('< 100 m', GPS::prettyDistance(0));
-Assert::same('< 100 m', GPS::prettyDistance(99.9));
-Assert::same('100 m', GPS::prettyDistance(100));
-Assert::same('900 m', GPS::prettyDistance(999));
-Assert::same('1 km', GPS::prettyDistance(1000));
-Assert::same('12 km', GPS::prettyDistance(12_999));
+// Czech distance format (#51): metres to tens below 1 km, one decimal with a comma below 10 km, whole kilometres above
+Assert::same('0 m', GPS::prettyDistance(0));
+Assert::same('10 m', GPS::prettyDistance(12));
+Assert::same('350 m', GPS::prettyDistance(349.6));
+Assert::same('990 m', GPS::prettyDistance(994));
+Assert::same('1,0 km', GPS::prettyDistance(995)); // rounds up to 1 km, not "1000 m"
+Assert::same('2,1 km', GPS::prettyDistance(2_120));
+Assert::same('9,9 km', GPS::prettyDistance(9_940));
+Assert::same('10 km', GPS::prettyDistance(9_960)); // rounds up to 10 km, not "10,0 km"
+Assert::same('15 km', GPS::prettyDistance(14_600));
+Assert::same('186 km', GPS::prettyDistance(186_200));
 
 // lngScale shrinks longitude degrees towards the poles
 Assert::same(1.0, GPS::lngScale(0.0));

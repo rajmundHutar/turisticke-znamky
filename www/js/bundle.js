@@ -345,6 +345,72 @@ function initLiveFilter() {
 
 }
 
+// Nearby (#51): the location from the browser with its status in Czech, the nearest stamps for it by AJAX.
+// Called from the Nearby template; the button locates again.
+function initNearby() {
+
+    const status = document.getElementById('nearby-status')
+    const text = status.querySelector('.nearby-status-text')
+    const button = document.querySelector('.js-locate')
+
+    function setStatus(state, message) {
+        status.dataset.state = state
+        text.textContent = message
+    }
+
+    function locate() {
+        if (!navigator.geolocation) {
+            setStatus('error', status.dataset.unsupported)
+            return
+        }
+        setStatus('locating', status.dataset.locating)
+        button.disabled = true
+        navigator.geolocation.getCurrentPosition((position) => {
+            button.disabled = false
+            const { latitude, longitude, accuracy } = position.coords
+            setStatus('located', status.dataset.located.replace('{accuracy}', Math.round(accuracy).toLocaleString('cs-CZ')))
+            // from the current URL, which keeps the switch Vše / Mám / Nemám; via Naja, so the collect form
+            // in the redrawn snippet submits by AJAX too
+            const url = new URL(window.location.href)
+            url.searchParams.delete('do')
+            url.searchParams.delete('_fid')
+            url.searchParams.set('lat', latitude)
+            url.searchParams.set('lng', longitude)
+            url.hash = ''
+            naja.makeRequest('GET', url.toString(), null, { history: false })
+        }, (error) => {
+            button.disabled = false
+            const messages = {
+                [error.PERMISSION_DENIED]: status.dataset.denied,
+                [error.TIMEOUT]: status.dataset.timeout,
+            }
+            setStatus('error', messages[error.code] ?? status.dataset.unavailable)
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 })
+    }
+
+    button.addEventListener('click', locate)
+    locate()
+
+}
+
+// The description of a stamp on its detail (#51): a few lines (styles.css), the button expands the whole text;
+// the button only when the text is longer
+function initDescription() {
+
+    const description = document.querySelector('.js-description')
+    const button = document.querySelector('.js-description-toggle')
+    if (!description || description.scrollHeight <= description.clientHeight) {
+        return
+    }
+    button.hidden = false
+    button.addEventListener('click', () => {
+        const expanded = description.classList.toggle('is-expanded')
+        button.setAttribute('aria-expanded', expanded)
+        button.textContent = expanded ? button.dataset.less : button.dataset.more
+    })
+
+}
+
 class StampMap {
     constructor(divId, stamps, collection, lat, lng, baseUrl, apiKey, salespoints = []) {
         this.divId = divId

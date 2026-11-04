@@ -1,41 +1,60 @@
 {block menu}
-    {control menu}
+	{control menu}
 {/block}
 
 {block content}
+<div class="stamp-list-page">
 
-    <div class="container">
-        <div n:snippet="stamps">
-            <h3 class="title is-4 has-text-centered	">{_'nearby.forLocation{lat}{lng}', ['lat' => $lat, 'lng' => $lng]}</h3>
-            <div class="columns is-multiline px-4">
-                {foreach $stamps as $stamp}
-                    <div class="column is-3">
-                        {include "../@stampCard.latte", stamp => $stamp}
-                    </div>
-                {/foreach}
-            </div>
+	{* outside the 'stamps' snippet, bundle.js keeps the status across the redraws *}
+	<header class="nearby-header">
+		<div class="nearby-title">
+			<h1 class="title is-4">{_'nearby.title'}</h1>
+			<button type="button" class="button nearby-locate js-locate" aria-label="{_'nearby.locateAgain'}" title="{_'nearby.locateAgain'}">
+				<span class="icon"><i class="fas fa-crosshairs"></i></span>
+			</button>
+		</div>
+		<p class="nearby-status" id="nearby-status" role="status" data-state="locating" data-locating="{_'nearby.status.locating'}" data-located="{_'nearby.status.located'}" data-denied="{_'nearby.status.denied'}" data-unavailable="{_'nearby.status.unavailable'}" data-timeout="{_'nearby.status.timeout'}" data-unsupported="{_'nearby.status.unsupported'}">
+			<span class="nearby-status-dot" aria-hidden="true"></span>
+			<span class="nearby-status-text">{_'nearby.status.locating'}</span>
+		</p>
+		<noscript>
+			<p class="notification is-warning is-light">{_'nearby.noScript'}</p>
+		</noscript>
+	</header>
 
-            {* inside 'stamps', so the form action gets lat/lng after the location is known *}
-            <div n:snippet="collectSheet">{include "../@collectSheet.latte"}</div>
-        </div>
-    </div>
+	<div n:snippet="stamps">
+		{* the links keep lat/lng of this request *}
+		<nav n:if="$located && $user->isLoggedIn()" class="tabs is-toggle is-fullwidth collection-switch" aria-label="{_'form.filter.collection'}">
+			<ul>
+				<li n:class="$activeFilter === all ? is-active">
+					<a n:href="this, filter => all" class="ajax">{_'form.filter.all'}</a>
+				</li>
+				<li n:class="$activeFilter === collected ? is-active">
+					<a n:href="this, filter => collected" class="ajax">{_'form.filter.mine'}</a>
+				</li>
+				<li n:class="$activeFilter === missing ? is-active">
+					<a n:href="this, filter => missing" class="ajax">{_'form.filter.missing'}</a>
+				</li>
+			</ul>
+		</nav>
 
+		<ul n:if="$stamps" class="stamp-rows">
+			<li n:foreach="$stamps as $stamp">
+				{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
+			</li>
+		</ul>
+
+		<article n:if="$located && !$stamps" class="message">
+			<div class="message-body">{_'general.noItemsFound'}</div>
+		</article>
+
+		{* inside 'stamps', so the form action gets lat/lng after the location is known *}
+		<div n:snippet="collectSheet">{include "../@collectSheet.latte"}</div>
+	</div>
+
+</div>
 {/block}
 
 <script n:syntax="double" n:block=userScript>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function (position) {
-                // via Naja, so the collect form in the redrawn snippet submits by AJAX too
-                naja.makeRequest('GET', {{plink "Nearby:"}}, {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                }, {history: false})
-            }, function () {
-                alert({{_'nearby.geolocationNotAllowed'}});
-            });
-        } else {
-            alert({{_'nearby.geolocationNotAllowed'}});
-        }
-    })
+	document.addEventListener("DOMContentLoaded", () => initNearby());
 </script>
