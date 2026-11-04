@@ -358,7 +358,8 @@ function initNearby() {
         text.textContent = message
     }
 
-    function locate() {
+    // maximumAge: a cached position for the automatic first call, a fresh one for the button
+    function locate(maximumAge) {
         if (!navigator.geolocation) {
             setStatus('error', status.dataset.unsupported)
             return
@@ -370,14 +371,16 @@ function initNearby() {
             const { latitude, longitude, accuracy } = position.coords
             setStatus('located', status.dataset.located.replace('{accuracy}', Math.round(accuracy).toLocaleString('cs-CZ')))
             // from the current URL, which keeps the switch Vše / Mám / Nemám; via Naja, so the collect form
-            // in the redrawn snippet submits by AJAX too
+            // in the redrawn snippet submits by AJAX too. The current history entry gets lat/lng, so Back to it
+            // shows the list. Its own unique key: locating again aborts the previous locating, not a collect submit.
             const url = new URL(window.location.href)
             url.searchParams.delete('do')
             url.searchParams.delete('_fid')
             url.searchParams.set('lat', latitude)
             url.searchParams.set('lng', longitude)
             url.hash = ''
-            naja.makeRequest('GET', url.toString(), null, { history: false })
+            naja.makeRequest('GET', url.toString(), null, { history: 'replace', unique: 'nearby' })
+                .catch(() => setStatus('error', status.dataset.loadFailed))
         }, (error) => {
             button.disabled = false
             const messages = {
@@ -385,11 +388,11 @@ function initNearby() {
                 [error.TIMEOUT]: status.dataset.timeout,
             }
             setStatus('error', messages[error.code] ?? status.dataset.unavailable)
-        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 })
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge })
     }
 
-    button.addEventListener('click', locate)
-    locate()
+    button.addEventListener('click', () => locate(0))
+    locate(60000)
 
 }
 

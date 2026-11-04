@@ -29,6 +29,7 @@ class Translator implements \Nette\Localization\Translator
 		'nearby.status.unavailable' => 'Polohu se nepodařilo zjistit. Zkontrolujte, že máte zapnuté určování polohy, a zkuste to znovu.',
 		'nearby.status.timeout' => 'Zjišťování polohy trvalo příliš dlouho. Zkuste to znovu.',
 		'nearby.status.unsupported' => 'Tento prohlížeč neumí zjistit polohu.',
+		'nearby.status.loadFailed' => 'Známky se nepodařilo načíst. Zkuste to znovu.',
 
 		'login.email' => 'E-mail',
 		'login.password' => 'Heslo',

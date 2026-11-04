@@ -373,8 +373,8 @@ Assert::match('~<figure class="stamp-detail-image">.*/images/stamps/1-praded.jpg
 	. '<p class="stamp-detail-number">Známka #1</p>\s*<h1 class="title[^"]*">Nová známka</h1>.*'
 	. 'Ve sbírce od 29. 5. 2022.*S rodinou.*'
 	. '<h2[^>]*>Kde koupit</h2>.*Pokladna hradu.*'
-	. '<h2[^>]*>O místě</h2>\s*<div class="stamp-description js-description">.*First paragraph.*</div>\s*'
-	. '<button type="button" class="[^"]*js-description-toggle[^"]*"[^>]*data-less="[^"]+"[^>]*>Zobrazit celý popis</button>.*'
+	. '<h2[^>]*>O místě</h2>\s*<div class="stamp-description js-description" id="stamp-description">.*First paragraph.*</div>\s*'
+	. '<button type="button" class="[^"]*js-description-toggle[^"]*"[^>]*aria-controls="stamp-description"[^>]*data-less="[^"]+"[^>]*>Zobrazit celý popis</button>.*'
 	. 'id="map"~s', $html);
 
 // a logged-in user without the stamp gets the add button with the data for the shared sheet

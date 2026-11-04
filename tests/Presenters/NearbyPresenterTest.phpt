@@ -86,6 +86,7 @@ final class NearbyFakeCollectionModel extends CollectionModel
 	public function add(int $stampId, int $userId, ?DateTimeInterface $date, ?string $comment): void
 	{
 		$this->added[] = [$stampId, $userId, $date, $comment];
+		$this->collection[$stampId] = new CollectedStampDto($stampId, 'Stamp', null, null, null, '50.0', '14.0', null, null, $comment, null);
 	}
 
 
@@ -249,3 +250,41 @@ $html = renderNearby($stampsModel, ['user'], []);
 Assert::same([], $stampsModel->closestCalls);
 Assert::contains('id="nearby-status"', $html);
 Assert::notContains('stamp-row', $html);
+
+
+// An invalid filter is "Nemám", not carried into the links (#51)
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'foo']);
+Assert::same([[50.1, 14.4, 20, [5], null]], $stampsModel->closestCalls);
+Assert::notContains('filter=foo', $html);
+Assert::match('~<li class="is-active">\s*<a [^>]*>Nemám</a>~', $html);
+
+
+// A location that is not a finite number is ignored, not an error (#51)
+foreach ([['1e309', '14.4'], ['abc', '14.4'], ['50.1', '-INF']] as [$lat, $lng]) {
+	$stampsModel = new NearbyFakeStampsModel($closestStamps);
+	$html = renderNearby($stampsModel, ['user'], ['lat' => $lat, 'lng' => $lng]);
+	Assert::same([], $stampsModel->closestCalls);
+	Assert::notContains('stamp-row', $html);
+}
+
+
+// Adding a stamp by AJAX in "Nemám" lists the nearest stamps without it: fetched after the change of the collection (#51)
+$translator = PresenterTestHelpers::createTranslator();
+$presenter = new NearbyPresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$presenter->injectStampsModel($stampsModel);
+$presenter->injectCollectionModel(new NearbyFakeCollectionModel([
+	5 => new CollectedStampDto(5, 'Sněžka', 'type', 'region', new DateTime, '50.7', '15.7', 'img.jpg', new DateTime('2024-05-01'), 'Windy', null),
+]));
+$presenter->injectEditStampForm(new EditStampForm($translator));
+$presenter->run(new Request(
+	'Nearby',
+	'POST',
+	['action' => 'default', 'lat' => '50.1', 'lng' => '14.4', 'do' => 'collectForm-submit'],
+	['id' => '19', 'date' => '', 'comment' => '', 'ok' => 'stamp.saveToCollection'],
+));
+Assert::same([[50.1, 14.4, 20, [5, 19], null]], $stampsModel->closestCalls);
+$snippets = (array) $presenter->getPayload()->snippets;
+Assert::same(['snippet--stamps', 'snippet--flashes'], array_keys($snippets));

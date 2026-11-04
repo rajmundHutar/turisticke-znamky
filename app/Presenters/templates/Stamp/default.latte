@@ -48,8 +48,8 @@
 		{* the full text without JS; bundle.js shortens it to a few lines with a button to expand it *}
 		<section n:if="$stamp['description']" class="stamp-detail-section">
 			<h2 class="title is-5">{_'detail.about'}</h2>
-			<div class="stamp-description js-description">{$stamp['description']|breaklines}</div>
-			<button type="button" class="button is-small is-text stamp-description-toggle js-description-toggle" hidden aria-expanded="false" data-more="{_'detail.showFullDescription'}" data-less="{_'detail.showLessDescription'}">{_'detail.showFullDescription'}</button>
+			<div class="stamp-description js-description" id="stamp-description">{$stamp['description']|breaklines}</div>
+			<button type="button" class="button is-small is-text stamp-description-toggle js-description-toggle" hidden aria-expanded="false" aria-controls="stamp-description" data-more="{_'detail.showFullDescription'}" data-less="{_'detail.showLessDescription'}">{_'detail.showFullDescription'}</button>
 		</section>
 
 		<div id="map" class="stamp-detail-map"></div>
@@ -89,6 +89,6 @@
 	const API_KEY = {{$mapyApiKey}};
 	{{var $allStamps = array_merge([$stamp->toArray()], array_values($closest))}}
 	{{var $salespointMarkers = array_values(array_filter(array_map(fn($salespoint) => $salespoint->toArray(), $salespoints), fn($salespoint) => $salespoint['lat'] !== null && $salespoint['lng'] !== null))}}
+	initDescription(); // first, a failing map must not leave the description shortened without its button
 	new StampMap('map', {{$allStamps}}, {{$collection}}, {{$stamp['lat']}}, {{$stamp['lng']}}, {{$baseUrl}}, API_KEY, {{$salespointMarkers}});
-	initDescription();
 </script>

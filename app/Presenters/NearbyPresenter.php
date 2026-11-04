@@ -32,7 +32,10 @@ class NearbyPresenter extends Presenter
 
 	public function actionDefault(?string $lat = null, ?string $lng = null)
 	{
-		if ($lat && $lng) {
+		if (!in_array($this->filter, self::Filters, true)) {
+			$this->filter = 'missing'; // not carried into the links
+		}
+		if (self::isCoordinate($lat) && self::isCoordinate($lng)) {
 			$this->lat = $lat;
 			$this->lng = $lng;
 		}
@@ -41,9 +44,15 @@ class NearbyPresenter extends Presenter
 		}
 	}
 
+	/** A finite number; e.g. 1e309 or "abc" are ignored, not an error */
+	private static function isCoordinate(?string $value): bool
+	{
+		return is_numeric($value) && is_finite((float) $value);
+	}
+
 	public function renderDefault(): void
 	{
-		$filter = $this->user->isLoggedIn() && in_array($this->filter, self::Filters, true) ? $this->filter : 'missing';
+		$filter = $this->user->isLoggedIn() ? $this->filter : 'missing';
 		$collectedIds = array_keys($this->userCollection);
 
 		// in render, after a collect form signal changed the collection
