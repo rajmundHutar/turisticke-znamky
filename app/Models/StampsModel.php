@@ -39,7 +39,7 @@ class StampsModel
 		if ($filter['search'] ?? null) {
 			$query->whereOr([
 				'tz_stamps.id LIKE ?' => self::mysqlEscapeLike($filter['search'], 'right'),
-				'name LIKE ?' => self::mysqlEscapeLike($filter['search']),
+				'name COLLATE utf8mb4_unicode_ci LIKE ?' => self::mysqlEscapeLike($filter['search']), // ignore diacritics: "trebic" finds "Třebíč"
 			]);
 		}
 
