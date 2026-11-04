@@ -36,12 +36,6 @@ services:
 	- App\Controls\Menu(@translator)
 
 	# Forms
-	formFactory:
-		create: App\Forms\FormFactory
-		setup:
-			- register(@App\Forms\FilterForm)
-			- register(@App\Forms\EditStampForm)
-			- register(@App\Forms\LoginForm)
 	- App\Forms\FilterForm
 	- App\Forms\EditStampForm
 	- App\Forms\LoginForm

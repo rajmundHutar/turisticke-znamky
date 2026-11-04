@@ -7,7 +7,6 @@
 declare(strict_types=1);
 
 use App\Forms\EditStampForm;
-use App\Forms\FormFactory;
 use App\Models\CollectionModel;
 use App\Presenters\HomepagePresenter;
 use Nette\Application\Request;
@@ -61,14 +60,12 @@ Assert::noError(function () {
 // Submitting the collect form for a collected stamp stores the values and redirects back (no stale collection rendered),
 // keeping filter, sort and page (#29, #48)
 $translator = PresenterTestHelpers::createTranslator();
-$formFactory = new FormFactory($translator);
-$formFactory->register(new EditStampForm($translator));
 $collectionModel = new HomepageFakeCollectionModel;
 
 $presenter = new HomepagePresenter($translator);
 PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']); // signals are CSRF protected
 $presenter->injectCollectionModel($collectionModel);
-$presenter->injectFormFactory($formFactory);
+$presenter->injectEditStampForm(new EditStampForm($translator));
 // no stamps model nor templates: the request must end by the redirect before rendering
 
 $response = $presenter->run(new Request(
@@ -164,16 +161,14 @@ final class HomepageCollectionModelWith extends CollectionModel
 function homepageFilters(?array $roles, array $collection, array $params): array
 {
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new App\Forms\FilterForm($translator));
-	$formFactory->register(new EditStampForm($translator)); // the collect form of a logged-in user
 	$stampsModel = new HomepageFakeStampsModel;
 
 	$presenter = new HomepagePresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
 	$presenter->injectCollectionModel(new HomepageCollectionModelWith($collection));
 	$presenter->injectStampsModel($stampsModel);
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+	$presenter->injectEditStampForm(new EditStampForm($translator)); // the collect form of a logged-in user
 	$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default'] + $params));
 	Assert::type(Nette\Application\Responses\TextResponse::class, $response);
 	assert($response instanceof Nette\Application\Responses\TextResponse);
@@ -227,9 +222,6 @@ function collectedStamp(int $id, ?string $date): App\Dto\CollectedStampDto
 $collection = [5 => collectedStamp(5, '2024-01-01'), 3 => collectedStamp(3, '2023-01-01'), 9 => collectedStamp(9, null)];
 foreach (['date', '-date'] as $sort) {
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new App\Forms\FilterForm($translator));
-	$formFactory->register(new EditStampForm($translator));
 	$modelOrder = [9, 5, 3]; // neither ascending nor descending by date
 	$stampsModel = new HomepageFakeStampsModel(array_map(
 		fn(int $id) => Nette\Utils\ArrayHash::from(['id' => $id, 'name' => "Stamp $id", 'image' => null]),
@@ -240,7 +232,8 @@ foreach (['date', '-date'] as $sort) {
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']));
 	$presenter->injectCollectionModel(new HomepageCollectionModelWith($collection));
 	$presenter->injectStampsModel($stampsModel);
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+	$presenter->injectEditStampForm(new EditStampForm($translator));
 	$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'onlyCollected' => '1', 'sort' => $sort]));
 	Assert::type(Nette\Application\Responses\TextResponse::class, $response);
 	assert($response instanceof Nette\Application\Responses\TextResponse);
@@ -274,9 +267,6 @@ foreach (homepageFilters(['user'], [], ['onlyCollected' => '1', 'sort' => 'nonse
 
 // The list shows 60 stamps per page; the second page starts at the 61st stamp (#49)
 $translator = PresenterTestHelpers::createTranslator();
-$formFactory = new FormFactory($translator);
-$formFactory->register(new App\Forms\FilterForm($translator));
-$formFactory->register(new EditStampForm($translator));
 $stampsModel = new HomepageFakeStampsModel(array_map(
 	fn(int $id) => Nette\Utils\ArrayHash::from(['id' => $id, 'name' => "Stamp $id", 'image' => $id === 5 ? 'stamp-5.jpg' : null]),
 	[5, 7, 9],
@@ -285,7 +275,8 @@ $presenter = new HomepagePresenter($translator);
 PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']));
 $presenter->injectCollectionModel(new HomepageCollectionModelWith([5 => collectedStamp(5, '2024-06-02'), 9 => collectedStamp(9, null)]));
 $presenter->injectStampsModel($stampsModel);
-$presenter->injectFormFactory($formFactory);
+$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+$presenter->injectEditStampForm(new EditStampForm($translator));
 $response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'paginator-page' => '2']));
 assert($response instanceof Nette\Application\Responses\TextResponse);
 $html = (string) $response->getSource();
@@ -348,7 +339,8 @@ $presenter = new HomepagePresenter($translator);
 PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']));
 $presenter->injectCollectionModel(new HomepageCollectionModelWith([5 => collectedStamp(5, '2024-06-02')]));
 $presenter->injectStampsModel($stampsModel);
-$presenter->injectFormFactory($formFactory);
+$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+$presenter->injectEditStampForm(new EditStampForm($translator));
 $response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'onlyCollected' => '1']));
 assert($response instanceof Nette\Application\Responses\TextResponse);
 Assert::contains('<ul class="stamp-rows" data-only-collected>', (string) $response->getSource());
@@ -398,15 +390,13 @@ final class HomepageJumpStampsModel extends App\Models\StampsModel
 function submitSearch(string $search): array
 {
 	$translator = PresenterTestHelpers::createTranslator();
-	$formFactory = new FormFactory($translator);
-	$formFactory->register(new App\Forms\FilterForm($translator));
-	$formFactory->register(new EditStampForm($translator));
 	$stampsModel = new HomepageJumpStampsModel;
 	$presenter = new HomepagePresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin']);
 	$presenter->injectCollectionModel(new HomepageCollectionModelWith([]));
 	$presenter->injectStampsModel($stampsModel);
-	$presenter->injectFormFactory($formFactory);
+	$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+	$presenter->injectEditStampForm(new EditStampForm($translator));
 	$response = $presenter->run(new Request('Homepage', 'GET', [
 		'action' => 'default',
 		'search' => $search,

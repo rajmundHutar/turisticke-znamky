@@ -9,7 +9,6 @@ use App\Helpers\Paginator;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\CollectStamps;
-use App\Presenters\Traits\InjectFormFactory;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
 use Nette\Application\Attributes\Persistent;
@@ -21,7 +20,6 @@ final class HomepagePresenter extends Presenter
 {
 
 	use InjectMenu;
-	use InjectFormFactory;
 	use InjectTranslator;
 	use InjectStampsModel;
 	use InjectCollectionModel;
@@ -35,6 +33,15 @@ final class HomepagePresenter extends Presenter
 	public ?string $sort = null;
 	#[Persistent]
 	public bool $onlyCollected = false;
+
+	private FilterForm $filterForm;
+
+
+	public function injectFilterForm(FilterForm $filterForm): void
+	{
+		$this->filterForm = $filterForm;
+	}
+
 
 	public function actionDefault()
 	{
@@ -70,7 +77,7 @@ final class HomepagePresenter extends Presenter
 
 	public function createComponentFilterForm()
 	{
-		$form = $this->formFactory->create(FilterForm::class, $this->getSortOptions());
+		$form = $this->filterForm->create($this->getSortOptions());
 		$form->onSubmit[] = function (Form $form): void {
 			// the exact number of a stamp (leading zeros dropped by the int cast) goes straight to its detail;
 			// in onSubmit, which runs before validation, fine here as FilterForm has no rules to wait for

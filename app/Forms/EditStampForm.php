@@ -3,21 +3,33 @@
 namespace App\Forms;
 
 use Nette\Application\UI\Form;
+use Nette\Localization\Translator;
 use Nette\Forms\Controls\TextInput;
 use Nette\Utils\DateTime;
 
-class EditStampForm extends BaseForm
+final class EditStampForm
 {
 
 	private const DateFormat = 'j. n. Y';
 
+	public function __construct(
+		private Translator $translator,
+	) {
+	}
+
+
+	/**
+	 * Returns a new form on each call.
+	 */
 	public function create(
 		?int $stampId,
 		array $defaults,
 		callable $onSuccess
 	): Form {
+		$form = new Form;
+		$form->setTranslator($this->translator);
 
-		$this->form->addText('date', 'form.editStamp.date')
+		$form->addText('date', 'form.editStamp.date')
 			->setNullable()
 			->addCondition(Form::Filled)
 				->addRule(
@@ -25,24 +37,24 @@ class EditStampForm extends BaseForm
 					'form.editStamp.invalidDate'
 				)
 				->addFilter(fn(string $value) => self::parseDate($value));
-		$this->form->addTextArea('comment', 'form.editStamp.description')
+		$form->addTextArea('comment', 'form.editStamp.description')
 			->setNullable();
-		$id = $this->form->addHidden('id', $stampId);
+		$id = $form->addHidden('id', $stampId);
 
-		$this->form->addSubmit('ok', 'stamp.saveToCollection');
+		$form->addSubmit('ok', 'stamp.saveToCollection');
 		// removing needs just the stamp id, an invalid date in the form must not block it
-		$this->form->addSubmit('remove', 'stamp.uncollect')
+		$form->addSubmit('remove', 'stamp.uncollect')
 			->setValidationScope([$id]);
 
-		$this->form->onSuccess[] = $onSuccess;
+		$form->onSuccess[] = $onSuccess;
 
 		// DateTime would render as 'Y-m-d H:i:s'; show the same Czech format the datepicker uses
 		if (($defaults['date'] ?? null) instanceof \DateTimeInterface) {
 			$defaults['date'] = $defaults['date']->format(self::DateFormat);
 		}
-		$this->form->setDefaults($defaults);
+		$form->setDefaults($defaults);
 
-		return $this->form;
+		return $form;
 	}
 
 	/**

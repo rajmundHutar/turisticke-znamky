@@ -5,20 +5,32 @@ declare(strict_types=1);
 namespace App\Forms;
 
 use Nette\Application\UI\Form;
+use Nette\Localization\Translator;
 
-class LoginForm extends BaseForm
+final class LoginForm
 {
 
-	public function create(callable $onSuccess)
+	public function __construct(
+		private Translator $translator,
+	) {
+	}
+
+
+	/**
+	 * Returns a new form on each call.
+	 */
+	public function create(callable $onSuccess): Form
 	{
+		$form = new Form;
+		$form->setTranslator($this->translator);
 
-		$this->form->addText('email', 'login.email');
-		$this->form->addPassword('password', 'login.password');
-		$this->form->addSubmit('ok', 'login.submit');
+		$form->addText('email', 'login.email');
+		$form->addPassword('password', 'login.password');
+		$form->addSubmit('ok', 'login.submit');
 
-		$this->form->onSuccess[] = $onSuccess;
+		$form->onSuccess[] = $onSuccess;
 
-		return $this->form;
+		return $form;
 	}
 
 }
