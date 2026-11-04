@@ -3,11 +3,13 @@ document.addEventListener("DOMContentLoaded", () => {
     initDatepicker(document)
     initNavbarBurger()
     initCollectSheet()
+    initLiveFilter()
 
 });
 
-// AJAX for forms and links with the class 'ajax' (https://naja.js.org)
-naja.initialize()
+// AJAX for forms and links with the class 'ajax' (https://naja.js.org); back and forward refetch the page instead of
+// restoring cached snippets, which would show the stamp list (and the collection) as it was before later changes (#50)
+naja.initialize({ snippetCache: 'off' })
 naja.snippetHandler.addEventListener('afterUpdate', (event) => initDatepicker(event.detail.snippet))
 
 // Czech locale of vanillajs-datepicker (locale files are not bundled in datepicker-full.min.js)
@@ -243,9 +245,103 @@ function initCollectSheet() {
         if (payload.collected === false) {
             document.querySelector(`[data-only-collected] #stamp-${payload.stampId}`)?.closest('li')?.remove()
         }
+        // ... and "Nemám" the not collected ones (#50)
+        if (payload.collected === true) {
+            document.querySelector(`[data-not-collected] #stamp-${payload.stampId}`)?.closest('li')?.remove()
+        }
     })
 
     showWithErrors(findSheet())
+
+}
+
+// The stamp list filter applies itself (#50): the search after a short pause in typing, the sort on change, both by AJAX
+// with the URL in the history. The URL is built from the current one (not from the form, whose hidden fields keep the
+// state of the page load, e.g. the switch Vše / Mám / Nemám) and has no form signal, so a number typed so far doesn't
+// jump to the stamp. Enter is an explicit submit: a normal page load with the signal, which jumps to an existing stamp.
+function initLiveFilter() {
+
+    const form = document.querySelector('form.js-live-filter')
+    if (!form) {
+        return
+    }
+    const search = form.elements.namedItem('search')
+    let timer = null
+    let deferred = false // a search typed while the collect sheet was open, applied after it closes
+    let searchEntryUrl = null // the history entry created by typing, replaced as the typing goes on
+
+    function filterUrl(submit) {
+        const url = new URL(window.location.href)
+        const params = url.searchParams
+        params.delete('do')
+        params.delete('ok')
+        params.delete('_fid') // flash messages of a past redirect
+        params.delete('paginator-page') // a new filter starts on the first page
+        const select = form.elements.namedItem('sort') // the select may have been redrawn
+        search.value ? params.set('search', search.value) : params.delete('search')
+        select.value && select.value !== select.options[0]?.value ? params.set('sort', select.value) : params.delete('sort') // the default not in the URL
+        if (submit) {
+            params.set('do', 'filterForm-submit')
+        }
+        url.hash = ''
+        return url.toString()
+    }
+
+    // own unique key: a filter request aborts the previous filter request, not a collect form POST, and vice versa
+    function apply(typing) {
+        clearTimeout(timer)
+        deferred = false
+        const url = filterUrl(false)
+        if (url === window.location.href) {
+            return
+        }
+        // typing makes one history entry, not one per pause; a sort change makes its own
+        const history = typing && window.location.href === searchEntryUrl ? 'replace' : true
+        searchEntryUrl = typing ? url : null
+        naja.makeRequest('GET', url, null, { history, unique: 'filter' })
+    }
+
+    function applyTyping() {
+        if (document.getElementById('collect-sheet')?.open) { // the list would be replaced under the open sheet
+            deferred = true
+            return
+        }
+        apply(true)
+    }
+
+    document.addEventListener('close', (event) => {
+        if (event.target.id === 'collect-sheet' && deferred) {
+            applyTyping()
+        }
+    }, true)
+
+    search.addEventListener('input', () => {
+        clearTimeout(timer)
+        timer = setTimeout(applyTyping, 300)
+    })
+    // delegated, the sort select is replaced by a snippet redraw
+    form.addEventListener('change', (event) => {
+        if (event.target.name === 'sort') {
+            apply(false)
+        }
+    })
+    form.addEventListener('submit', (event) => {
+        event.preventDefault()
+        clearTimeout(timer)
+        deferred = false
+        window.location.href = filterUrl(true)
+    })
+
+    // back and forward restore the list by Naja (a refetch, the snippet cache is off); the search input is not part of it
+    window.addEventListener('popstate', () => {
+        clearTimeout(timer) // a pending search must not push a new entry over the restored one
+        deferred = false
+        search.value = new URL(window.location.href).searchParams.get('search') ?? ''
+    })
+    // ... the refetch is a filter request too
+    naja.snippetCache.addEventListener('fetch', (event) => {
+        event.detail.options.unique = 'filter'
+    })
 
 }
 

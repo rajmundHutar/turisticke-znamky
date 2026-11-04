@@ -59,6 +59,10 @@ class StampsModel
 			$query->where('tz_stamps.id', $filter['ids']); // qualified, tz_collection may be joined
 		}
 
+		if ($filter['excludeIds'] ?? null) { // an empty list excludes nothing
+			$query->where('tz_stamps.id NOT IN ?', $filter['excludeIds']);
+		}
+
 		return $query;
 	}
 

@@ -158,6 +158,22 @@ dialog {
     padding: 0 0.75rem;
 }
 
+/* live filter (#50): the submit button only without JS, bundle.js marks <html> with .js */
+.js .filter-submit {
+    display: none;
+}
+
+.collection-switch {
+    margin-bottom: 0.75rem;
+}
+
+.filter-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
 .stamp-rows {
     margin: 0;
     padding: 0;

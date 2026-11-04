@@ -5,62 +5,79 @@
 {block content}
 <div class="stamp-list-page">
 
-	<form n:name="filterForm">
-		<div class="field">
-			<div class="field has-addons">
-				<div class="control">
-					<a class="button is-static">
-						{=count($stamps ?? [])} / {$totalStampsCount}
-					</a>
-				</div>
-				<div class="control">
-					{input search, class => "input"}
-				</div>
-				<div class="select">
-					{input sort}
-				</div>
-				<div class="control">
-					{input ok, class => "button is-info"}
-				</div>
-				<div n:if="$filter['sort'] || $filter['search']" class="control">
-					<a n:href='this, sort => null, search => null' class="button is-danger">
-						{_'general.close'}
-					</a>
-				</div>
+	{* with JS bundle.js applies the filter as it changes (#50); the search input is never redrawn, it is being typed in *}
+	<form n:name="filterForm" class="filter-form js-live-filter">
+		<div class="field has-addons">
+			<div class="control is-expanded">
+				{input search, class => "input"}
 			</div>
-		</div>
-		<div class="field">
+			<div class="control" n:snippet="sort">
+				{formContext filterForm}
+					<div class="select">
+						{input sort}
+					</div>
+				{/formContext}
+			</div>
+			<div class="control filter-submit">
+				{input ok, class => "button is-info"}
+			</div>
 		</div>
 	</form>
 
-	{if $stamps}
-
-		{control paginator}
-
-		{* bundle.js removes a stamp removed from the collection from "My collection" *}
-		<ul class="stamp-rows"{if $presenter->onlyCollected} data-only-collected{/if}>
-			{snippetArea stamps}
-				{foreach $stamps as $stamp}
-					<li>
-						{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
+	<div n:snippet="list">
+		{* redrawn on its own after a change of the collection by AJAX, the counts change (#50) *}
+		<div n:snippet="collectionSwitch">
+			<nav n:ifset="$switchCounts" class="tabs is-toggle is-fullwidth collection-switch" aria-label="{_'form.filter.collection'}">
+				<ul>
+					<li n:class="!$presenter->onlyCollected && !$notCollectedView ? is-active">
+						<a n:href="this, onlyCollected => false, notCollected => false, 'paginator-page' => null" class="ajax" data-naja-unique="filter">{_'form.filter.all'}&nbsp;·&nbsp;{$switchCounts['all']|number: 0, ',', "\u{a0}"}</a>
 					</li>
-				{/foreach}
-			{/snippetArea}
-		</ul>
+					<li n:class="$presenter->onlyCollected ? is-active">
+						<a n:href="this, onlyCollected => true, notCollected => false, 'paginator-page' => null" class="ajax" data-naja-unique="filter">{_'form.filter.mine'}&nbsp;·&nbsp;{$switchCounts['collected']|number: 0, ',', "\u{a0}"}</a>
+					</li>
+					<li n:class="$notCollectedView ? is-active">
+						<a n:href="this, onlyCollected => false, notCollected => true, 'paginator-page' => null" class="ajax" data-naja-unique="filter">{_'form.filter.missing'}&nbsp;·&nbsp;{$switchCounts['notCollected']|number: 0, ',', "\u{a0}"}</a>
+					</li>
+				</ul>
+			</nav>
 
-		{control paginator}
-	{/if}
-
-	<article n:if="!$stamps" class="message is-danger">
-		<div class="message-body">
-			{_'general.noItemsFound'}
-			<br>
-			<br>
-			<a n:href='this, sort => null, search => null' class="button is-success">
-				{_'general.resetFilter'}
-			</a>
+			<p class="filter-summary">
+				{=count($stamps)} / {$totalStampsCount}
+				<a n:if="$filter['sort'] || $filter['search']" n:href="this, sort => null, search => null, 'paginator-page' => null" class="button is-small is-danger is-light">
+					{_'general.resetFilter'}
+				</a>
+			</p>
 		</div>
-	</article>
+
+		{if $stamps}
+
+			{control paginator}
+
+			{* bundle.js removes a stamp removed from "Mám" or added in "Nemám" from the list *}
+			<ul class="stamp-rows"{if $presenter->onlyCollected} data-only-collected{elseif $notCollectedView} data-not-collected{/if}>
+				{snippetArea stamps}
+					{foreach $stamps as $stamp}
+						<li>
+							{include "../@stampRow.latte", stamp => $stamp, collection => $collection}
+						</li>
+					{/foreach}
+				{/snippetArea}
+			</ul>
+
+			{control paginator}
+		{/if}
+
+		<article n:if="!$stamps" class="message is-danger">
+			<div class="message-body">
+				{_'general.noItemsFound'}
+				<br>
+				<br>
+				<a n:href='this, sort => null, search => null' class="button is-success">
+					{_'general.resetFilter'}
+				</a>
+			</div>
+		</article>
+	</div>
 
 	<div n:snippet="collectSheet">{include "../@collectSheet.latte"}</div>
 
