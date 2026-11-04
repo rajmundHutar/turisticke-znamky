@@ -15,7 +15,6 @@ class Translator implements \Nette\Localization\Translator
 		'general.prev' => 'Předchozí',
 		'general.next' => 'Další',
 		'general.chooseSomething' => 'Vyberte…',
-		'general.close' => '✘',
 		'general.closeDialog' => 'Zavřít',
 		'general.pagination' => 'Stránkování',
 		'general.goToPage{page}' => 'Přejít na stránku {page}',

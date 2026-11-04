@@ -23,7 +23,9 @@ final class HomepagePresenter extends Presenter
 	use InjectTranslator;
 	use InjectStampsModel;
 	use InjectCollectionModel;
-	use CollectStamps;
+	use CollectStamps {
+		redrawAfterCollectionChange as private redrawStampAfterCollectionChange;
+	}
 
 	private const StampsPerPage = 60;
 
@@ -85,7 +87,11 @@ final class HomepagePresenter extends Presenter
 		// counts of the switch Vše / Mám / Nemám, all of the stamps matching the search
 		if ($this->user->isLoggedIn()) {
 			$all = isset($listFilter['ids']) || isset($listFilter['excludeIds']) ? $this->stampsModel->count($filter) : $count;
-			$collected = $this->onlyCollected ? $count : $this->stampsModel->count(['ids' => $collectedIds] + $filter);
+			$collected = match (true) {
+				$this->onlyCollected => $count,
+				$this->isNotCollectedView() => $all - $count,
+				default => $this->stampsModel->count(['ids' => $collectedIds] + $filter),
+			};
 			$this->template->switchCounts = ['all' => $all, 'collected' => $collected, 'notCollected' => $all - $collected];
 		}
 
@@ -95,6 +101,14 @@ final class HomepagePresenter extends Presenter
 			$this->redrawControl('list');
 			$this->redrawControl('collectSheet'); // its form action keeps the filter for redirects
 		}
+	}
+
+
+	/** The counts of the switch Vše / Mám / Nemám change with the collection too (#50). */
+	protected function redrawAfterCollectionChange(int $id): void
+	{
+		$this->redrawStampAfterCollectionChange($id);
+		$this->redrawControl('collectionSwitch');
 	}
 
 

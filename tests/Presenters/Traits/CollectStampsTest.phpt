@@ -63,6 +63,7 @@ final class CollectFakeCollectionModel extends CollectionModel
 	public function add(int $stampId, int $userId, ?DateTimeInterface $date, ?string $comment): void
 	{
 		$this->writes[] = ['add', $stampId, $userId, $date, $comment];
+		$this->collection[$stampId] = collected($stampId);
 	}
 
 
@@ -75,6 +76,7 @@ final class CollectFakeCollectionModel extends CollectionModel
 	public function remove(int $stampId, int $userId): void
 	{
 		$this->writes[] = ['remove', $stampId, $userId];
+		unset($this->collection[$stampId]);
 	}
 
 }
@@ -106,9 +108,10 @@ final class CollectFakeStampsModel extends StampsModel
 	}
 
 
+	/** Of the 3 listed stamps those with the given ids, or the others. */
 	public function count(array $filter = []): int
 	{
-		return 3;
+		return isset($filter['ids']) ? count($filter['ids']) : 3 - count($filter['excludeIds'] ?? []);
 	}
 
 
@@ -424,13 +427,14 @@ Assert::same('14.4', $url->getQueryParameter('lng'));
 Assert::same('stamp-5', $url->getFragment());
 
 
-// AJAX: no redirect; the stamp's snippet, the stamp list and the flash messages are redrawn, the payload names the stamp (#48)
+// AJAX: no redirect; the stamp's snippet, the stamp list and the flash messages are redrawn, the payload names the stamp (#48);
+// on the homepage also the switch Vše / Mám / Nemám with the counts after the change (#50)
 $cases = [
-	[new CollectFakeCollectionModel, ['ok' => 'stamp.saveToCollection'], 'add', true, 'stamp.flash.added'],
-	[new CollectFakeCollectionModel([5 => collected(5)]), ['ok' => 'stamp.saveToCollection'], 'update', true, 'stamp.flash.saved'],
-	[new CollectFakeCollectionModel([5 => collected(5)]), ['remove' => 'stamp.uncollect'], 'remove', false, 'stamp.flash.removed'],
+	[new CollectFakeCollectionModel, ['ok' => 'stamp.saveToCollection'], 'add', true, 'stamp.flash.added', 1],
+	[new CollectFakeCollectionModel([5 => collected(5)]), ['ok' => 'stamp.saveToCollection'], 'update', true, 'stamp.flash.saved', 1],
+	[new CollectFakeCollectionModel([5 => collected(5)]), ['remove' => 'stamp.uncollect'], 'remove', false, 'stamp.flash.removed', 0],
 ];
-foreach ($cases as [$collectionModel, $button, $op, $collected, $flash]) {
+foreach ($cases as [$collectionModel, $button, $op, $collected, $flash, $collectedCount]) {
 	$presenter = new HomepagePresenter($translator);
 	$response = runCollect($presenter, 'Homepage', ['user'], $collectionModel, $homepageParams, [
 		'id' => '5',
@@ -445,8 +449,13 @@ foreach ($cases as [$collectionModel, $button, $op, $collected, $flash]) {
 	// the rendered payload carries just the redrawn snippets (rendering marks them valid again)
 	Assert::type(Nette\Application\Responses\JsonResponse::class, $response);
 	$snippets = (array) $presenter->getPayload()->snippets;
-	Assert::same(['snippet--stamp-5', 'snippet--flashes'], array_keys($snippets), $op); // not the other stamps of the page
+	$keys = array_keys($snippets);
+	sort($keys);
+	Assert::same(['snippet--collectionSwitch', 'snippet--flashes', 'snippet--stamp-5'], $keys, $op); // not the other stamps of the page
 	Assert::contains('id="stamp-5"', $snippets['snippet--stamp-5'], $op);
+	Assert::contains("form.filter.mine&nbsp;·&nbsp;$collectedCount<", $snippets['snippet--collectionSwitch'], $op);
+	Assert::contains('form.filter.missing&nbsp;·&nbsp;' . (3 - $collectedCount) . '<', $snippets['snippet--collectionSwitch'], $op);
+	Assert::contains("3 / $collectedCount", $snippets['snippet--collectionSwitch'], $op); // listed (the fake lists 3 always) / matching in "Mám"
 	Assert::contains($flash, $snippets['snippet--flashes'] ?? '', $op);
 	Assert::false(isset($snippets['snippet--collectSheet']), $op);
 }

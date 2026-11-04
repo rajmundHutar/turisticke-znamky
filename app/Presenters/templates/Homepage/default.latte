@@ -25,26 +25,29 @@
 	</form>
 
 	<div n:snippet="list">
-		<nav n:ifset="$switchCounts" class="tabs is-toggle is-fullwidth collection-switch" aria-label="{_'form.filter.collection'}">
-			<ul>
-				<li n:class="!$presenter->onlyCollected && !$notCollectedView ? is-active">
-					<a n:href="this, onlyCollected => false, notCollected => false, 'paginator-page' => null" class="ajax">{_'form.filter.all'}&nbsp;·&nbsp;{$switchCounts['all']|number: 0, ',', "\u{a0}"}</a>
-				</li>
-				<li n:class="$presenter->onlyCollected ? is-active">
-					<a n:href="this, onlyCollected => true, notCollected => false, 'paginator-page' => null" class="ajax">{_'form.filter.mine'}&nbsp;·&nbsp;{$switchCounts['collected']|number: 0, ',', "\u{a0}"}</a>
-				</li>
-				<li n:class="$notCollectedView ? is-active">
-					<a n:href="this, onlyCollected => false, notCollected => true, 'paginator-page' => null" class="ajax">{_'form.filter.missing'}&nbsp;·&nbsp;{$switchCounts['notCollected']|number: 0, ',', "\u{a0}"}</a>
-				</li>
-			</ul>
-		</nav>
+		{* redrawn on its own after a change of the collection by AJAX, the counts change (#50) *}
+		<div n:snippet="collectionSwitch">
+			<nav n:ifset="$switchCounts" class="tabs is-toggle is-fullwidth collection-switch" aria-label="{_'form.filter.collection'}">
+				<ul>
+					<li n:class="!$presenter->onlyCollected && !$notCollectedView ? is-active">
+						<a n:href="this, onlyCollected => false, notCollected => false, 'paginator-page' => null" class="ajax" data-naja-unique="filter">{_'form.filter.all'}&nbsp;·&nbsp;{$switchCounts['all']|number: 0, ',', "\u{a0}"}</a>
+					</li>
+					<li n:class="$presenter->onlyCollected ? is-active">
+						<a n:href="this, onlyCollected => true, notCollected => false, 'paginator-page' => null" class="ajax" data-naja-unique="filter">{_'form.filter.mine'}&nbsp;·&nbsp;{$switchCounts['collected']|number: 0, ',', "\u{a0}"}</a>
+					</li>
+					<li n:class="$notCollectedView ? is-active">
+						<a n:href="this, onlyCollected => false, notCollected => true, 'paginator-page' => null" class="ajax" data-naja-unique="filter">{_'form.filter.missing'}&nbsp;·&nbsp;{$switchCounts['notCollected']|number: 0, ',', "\u{a0}"}</a>
+					</li>
+				</ul>
+			</nav>
 
-		<p class="filter-summary">
-			{=count($stamps)} / {$totalStampsCount}
-			<a n:if="$filter['sort'] || $filter['search']" n:href="this, sort => null, search => null, 'paginator-page' => null" class="button is-small is-danger is-light">
-				{_'general.resetFilter'}
-			</a>
-		</p>
+			<p class="filter-summary">
+				{=count($stamps)} / {$totalStampsCount}
+				<a n:if="$filter['sort'] || $filter['search']" n:href="this, sort => null, search => null, 'paginator-page' => null" class="button is-small is-danger is-light">
+					{_'general.resetFilter'}
+				</a>
+			</p>
+		</div>
 
 		{if $stamps}
 

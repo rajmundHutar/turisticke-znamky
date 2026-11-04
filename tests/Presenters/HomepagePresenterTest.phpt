@@ -181,6 +181,7 @@ function homepageFilters(?array $roles, array $collection, array $params): array
 	Assert::same([], $presenter->getTemplate()->stamps ?? []);
 	Assert::same(0, $presenter->getTemplate()->totalStampsCount);
 	Assert::true(count($stampsModel->filters) > 0);
+	Assert::same($stampsModel->filters[0], $stampsModel->countFilters[0] ?? null); // the paginator counts the listed stamps (#50)
 	return $stampsModel->filters;
 }
 
@@ -526,7 +527,7 @@ function renderCountingHomepage(?array $roles, array $params, array $headers = [
 function collectionSwitch(string $html): array
 {
 	Assert::match('%A%<nav class="tabs is-toggle is-fullwidth collection-switch" aria-label="form.filter.collection">%A%', $html);
-	preg_match_all('~<li( class="is-active")?>\s*<a href="([^"]+)" class="ajax"[^>]*>([^<]+)</a>~', $html, $m, PREG_SET_ORDER);
+	preg_match_all('~<li( class="is-active")?>\s*<a href="([^"]+)" class="ajax" data-naja-unique="filter">([^<]+)</a>~', $html, $m, PREG_SET_ORDER);
 	$segments = [];
 	foreach ($m as [, $active, $href, $label]) {
 		$query = (new Nette\Http\Url(html_entity_decode($href)))->getQueryParameters();
@@ -552,6 +553,24 @@ foreach (['' => [], 'onlyCollected' => ['onlyCollected' => '1'], 'notCollected' 
 
 // "Nemám" marks the list, so bundle.js removes a stamp added to the collection by AJAX (#50)
 Assert::contains('<ul class="stamp-rows" data-not-collected>', $html);
+
+// Each view counts the listed stamps first (the paginator), then only what the switch still lacks: one extra COUNT (#50)
+foreach ([
+	'' => ['all', 'ids'],
+	'onlyCollected' => ['ids', 'all'],
+	'notCollected' => ['excludeIds', 'all'],
+] as $active => $expected) {
+	[, $stampsModel] = renderCountingHomepage(['user'], $active === '' ? ['search' => 'Praha'] : [$active => '1', 'search' => 'Praha']);
+	Assert::same($expected, array_map(fn(array $filter) => match (true) {
+		isset($filter['ids']) => 'ids',
+		isset($filter['excludeIds']) => 'excludeIds',
+		default => 'all',
+	}, $stampsModel->countFilters), $active);
+	foreach ($stampsModel->countFilters as $filter) {
+		Assert::same('Praha', $filter['search'], $active);
+		Assert::same([3, 8], $filter['ids'] ?? $filter['excludeIds'] ?? [3, 8], $active);
+	}
+}
 
 // An anonymous user has no collection, no switch (#50)
 [$response, $stampsModel] = renderCountingHomepage(null, []);
