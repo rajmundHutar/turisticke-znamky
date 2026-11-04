@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Test: NearbyPresenter collect form keeps the location (#2, #48)
+ * Test: NearbyPresenter collect form keeps the location (#2, #48); the list of stamp rows with distances,
+ * the location status and the switch Vše / Mám / Nemám (#51)
  */
 
 declare(strict_types=1);
@@ -26,14 +27,21 @@ require __DIR__ . '/../../app/Helpers/Flash.php'; // global class, loaded by Rob
 /** StampsModel double without a database. */
 final class NearbyFakeStampsModel extends StampsModel
 {
-	public function __construct()
-	{
+	/** @var list<array{float, float, ?int, ?array<int>, ?array<int>}> */
+	public array $closestCalls = [];
+
+
+	/** @param  array<int, array<string, mixed>>  $closest */
+	public function __construct(
+		private array $closest = [],
+	) {
 	}
 
 
-	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): array
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null, ?array $ids = null): array
 	{
-		return [];
+		$this->closestCalls[] = [$lat, $lng, $num, $exclude, $ids];
+		return $this->closest;
 	}
 
 
@@ -78,6 +86,7 @@ final class NearbyFakeCollectionModel extends CollectionModel
 	public function add(int $stampId, int $userId, ?DateTimeInterface $date, ?string $comment): void
 	{
 		$this->added[] = [$stampId, $userId, $date, $comment];
+		$this->collection[$stampId] = new CollectedStampDto($stampId, 'Stamp', null, null, null, '50.0', '14.0', null, null, $comment, null);
 	}
 
 
@@ -165,3 +174,117 @@ $presenter->run(new Request('Nearby', 'GET', ['action' => 'default', 'lat' => '5
 $snippets = (array) $presenter->getPayload()->snippets;
 Assert::same(['snippet--stamps'], array_keys($snippets));
 Assert::contains('<form action="/nearby/?lat=50.1&amp;lng=14.4" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>', $snippets['snippet--stamps']);
+
+
+$closestStamps = [
+	19 => ['id' => 19, 'name' => 'Osada Rezek', 'lat' => '50.7', 'lng' => '15.4', 'image' => null, 'distance' => 2120.0, 'prettyDistance' => '2,1 km'],
+];
+
+
+/**
+ * Renders the Nearby page (a full page load) with the stamp 5 collected; returns the HTML.
+ * @param  list<string>|null  $roles
+ * @param  array<string, string>  $params
+ */
+function renderNearby(NearbyFakeStampsModel $stampsModel, ?array $roles, array $params): string
+{
+	$translator = new App\Helpers\Translator;
+	$presenter = new NearbyPresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
+	$presenter->injectStampsModel($stampsModel);
+	$presenter->injectCollectionModel(new NearbyFakeCollectionModel([
+		5 => new CollectedStampDto(5, 'Sněžka', 'type', 'region', new DateTime, '50.7', '15.7', 'img.jpg', new DateTime('2024-05-01'), 'Windy', null),
+	]));
+	$presenter->injectEditStampForm(new EditStampForm($translator));
+	$response = $presenter->run(new Request('Nearby', 'GET', ['action' => 'default'] + $params));
+	Assert::type(Nette\Application\Responses\TextResponse::class, $response);
+	assert($response instanceof Nette\Application\Responses\TextResponse);
+	return (string) $response->getSource();
+}
+
+
+// A logged-in user sees "Nemám" by default: the nearest stamps not in the collection, as stamp rows with the distance
+// under the name; the switch links keep the location; no coordinates in the heading (#51)
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4']);
+Assert::same([[50.1, 14.4, 20, [5], null]], $stampsModel->closestCalls);
+Assert::match('~<article class="stamp-row" id="stamp-19">.*class="stamp-row-name">Osada Rezek</span>\s*<span class="stamp-row-distance">.*2,1 km</span>~s', $html);
+Assert::match('~<li class="is-active">\s*<a href="/nearby/\?lat=50.1&amp;lng=14.4"[^>]*>Nemám</a>~', $html);
+Assert::match('~<a href="/nearby/\?filter=all&amp;lat=50.1&amp;lng=14.4"[^>]*>Vše</a>~', $html);
+Assert::match('~<a href="/nearby/\?filter=collected&amp;lat=50.1&amp;lng=14.4"[^>]*>Mám</a>~', $html);
+Assert::match('~<h1 class="title[^"]*">Poblíž</h1>~', $html);
+Assert::notContains('50.1, 14.4', $html);
+Assert::notContains('nearby.forLocation', $html);
+// the location status, filled in by bundle.js, with the Czech texts of every state; the button to locate again
+Assert::match('~<p class="nearby-status" id="nearby-status" role="status"[^>]* data-locating="Zjišťuji polohu…" data-located="Poloha zjištěna · přesnost ±&#123;accuracy} m"'
+	. ' data-denied="[^"]+" data-unavailable="[^"]+" data-timeout="[^"]+" data-unsupported="[^"]+"~', $html);
+Assert::contains('js-locate', $html);
+Assert::match('~<noscript>.*JavaScript.*</noscript>~s', $html);
+Assert::contains('<dialog id="collect-sheet"', $html);
+
+
+// "Mám" lists the nearest collected stamps, "Vše" all of them (#51)
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'collected']);
+Assert::same([[50.1, 14.4, 20, null, [5]]], $stampsModel->closestCalls);
+Assert::match('~<li class="is-active">\s*<a [^>]*>Mám</a>~', $html);
+
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'all']);
+Assert::same([[50.1, 14.4, 20, null, null]], $stampsModel->closestCalls);
+Assert::match('~<li class="is-active">\s*<a [^>]*>Vše</a>~', $html);
+
+
+// An anonymous user gets all the nearest stamps, no switch nor collect buttons (#51)
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$html = renderNearby($stampsModel, null, ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'collected']);
+Assert::same([[50.1, 14.4, 20, null, null]], $stampsModel->closestCalls);
+Assert::notContains('collection-switch', $html);
+Assert::notContains('js-collect', $html);
+Assert::contains('2,1 km', $html);
+
+
+// Before the location is known, no stamps are loaded; the status is shown (#51)
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$html = renderNearby($stampsModel, ['user'], []);
+Assert::same([], $stampsModel->closestCalls);
+Assert::contains('id="nearby-status"', $html);
+Assert::notContains('stamp-row', $html);
+
+
+// An invalid filter is "Nemám", not carried into the links (#51)
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'foo']);
+Assert::same([[50.1, 14.4, 20, [5], null]], $stampsModel->closestCalls);
+Assert::notContains('filter=foo', $html);
+Assert::match('~<li class="is-active">\s*<a [^>]*>Nemám</a>~', $html);
+
+
+// A location that is not a finite number is ignored, not an error (#51)
+foreach ([['1e309', '14.4'], ['abc', '14.4'], ['50.1', '-INF']] as [$lat, $lng]) {
+	$stampsModel = new NearbyFakeStampsModel($closestStamps);
+	$html = renderNearby($stampsModel, ['user'], ['lat' => $lat, 'lng' => $lng]);
+	Assert::same([], $stampsModel->closestCalls);
+	Assert::notContains('stamp-row', $html);
+}
+
+
+// Adding a stamp by AJAX in "Nemám" lists the nearest stamps without it: fetched after the change of the collection (#51)
+$translator = PresenterTestHelpers::createTranslator();
+$presenter = new NearbyPresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
+$stampsModel = new NearbyFakeStampsModel($closestStamps);
+$presenter->injectStampsModel($stampsModel);
+$presenter->injectCollectionModel(new NearbyFakeCollectionModel([
+	5 => new CollectedStampDto(5, 'Sněžka', 'type', 'region', new DateTime, '50.7', '15.7', 'img.jpg', new DateTime('2024-05-01'), 'Windy', null),
+]));
+$presenter->injectEditStampForm(new EditStampForm($translator));
+$presenter->run(new Request(
+	'Nearby',
+	'POST',
+	['action' => 'default', 'lat' => '50.1', 'lng' => '14.4', 'do' => 'collectForm-submit'],
+	['id' => '19', 'date' => '', 'comment' => '', 'ok' => 'stamp.saveToCollection'],
+));
+Assert::same([[50.1, 14.4, 20, [5, 19], null]], $stampsModel->closestCalls);
+$snippets = (array) $presenter->getPayload()->snippets;
+Assert::same(['snippet--stamps', 'snippet--flashes'], array_keys($snippets));

@@ -9,6 +9,7 @@ use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\CollectStamps;
 use App\Presenters\Traits\InjectMenu;
 use App\Presenters\Traits\InjectTranslator;
+use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Presenter;
 
 class NearbyPresenter extends Presenter
@@ -19,14 +20,22 @@ class NearbyPresenter extends Presenter
 	use InjectTranslator;
 	use InjectMenu;
 	use CollectStamps;
-	protected array $closest = [];
+
+	public const Filters = ['all', 'collected', 'missing'];
+
+	/** The switch Vše / Mám / Nemám of a logged-in user, "Nemám" by default (#51) */
+	#[Persistent]
+	public string $filter = 'missing';
+
 	protected ?string $lat = null;
 	protected ?string $lng = null;
 
 	public function actionDefault(?string $lat = null, ?string $lng = null)
 	{
-		if ($lat && $lng) {
-			$this->closest = $this->stampsModel->fetchClosest((float) $lat, (float) $lng, 20);
+		if (!in_array($this->filter, self::Filters, true)) {
+			$this->filter = 'missing'; // not carried into the links
+		}
+		if (self::isCoordinate($lat) && self::isCoordinate($lng)) {
 			$this->lat = $lat;
 			$this->lng = $lng;
 		}
@@ -35,12 +44,33 @@ class NearbyPresenter extends Presenter
 		}
 	}
 
+	/** A finite number; e.g. 1e309 or "abc" are ignored, not an error */
+	private static function isCoordinate(?string $value): bool
+	{
+		return is_numeric($value) && is_finite((float) $value);
+	}
+
 	public function renderDefault(): void
 	{
-		$this->template->stamps = $this->closest;
+		$filter = $this->user->isLoggedIn() ? $this->filter : 'missing';
+		$collectedIds = array_keys($this->userCollection);
+
+		// in render, after a collect form signal changed the collection
+		$stamps = [];
+		if ($this->lat !== null && $this->lng !== null) {
+			$stamps = $this->stampsModel->fetchClosest(
+				(float) $this->lat,
+				(float) $this->lng,
+				20,
+				$this->user->isLoggedIn() && $filter === 'missing' ? $collectedIds : null,
+				$this->user->isLoggedIn() && $filter === 'collected' ? $collectedIds : null,
+			);
+		}
+
+		$this->template->stamps = $stamps;
 		$this->template->collection = $this->userCollection;
-		$this->template->lat = $this->lat;
-		$this->template->lng = $this->lng;
+		$this->template->located = $this->lat !== null && $this->lng !== null;
+		$this->template->activeFilter = $filter;
 
 		// the whole 'stamps' snippet on every AJAX request (also after a collect form submit, not just the changed stamp):
 		// the collect sheet lives inside it, so its form action gets lat/lng once the location is known

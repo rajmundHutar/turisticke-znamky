@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Test: StampPresenter collect form stores the values and redirects back (#3, #29, #48), shows invalid date errors (#31); the detail shows the feed data (#14, #4)
+ * Test: StampPresenter collect form stores the values and redirects back (#3, #29, #48), shows invalid date errors (#31); the detail shows the feed data (#14, #4);
+ * the layout of the detail: collection status, "Kde koupit", collapsible description (#51)
  */
 
 declare(strict_types=1);
@@ -164,7 +165,7 @@ final class StampFakeStampsModel extends StampsModel
 	}
 
 
-	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null): array
+	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null, ?array $ids = null): array
 	{
 		return $this->closest;
 	}
@@ -192,7 +193,7 @@ function createRow(array $data): ActiveRow
  */
 function renderStampDetail(array $stamp, array $salespoints = [], array $closest = [], string $mapyApiKey = '', ?array $roles = null, array $collection = []): string
 {
-	$translator = PresenterTestHelpers::createTranslator();
+	$translator = new App\Helpers\Translator;
 	$presenter = new StampPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
 	$presenter->injectMapyConfig(new App\Helpers\MapyConfig($mapyApiKey));
@@ -266,9 +267,10 @@ Assert::contains('/images/stamps/1-praded.jpg"', $html);
 Assert::notMatch('~>\s*Rozhledna\s*<~', $html); // stays only in the map data
 Assert::notMatch('~>\s*Jeseníky\s*<~', $html);
 Assert::notContains('3. 2. 2001', $html);
-Assert::notContains('detail.detailsOn', $html);
+Assert::notContains('Více na', $html);
 Assert::notContains('rel="noopener"', $html);
-Assert::notContains('detail.salespoints', $html);
+Assert::notContains('Kde koupit', $html);
+Assert::notContains('O místě', $html);
 
 
 /** StampsModel double without a database that knows no stamp. */
@@ -342,8 +344,8 @@ foreach (['1', '7'] as $stampId) {
 // no GET links nor per-card forms change the collection (#48)
 $html = renderStampDetail($detailStamp, [], $closest, roles: ['user'], collection: [1 => $collected(1)]);
 Assert::match(
-	'~<div class="column px-6" id="snippet--detailCollection">.*stamp.collectedOn 1. 5. 2024.*Windy.*'
-	. 'data-stamp-id="1" data-stamp-number="1" data-stamp-name="Nová známka" data-collected="1" data-date="1. 5. 2024" data-note="Windy"~s',
+	'~<section class="stamp-detail-collection" id="snippet--detailCollection">.*Ve sbírce od 1. 5. 2024.*Windy.*'
+	. 'data-stamp-id="1" data-stamp-number="1" data-stamp-name="Nová známka" data-collected="1" data-date="1. 5. 2024" data-note="Windy"[^>]*>\s*<span>Upravit</span>~s',
 	$html,
 );
 Assert::match(
@@ -351,7 +353,6 @@ Assert::match(
 	. 'data-stamp-id="7" data-stamp-number="7" data-stamp-name="Bez obrázku" data-collected="0" data-date="" data-note=""~s',
 	$html,
 );
-Assert::contains('<div id="snippet--detailRibbon">', $html);
 Assert::notContains('toggleCollect', $html);
 Assert::same(1, substr_count($html, '<dialog'));
 Assert::same(1, substr_count($html, '<form'));
@@ -362,6 +363,28 @@ Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm" cla
 $html = renderStampDetail($detailStamp, [], $closest);
 Assert::notContains('js-collect', $html);
 Assert::notContains('<form', $html);
+Assert::notContains('Ve sbírce', $html);
+
+
+// The detail (#51): the image on top, number and name, the collection status, "Kde koupit" before the collapsible "O místě", then the map
+$html = renderStampDetail(['image' => '1-praded.jpg'] +
+	$detailStamp, $salespoints, $closest, roles: ['user'], collection: [1 => new CollectedStampDto(1, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2022-05-29'), 'S rodinou', null)]);
+Assert::match('~<figure class="stamp-detail-image">.*/images/stamps/1-praded.jpg.*</figure>\s*'
+	. '<p class="stamp-detail-number">Známka #1</p>\s*<h1 class="title[^"]*">Nová známka</h1>.*'
+	. 'Ve sbírce od 29. 5. 2022.*S rodinou.*'
+	. '<h2[^>]*>Kde koupit</h2>.*Pokladna hradu.*'
+	. '<h2[^>]*>O místě</h2>\s*<div class="stamp-description js-description" id="stamp-description">.*First paragraph.*</div>\s*'
+	. '<button type="button" class="[^"]*js-description-toggle[^"]*"[^>]*aria-controls="stamp-description"[^>]*data-less="[^"]+"[^>]*>Zobrazit celý popis</button>.*'
+	. 'id="map"~s', $html);
+
+// a logged-in user without the stamp gets the add button with the data for the shared sheet
+$html = renderStampDetail($detailStamp, [], $closest, roles: ['user']);
+Assert::notContains('Ve sbírce', $html);
+Assert::match(
+	'~<section class="stamp-detail-collection" id="snippet--detailCollection">\s*'
+	. '<button type="button" class="[^"]*js-collect[^"]*" data-stamp-id="1" [^>]*data-collected="0"[^>]*>.*<span>Přidat do sbírky</span>~s',
+	$html,
+);
 
 
 // The Mapy.cz API key comes from the configuration, not from the template (#39)

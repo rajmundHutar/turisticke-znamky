@@ -246,6 +246,158 @@ dialog {
     padding: 0;
 }
 
+/* distance of a nearby stamp (#51) */
+.stamp-row-distance {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: hsl(204, 71%, 39%);
+}
+
+/* Nearby (#51): the heading with the button to locate again and the status of the location */
+.nearby-header {
+    padding: 0.5rem 0 0.75rem;
+}
+
+.nearby-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.nearby-title .title {
+    margin-bottom: 0;
+}
+
+.nearby-locate {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    padding: 0;
+}
+
+.nearby-status {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #7a7a7a;
+}
+
+.nearby-status-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #b5b5b5;
+}
+
+.nearby-status[data-state="located"] .nearby-status-dot {
+    background: hsl(141, 53%, 53%);
+}
+
+.nearby-status[data-state="error"] {
+    color: hsl(348, 86%, 43%);
+}
+
+.nearby-status[data-state="error"] .nearby-status-dot {
+    background: hsl(348, 86%, 61%);
+}
+
+/* without JS the location is unknown, a <noscript> note says so */
+html:not(.js) .nearby-status,
+html:not(.js) .nearby-locate {
+    display: none;
+}
+
+/* stamp detail (#51): one centered column, the image on top */
+.stamp-detail-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 0.75rem;
+}
+
+.stamp-detail-image {
+    margin: 0 -0.75rem 0.75rem;
+    background: #f5f5f5;
+}
+
+.stamp-detail-image img {
+    display: block;
+    width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+}
+
+.stamp-detail-number {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #7a7a7a;
+}
+
+.stamp-detail-page .title.is-3 {
+    margin-bottom: 1rem;
+}
+
+.stamp-detail-collected {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background: hsl(141, 53%, 96%);
+}
+
+.stamp-detail-collected-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.stamp-detail-section {
+    margin-top: 1.5rem;
+}
+
+.stamp-detail-section .title {
+    margin-bottom: 0.5rem;
+}
+
+.stamp-detail-salespoints li {
+    padding: 0.25rem 0;
+}
+
+/* three lines with JS, bundle.js adds the button to expand it; the full text without JS */
+.stamp-description {
+    line-height: 1.5;
+}
+
+.js .stamp-description:not(.is-expanded) {
+    max-height: 4.5em;
+    overflow: hidden;
+}
+
+.stamp-description-toggle {
+    margin-top: 0.25rem;
+    padding-left: 0;
+}
+
+.stamp-description-toggle[hidden] {
+    display: none; /* over the display of Bulma's .button */
+}
+
+.stamp-detail-map {
+    height: 320px;
+    margin-top: 1.5rem;
+}
+
+.stamp-detail-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-top: 1rem;
+}
+
 /* bottom sheet of the shared collect form (#48); a theme (#53) restyles it through the variables */
 :root {
     --collect-sheet-background: #fff;
@@ -315,8 +467,17 @@ body:has(.collect-sheet[open]) {
 
 /* larger screens: the same single column, just scaled up */
 @media screen and (min-width: 1024px) {
-    .stamp-list-page {
+    .stamp-list-page,
+    .stamp-detail-page {
         max-width: 960px;
+    }
+
+    .stamp-detail-image {
+        margin: 0 0 1rem;
+    }
+
+    .stamp-detail-map {
+        height: 450px;
     }
 
     .stamp-row {

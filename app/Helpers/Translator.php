@@ -20,8 +20,16 @@ class Translator implements \Nette\Localization\Translator
 		'general.goToPage{page}' => 'Přejít na stránku {page}',
 		'general.page{page}' => 'Stránka {page}',
 
-		'nearby.forLocation{lat}{lng}' => 'Známky poblíž {lat}, {lng}.',
-		'nearby.geolocationNotAllowed' => 'Prohlížeč nepovolil zjištění polohy.',
+		'nearby.title' => 'Poblíž',
+		'nearby.locateAgain' => 'Znovu zjistit polohu',
+		'nearby.noScript' => 'Ke zjištění polohy je potřeba zapnutý JavaScript.',
+		'nearby.status.locating' => 'Zjišťuji polohu…',
+		'nearby.status.located' => 'Poloha zjištěna · přesnost ±{accuracy} m', // {accuracy} filled in by bundle.js
+		'nearby.status.denied' => 'Přístup k poloze je zakázaný. Povolte ho tomuto webu v nastavení prohlížeče a zkuste to znovu.',
+		'nearby.status.unavailable' => 'Polohu se nepodařilo zjistit. Zkontrolujte, že máte zapnuté určování polohy, a zkuste to znovu.',
+		'nearby.status.timeout' => 'Zjišťování polohy trvalo příliš dlouho. Zkuste to znovu.',
+		'nearby.status.unsupported' => 'Tento prohlížeč neumí zjistit polohu.',
+		'nearby.status.loadFailed' => 'Známky se nepodařilo načíst. Zkuste to znovu.',
 
 		'login.email' => 'E-mail',
 		'login.password' => 'Heslo',
@@ -42,7 +50,13 @@ class Translator implements \Nette\Localization\Translator
 		'detail.detailsOn' => 'Více na',
 		'detail.nearby' => 'Známky poblíž:',
 		'detail.website' => 'Web',
-		'detail.salespoints' => 'Kde koupit:',
+		'detail.salespoints' => 'Kde koupit',
+		'detail.stampNumber{number}' => 'Známka {number}',
+		'detail.inCollection' => 'Ve sbírce',
+		'detail.inCollectionSince{date}' => 'Ve sbírce od {date}',
+		'detail.about' => 'O místě',
+		'detail.showFullDescription' => 'Zobrazit celý popis',
+		'detail.showLessDescription' => 'Zobrazit méně',
 
 		'stats.numberOfCollected' => 'sebráno',
 		'stats.percentage' => 'procent',

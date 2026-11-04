@@ -52,7 +52,6 @@ class StampPresenter extends Presenter
 	protected function redrawAfterCollectionChange(int $id): void
 	{
 		if ($id === $this->stampId) {
-			$this->redrawControl('detailRibbon');
 			$this->redrawControl('detailCollection');
 		} else {
 			$this->redrawControl('stamps');

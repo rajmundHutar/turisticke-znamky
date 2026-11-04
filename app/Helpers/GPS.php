@@ -34,18 +34,22 @@ class GPS
 		return cos(deg2rad($lat));
 	}
 
+	/**
+	 * Czech distance from metres: "350 m" below 1 km, "2,1 km" below 10 km, "15 km" above.
+	 */
 	public static function prettyDistance(float $distance): string
 	{
-
-		if ($distance < 100) {
-			return "< 100 m";
+		$metres = (int) round($distance, -1);
+		if ($metres < 1000) {
+			return "{$metres} m";
 		}
 
-		if ($distance < 1000) {
-			return (floor($distance / 100) * 100) . " m";
+		$kilometres = round($distance / 1000, 1);
+		if ($kilometres < 10) {
+			return number_format($kilometres, 1, ',', '') . ' km';
 		}
 
-		return floor($distance / 1000) . " km";
+		return round($distance / 1000) . ' km';
 	}
 
 }

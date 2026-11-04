@@ -1,5 +1,8 @@
-{* The "+" / check button of a stamp; the shared collect sheet (@collectSheet.latte) reads its data attributes (#48) *}
+{* The "+" / check button of a stamp; the shared collect sheet (@collectSheet.latte) reads its data attributes (#48).
+   With a $label (#51) it shows the text: "Upravit" alone, a "+" with "Přidat do sbírky". *}
 {var $collected = $collection[$stamp['id']] ?? null}
-<button type="button" n:class="$class, js-collect, $collected ? is-success" data-stamp-id="{$stamp['id']}" data-stamp-number="{$stamp['id']}" data-stamp-name="{$stamp['name']}" data-collected="{$collected ? 1 : 0}" data-date="{$collected?->date?->format('j. n. Y') ?? ''}" data-note="{$collected?->comment ?? ''}" aria-label="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}" title="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}">
-	<span class="icon"><i n:class="fas, $collected ? fa-check : fa-plus"></i></span>
+{var $label = $label ?? null}
+<button type="button" n:class="$class, js-collect, $collected && !$label ? is-success" data-stamp-id="{$stamp['id']}" data-stamp-number="{$stamp['id']}" data-stamp-name="{$stamp['name']}" data-collected="{$collected ? 1 : 0}" data-date="{$collected?->date?->format('j. n. Y') ?? ''}" data-note="{$collected?->comment ?? ''}" aria-label="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}" title="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}">
+	<span n:if="!$label || !$collected" class="icon"><i n:class="fas, $collected ? fa-check : fa-plus"></i></span>
+	<span n:if="$label">{$label}</span>
 </button>
