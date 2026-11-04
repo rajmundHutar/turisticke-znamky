@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\StampThumbnails;
 use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 use Nette\Utils\DateTime;
@@ -17,7 +18,8 @@ class ImportModel
 	public function __construct(
 		protected string $feedUrl,
 		protected string $stampsImagesPath,
-		protected Explorer $db
+		protected Explorer $db,
+		protected StampThumbnails $thumbnails,
 	) {
 	}
 
@@ -165,6 +167,7 @@ class ImportModel
 				'image' => $newName,
 			]);
 			$count++;
+			$this->createThumbnail(pathinfo($newName, PATHINFO_FILENAME));
 		}
 
 		if ($failed) {
@@ -172,6 +175,21 @@ class ImportModel
 		}
 
 		return $count;
+	}
+
+	/**
+	 * Creates the list thumbnail of a downloaded image; a failure is only logged, the list then creates it on demand (#52).
+	 */
+	private function createThumbnail(string $name): void
+	{
+		if (!$this->thumbnails->isSupported()) {
+			return;
+		}
+		try {
+			$this->thumbnails->create($name);
+		} catch (\Throwable $e) {
+			Debugger::log($e, Debugger::WARNING);
+		}
 	}
 
 	/**

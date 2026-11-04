@@ -9,6 +9,11 @@ application:
 		*: App\*Module\Presenters\*Presenter
 
 
+latte:
+	extensions:
+		- @App\Helpers\StampThumbnails
+
+
 session:
 	expiration: 14 days
 
@@ -24,6 +29,7 @@ services:
 	# Helpers
 	translator: App\Helpers\Translator
 	- App\Helpers\MapyConfig(%mapyApiKey%)
+	- App\Helpers\StampThumbnails(%stampsImagesPath%)
 
 	# Models
 	- App\Models\StampsModel

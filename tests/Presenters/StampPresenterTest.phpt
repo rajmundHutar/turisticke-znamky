@@ -256,14 +256,14 @@ $html = renderStampDetail([
 	'created_at' => new DateTime('2001-02-03'),
 	'lat' => '50.08',
 	'lng' => '17.23',
-	'image' => '1-praded.jpg',
+	'image' => '1-praded.png',
 	'description' => null,
 	'detail_url' => null,
 	'website' => null,
 	'wikipedia' => null,
 	'facebook' => null,
 ]);
-Assert::contains('/images/stamps/1-praded.jpg"', $html);
+Assert::contains('/images/stamps/1-praded.png"', $html);
 Assert::notMatch('~>\s*Rozhledna\s*<~', $html); // stays only in the map data
 Assert::notMatch('~>\s*Jeseníky\s*<~', $html);
 Assert::notContains('3. 2. 2001', $html);
@@ -367,15 +367,22 @@ Assert::notContains('Ve sbírce', $html);
 
 
 // The detail (#51): the image on top, number and name, the collection status, "Kde koupit" before the collapsible "O místě", then the map
-$html = renderStampDetail(['image' => '1-praded.jpg'] +
-	$detailStamp, $salespoints, $closest, roles: ['user'], collection: [1 => new CollectedStampDto(1, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2022-05-29'), 'S rodinou', null)]);
-Assert::match('~<figure class="stamp-detail-image">.*/images/stamps/1-praded.jpg.*</figure>\s*'
+$snezka = ['id' => 8, 'name' => 'Sněžka', 'lat' => '50.7', 'lng' => '15.7', 'image' => '8-snezka.png', 'distance' => 900.0, 'prettyDistance' => '0.9 km'];
+$nearby = [8 => $snezka] + $closest;
+$html = renderStampDetail(['image' => '1-praded.png'] +
+	$detailStamp, $salespoints, $nearby, roles: ['user'], collection: [1 => new CollectedStampDto(1, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2022-05-29'), 'S rodinou', null)]);
+Assert::match('~<figure class="stamp-detail-image">\s*'
+	. '<a data-fslightbox href="http://localhost/images/stamps/1-praded.png" target="_blank">\s*'
+	. '<img src="http://localhost/images/stamps/1-praded.png" alt="Nová známka">.*</figure>\s*'
 	. '<p class="stamp-detail-number">Známka #1</p>\s*<h1 class="title[^"]*">Nová známka</h1>.*'
 	. 'Ve sbírce od 29. 5. 2022.*S rodinou.*'
 	. '<h2[^>]*>Kde koupit</h2>.*Pokladna hradu.*'
 	. '<h2[^>]*>O místě</h2>\s*<div class="stamp-description js-description" id="stamp-description">.*First paragraph.*</div>\s*'
 	. '<button type="button" class="[^"]*js-description-toggle[^"]*"[^>]*aria-controls="stamp-description"[^>]*data-less="[^"]+"[^>]*>Zobrazit celý popis</button>.*'
 	. 'id="map"~s', $html);
+// the nearby cards load the lazy thumbnails, only the detail image is the full one (#52)
+Assert::contains('<img src="http://localhost/thumb/8-snezka" width="400" height="300" alt="Sněžka" loading="lazy" decoding="async">', $html);
+Assert::notContains('/images/stamps/8-snezka.png', $html);
 
 // a logged-in user without the stamp gets the add button with the data for the shared sheet
 $html = renderStampDetail($detailStamp, [], $closest, roles: ['user']);

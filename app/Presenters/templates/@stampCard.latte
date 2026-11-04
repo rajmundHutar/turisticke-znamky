@@ -23,7 +23,7 @@
     <div class="card-image stamp-image">
         <a n:href="Stamp:, id => $stamp['id']">
             <figure n:if="$stamp['image']" class="image">
-                <img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}" loading="lazy">
+                <img src="{$baseUrl}/{$stamp['image']|stampThumb}" width="{App\Helpers\StampThumbnails::Width}" height="{App\Helpers\StampThumbnails::Height}" alt="{$stamp['name']}" loading="lazy" decoding="async">
             </figure>
             <span n:if="!$stamp['image']" class="icon is-large has-text-grey-lighter" title="{_'stamp.noImage'}">
                 <i class="fas fa-4x fa-image"></i>
