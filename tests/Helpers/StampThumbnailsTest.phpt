@@ -30,6 +30,7 @@ createPng("$dir/1-praded.png", 532, 300);
 createPng("$dir/10-alfredka.png", 264, 300);
 createPng("$dir/5-small.png", 100, 50);
 file_put_contents("$dir/7-broken.png", 'not an image');
+touch("$dir/8-empty.png");
 
 $thumbnails = new StampThumbnails($dir . '/');
 
@@ -57,15 +58,33 @@ Assert::same(['1-praded.webp'], array_map('basename', glob("$dir/thumbs/*") ?: [
 Assert::same([264, 300], array_slice(getimagesize($thumbnails->create('10-alfredka')) ?: [], 0, 2));
 Assert::same([100, 50], array_slice(getimagesize($thumbnails->create('5-small')) ?: [], 0, 2));
 
-// a corrupt source is an error, no thumbnail is written
+// a corrupt or empty source is an error, no thumbnail is written
 Assert::exception(fn() => $thumbnails->create('7-broken'), RuntimeException::class);
 Assert::false(is_file("$dir/thumbs/7-broken.webp"));
+Assert::exception(fn() => $thumbnails->create('8-empty'), RuntimeException::class);
+Assert::false(is_file("$dir/thumbs/8-empty.webp"));
+
+// an image over the pixel limit is refused before it is decoded, so it cannot exhaust the memory
+$limited = new StampThumbnails($dir, maxPixels: 532 * 300 - 1);
+Assert::exception(fn() => $limited->create('1-praded'), RuntimeException::class, '~too large~');
+Assert::same([100, 50], array_slice(getimagesize($limited->create('5-small')) ?: [], 0, 2));
+
+// transparency is kept
+$image = imagecreatetruecolor(40, 20);
+imagealphablending($image, false);
+imagesavealpha($image, true);
+imagefill($image, 0, 0, (int) imagecolorallocatealpha($image, 0, 0, 0, 127));
+imagefilledrectangle($image, 20, 0, 39, 19, (int) imagecolorallocate($image, 0, 0, 255));
+imagepng($image, "$dir/9-alpha.png");
+$thumb = imagecreatefromwebp($thumbnails->create('9-alpha'));
+Assert::same(127, imagecolorsforindex($thumb, imagecolorat($thumb, 5, 10))['alpha']);
+Assert::same(0, imagecolorsforindex($thumb, imagecolorat($thumb, 35, 10))['alpha']);
 
 
 // The URL (relative to the base URL) is the static thumbnail when it exists, else the route generating it
 Assert::same('images/stamps/thumbs/1-praded.webp', $thumbnails->getUrl('1-praded.png'));
 Assert::same('thumb/7-broken', $thumbnails->getUrl('7-broken.png'));
-Assert::same('thumb/404-missing', $thumbnails->getUrl('404-missing.png'));
+Assert::same('images/stamps/404-missing.png', $thumbnails->getUrl('404-missing.png')); // no source, no route
 Assert::same('images/stamps/stamp-5.jpg', $thumbnails->getUrl('stamp-5.jpg')); // not a name of an imported image: the original
 
 

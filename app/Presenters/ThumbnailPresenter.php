@@ -21,12 +21,15 @@ final class ThumbnailPresenter implements Nette\Application\IPresenter
 		private StampThumbnails $thumbnails,
 		private Nette\Http\IRequest $httpRequest,
 		private Nette\Http\IResponse $httpResponse,
+		private Nette\Http\Session $session,
 	) {
 	}
 
 
 	public function run(Nette\Application\Request $request): Nette\Application\Response
 	{
+		$this->session->close(); // releases the lock of a started session, so the parallel requests of a list are not serialized
+
 		$name = (string) $request->getParameter('name');
 		$source = $this->thumbnails->getSourcePath($name) ?? throw new BadRequestException("Unknown stamp image '{$name}'.");
 
@@ -36,10 +39,11 @@ final class ThumbnailPresenter implements Nette\Application\IPresenter
 				if (!is_file($path)) {
 					$path = $this->thumbnails->create($name);
 				}
-				$this->httpResponse->setHeader('Cache-Control', 'public, max-age=31536000');
+				$this->httpResponse->setExpiration('1 year'); // replaces Pragma and Expires sent by the session
+				$this->httpResponse->setHeader('Cache-Control', 'private, max-age=31536000'); // the response may carry a session cookie
 				return new FileResponse($path, basename($path), 'image/webp', forceDownload: false);
-			} catch (\RuntimeException $e) {
-				Debugger::log($e, Debugger::WARNING);
+			} catch (\Throwable $e) {
+				Debugger::log("Stamp thumbnail {$name}: {$e->getMessage()}", Debugger::WARNING);
 			}
 		}
 

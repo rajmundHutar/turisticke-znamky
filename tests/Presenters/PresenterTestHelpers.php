@@ -95,7 +95,7 @@ final class PresenterTestHelpers
 				$latte = new Latte\Engine;
 				$latte->addExtension(new UIExtension($control)); // layout lookup, as in the app's LatteExtension
 				$latte->addExtension(new FormsExtension); // {form} tags, as in the app's FormsExtension
-				$latte->addExtension(new StampThumbnails(sys_get_temp_dir() . '/no-stamp-images', supported: true)); // |stampThumb, no thumbnail exists yet
+				$latte->addExtension(new StampThumbnails(__DIR__ . '/fixtures/stamp-images', supported: true)); // |stampThumb, the images have no thumbnail yet
 				return $latte;
 			}
 		};

@@ -26,8 +26,14 @@ final class StampThumbnails extends Latte\Extension
 	private bool $supported;
 
 
-	public function __construct(string $imagesDir, ?bool $supported = null)
-	{
+	/**
+	 * @param  int  $maxPixels  larger images are refused before decoding, so they can't exhaust the memory limit
+	 */
+	public function __construct(
+		string $imagesDir,
+		?bool $supported = null,
+		private int $maxPixels = 25_000_000,
+	) {
 		$this->imagesDir = rtrim($imagesDir, '/');
 		$this->supported = $supported ?? (function_exists('imagewebp') && defined('IMG_WEBP') && (imagetypes() & IMG_WEBP));
 	}
@@ -65,7 +71,7 @@ final class StampThumbnails extends Latte\Extension
 		} elseif (is_file($this->getThumbnailPath($m[1]))) {
 			return "images/stamps/thumbs/{$m[1]}.webp";
 		}
-		return $this->supported ? "thumb/{$m[1]}" : "images/stamps/{$image}";
+		return $this->supported && $this->getSourcePath($m[1]) !== null ? "thumb/{$m[1]}" : "images/stamps/{$image}";
 	}
 
 
@@ -83,8 +89,15 @@ final class StampThumbnails extends Latte\Extension
 			throw new \RuntimeException('GD with WebP support is not available.');
 		}
 
-		$data = @file_get_contents($source); // @ - the error is thrown below
-		$image = $data === false ? false : @imagecreatefromstring($data);
+		$size = @getimagesize($source); // @ - the error is thrown below
+		if ($size === false) {
+			throw new \RuntimeException("Cannot read the stamp image {$source}.");
+		} elseif ($size[0] * $size[1] > $this->maxPixels) {
+			throw new \RuntimeException("The stamp image {$source} is too large ({$size[0]} × {$size[1]} px).");
+		}
+
+		$data = @file_get_contents($source);
+		$image = $data === false || $data === '' ? false : @imagecreatefromstring($data);
 		if ($image === false) {
 			throw new \RuntimeException("Cannot read the stamp image {$source}.");
 		}
@@ -104,7 +117,7 @@ final class StampThumbnails extends Latte\Extension
 		// written to a temporary file and renamed, so a concurrent request never sees a half-written thumbnail
 		$target = $this->getThumbnailPath($name);
 		$dir = dirname($target);
-		if (!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) {
+		if (!is_dir($dir) && !@mkdir($dir, 0o755, true) && !is_dir($dir)) {
 			throw new \RuntimeException("Cannot create the directory {$dir}.");
 		}
 		$temp = $target . '.' . bin2hex(random_bytes(4)) . '.tmp';

@@ -188,7 +188,7 @@ class ImportModel
 		try {
 			$this->thumbnails->create($name);
 		} catch (\Throwable $e) {
-			Debugger::log($e, Debugger::WARNING);
+			Debugger::log("Stamp thumbnail {$name}: {$e->getMessage()}", Debugger::WARNING);
 		}
 	}
 
