@@ -13,7 +13,7 @@
 
 	<div id="navbarBasicExample" class="navbar-menu">
 		<div class="navbar-start">
-			<a href="{plink Homepage:, onlyCollected => false}" class="navbar-item">
+			<a href="{plink Homepage:, onlyCollected => false, notCollected => false}" class="navbar-item">
 				{_'menu.allStamps'}
 			</a>
 
@@ -21,7 +21,7 @@
 				{_'menu.nearby'}
 			</a>
 
-			<a n:if="$user->isLoggedIn()" href="{plink Homepage:, onlyCollected => true}" class="navbar-item">
+			<a n:if="$user->isLoggedIn()" href="{plink Homepage:, onlyCollected => true, notCollected => false}" class="navbar-item">
 				{_'menu.myCollection'}
 			</a>
 

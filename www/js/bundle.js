@@ -1,8 +1,12 @@
+// styles for pages with JS, e.g. the filter submit button is hidden as the filter applies itself (#50)
+document.documentElement.classList.add('js')
+
 document.addEventListener("DOMContentLoaded", () => {
 
     initDatepicker(document)
     initNavbarBurger()
     initCollectSheet()
+    initLiveFilter()
 
 });
 
@@ -243,9 +247,73 @@ function initCollectSheet() {
         if (payload.collected === false) {
             document.querySelector(`[data-only-collected] #stamp-${payload.stampId}`)?.closest('li')?.remove()
         }
+        // ... and "Nemám" the not collected ones (#50)
+        if (payload.collected === true) {
+            document.querySelector(`[data-not-collected] #stamp-${payload.stampId}`)?.closest('li')?.remove()
+        }
     })
 
     showWithErrors(findSheet())
+
+}
+
+// The stamp list filter applies itself (#50): the search after a short pause in typing, the sort on change, both by AJAX
+// with the URL in the history. The URL is built from the current one (not from the form, whose hidden fields keep the
+// state of the page load, e.g. the switch Vše / Mám / Nemám) and has no form signal, so a number typed so far doesn't
+// jump to the stamp. Enter is an explicit submit: a normal page load with the signal, which jumps to an existing stamp.
+function initLiveFilter() {
+
+    const form = document.querySelector('form.js-live-filter')
+    if (!form) {
+        return
+    }
+    const search = form.elements.namedItem('search')
+    let timer = null
+
+    function filterUrl(submit) {
+        const url = new URL(window.location.href)
+        const params = url.searchParams
+        params.delete('do')
+        params.delete('ok')
+        params.delete('paginator-page') // a new filter starts on the first page
+        const sort = form.elements.namedItem('sort').value // the select may have been redrawn
+        search.value ? params.set('search', search.value) : params.delete('search')
+        sort ? params.set('sort', sort) : params.delete('sort')
+        if (submit) {
+            params.set('do', 'filterForm-submit')
+        }
+        url.hash = ''
+        return url.toString()
+    }
+
+    function apply() {
+        clearTimeout(timer)
+        const url = filterUrl(false)
+        if (url !== window.location.href) {
+            naja.makeRequest('GET', url, null, { history: true })
+        }
+    }
+
+    search.addEventListener('input', () => {
+        clearTimeout(timer)
+        timer = setTimeout(apply, 300)
+    })
+    // delegated, the sort select is replaced by a snippet redraw
+    form.addEventListener('change', (event) => {
+        if (event.target.name === 'sort') {
+            apply()
+        }
+    })
+    form.addEventListener('submit', (event) => {
+        event.preventDefault()
+        clearTimeout(timer)
+        window.location.href = filterUrl(true)
+    })
+
+    // back and forward restore the list by Naja; the search input is not part of it
+    window.addEventListener('popstate', () => {
+        search.value = new URL(window.location.href).searchParams.get('search') ?? ''
+    })
 
 }
 

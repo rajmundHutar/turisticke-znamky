@@ -33,6 +33,9 @@ final class HomepagePresenter extends Presenter
 	public ?string $sort = null;
 	#[Persistent]
 	public bool $onlyCollected = false;
+	/** "Nemám": stamps not in the collection of a logged-in user; onlyCollected wins if both are set */
+	#[Persistent]
+	public bool $notCollected = false;
 
 	private FilterForm $filterForm;
 
@@ -48,30 +51,56 @@ final class HomepagePresenter extends Presenter
 		$this->userCollection = $this->collectionModel->fetchByUser($this->user->getId());
 	}
 
-	public function renderDefault(?bool $onlyCollected = null): void
+	public function renderDefault(): void
 	{
 		$filter = $this->getFilter();
-
-		if ($onlyCollected) {
-			$filter['ids'] = array_keys($this->userCollection);
-		}
 		$this['filterForm']->setDefaults($filter);
+
+		$collectedIds = array_keys($this->userCollection);
+		$listFilter = $filter;
+		if ($this->onlyCollected) {
+			$listFilter['ids'] = $collectedIds;
+		} elseif ($this->isNotCollectedView()) {
+			$listFilter['excludeIds'] = $collectedIds;
+		}
+		$count = $this->stampsModel->count($listFilter);
 
 		/** @var Paginator $paginator */
 		$paginator = $this['paginator'];
 		$paginator->setItemsPerPage(self::StampsPerPage);
-		$paginator->setItemCount($this->stampsModel->count($filter));
+		$paginator->setItemCount($count);
 
 		$stamps = $this->stampsModel->search(
-			$filter,
+			$listFilter,
 			$paginator->getLength(),
 			$paginator->getOffset()
 		) ?? [];
 		$this->template->stamps = $stamps;
 
-		$this->template->totalStampsCount = $this->stampsModel->count($filter);
+		$this->template->totalStampsCount = $count;
 		$this->template->collection = $this->userCollection;
 		$this->template->filter = $filter;
+		$this->template->notCollectedView = $this->isNotCollectedView();
+
+		// counts of the switch Vše / Mám / Nemám, all of the stamps matching the search
+		if ($this->user->isLoggedIn()) {
+			$all = isset($listFilter['ids']) || isset($listFilter['excludeIds']) ? $this->stampsModel->count($filter) : $count;
+			$collected = $this->onlyCollected ? $count : $this->stampsModel->count(['ids' => $collectedIds] + $filter);
+			$this->template->switchCounts = ['all' => $all, 'collected' => $collected, 'notCollected' => $all - $collected];
+		}
+
+		// a filter change by AJAX (live filter, the switch); the search input stays as the user is typing in it
+		if ($this->isAjax() && !$this->isControlInvalid()) { // nothing redrawn by a signal (the collect form)
+			$this->redrawControl('sort'); // date items only in "Mám"
+			$this->redrawControl('list');
+			$this->redrawControl('collectSheet'); // its form action keeps the filter for redirects
+		}
+	}
+
+
+	private function isNotCollectedView(): bool
+	{
+		return $this->notCollected && !$this->onlyCollected && $this->user->isLoggedIn();
 	}
 
 

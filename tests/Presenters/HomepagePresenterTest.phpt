@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Test: HomepagePresenter persistent params and collect form redirect (#29, #48); no type filter (#14); jump to a stamp by its number (#48)
+ * Test: HomepagePresenter persistent params and collect form redirect (#29, #48); no type filter (#14); jump to a stamp by its number (#48);
+ * live filter with the switch Vše / Mám / Nemám (#50)
  */
 
 declare(strict_types=1);
@@ -51,7 +52,7 @@ final class HomepageFakeCollectionModel extends CollectionModel
 // Persistent params are declared via #[Persistent]; the @persistent annotation is deprecated since nette/application 3.3
 Assert::noError(function () {
 	Assert::same(
-		['search', 'sort', 'onlyCollected'],
+		['search', 'sort', 'onlyCollected', 'notCollected'],
 		array_keys((new ComponentReflection(HomepagePresenter::class))->getPersistentParams()),
 	);
 });
@@ -100,8 +101,11 @@ Assert::null($url->getQueryParameter('do'));
 /** StampsModel double without a database; records the filters it is asked for. */
 final class HomepageFakeStampsModel extends App\Models\StampsModel
 {
-	/** @var list<array<string, mixed>> */
+	/** @var list<array<string, mixed>> filters of the listed stamps (search() calls) */
 	public array $filters = [];
+
+	/** @var list<array<string, mixed>> filters of count() calls */
+	public array $countFilters = [];
 
 	/** @var list<array{mixed, mixed}> limit and offset of each search() call */
 	public array $pages = [];
@@ -128,7 +132,7 @@ final class HomepageFakeStampsModel extends App\Models\StampsModel
 
 	public function count(array $filter = []): int
 	{
-		$this->filters[] = $filter;
+		$this->countFilters[] = $filter;
 		return $this->total ?? count($this->stamps);
 	}
 }
@@ -426,3 +430,152 @@ foreach (['19x', '1984 Praha', '1985', '0', '99999999999999999999'] as $search) 
 }
 [, $stampsModel] = submitSearch('19x');
 Assert::same([], $stampsModel->fetched); // no lookup for a term that is not a number
+
+
+// Typing in the search with JS requests the page without the form signal: no jump while typing "19" on the way to "1984" (#50)
+$translator = PresenterTestHelpers::createTranslator();
+$stampsModel = new HomepageJumpStampsModel;
+$presenter = new HomepagePresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['X-Requested-With' => 'XMLHttpRequest']);
+$presenter->injectCollectionModel(new HomepageCollectionModelWith([]));
+$presenter->injectStampsModel($stampsModel);
+$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+$presenter->injectEditStampForm(new EditStampForm($translator));
+$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default', 'search' => '1984']));
+Assert::type(Nette\Application\Responses\JsonResponse::class, $response);
+Assert::same([], $stampsModel->fetched);
+
+
+// "Nemám" lists the stamps not in the user's collection (#50)
+foreach (homepageFilters(['user'], [3 => 'a', 8 => 'b'], ['notCollected' => '1']) as $filter) {
+	Assert::same([3, 8], $filter['excludeIds'] ?? null);
+	Assert::false(array_key_exists('ids', $filter));
+}
+
+// ... an empty collection excludes nothing (the model adds no condition for an empty list) (#50)
+foreach (homepageFilters(['user'], [], ['notCollected' => '1']) as $filter) {
+	Assert::same([], $filter['excludeIds'] ?? null);
+}
+
+// ... an anonymous user has no collection, "Nemám" is ignored (#50)
+foreach (homepageFilters(null, [], ['notCollected' => '1']) as $filter) {
+	Assert::false(array_key_exists('excludeIds', $filter));
+	Assert::false(array_key_exists('ids', $filter));
+}
+
+// "Vše" and "Mám" exclude nothing (#50)
+foreach ([[], ['onlyCollected' => '1']] as $params) {
+	foreach (homepageFilters(['user'], [3 => 'a'], $params) as $filter) {
+		Assert::false(array_key_exists('excludeIds', $filter));
+	}
+}
+
+
+/** StampsModel double answering counts by the kind of the filter: 9 matching stamps, 2 of them collected. */
+final class HomepageCountingStampsModel extends App\Models\StampsModel
+{
+	/** @var list<array<string, mixed>> */
+	public array $countFilters = [];
+
+
+	public function __construct()
+	{
+	}
+
+
+	public function search(array $filter, $limit = null, $offset = null): array
+	{
+		return [Nette\Utils\ArrayHash::from(['id' => 3, 'name' => 'Stamp 3', 'image' => null])];
+	}
+
+
+	public function count(array $filter = []): int
+	{
+		$this->countFilters[] = $filter;
+		return isset($filter['ids']) ? 2 : (isset($filter['excludeIds']) ? 7 : 9);
+	}
+}
+
+
+/**
+ * Renders the homepage with HomepageCountingStampsModel.
+ * @param  list<string>|null  $roles
+ * @param  array<string, string>  $params
+ * @param  array<string, string>  $headers
+ * @return array{Nette\Application\Response, HomepageCountingStampsModel}
+ */
+function renderCountingHomepage(?array $roles, array $params, array $headers = []): array
+{
+	$translator = PresenterTestHelpers::createTranslator();
+	$stampsModel = new HomepageCountingStampsModel;
+	$presenter = new HomepagePresenter($translator);
+	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles), $headers);
+	$presenter->injectCollectionModel(new HomepageCollectionModelWith($roles === null ? [] : [3 => collectedStamp(3, null), 8 => collectedStamp(8, null)]));
+	$presenter->injectStampsModel($stampsModel);
+	$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+	$presenter->injectEditStampForm(new EditStampForm($translator));
+	$response = $presenter->run(new Request('Homepage', 'GET', ['action' => 'default'] + $params));
+	return [$response, $stampsModel];
+}
+
+
+/**
+ * The segments of the switch: label => [href query parameters, active].
+ * @return array<string, array{array<string, mixed>, bool}>
+ */
+function collectionSwitch(string $html): array
+{
+	Assert::match('%A%<nav class="tabs is-toggle is-fullwidth collection-switch" aria-label="form.filter.collection">%A%', $html);
+	preg_match_all('~<li( class="is-active")?>\s*<a href="([^"]+)" class="ajax"[^>]*>([^<]+)</a>~', $html, $m, PREG_SET_ORDER);
+	$segments = [];
+	foreach ($m as [, $active, $href, $label]) {
+		$query = (new Nette\Http\Url(html_entity_decode($href)))->getQueryParameters();
+		ksort($query);
+		$segments[trim(html_entity_decode($label))] = [$query, $active !== ''];
+	}
+	return $segments;
+}
+
+
+// The switch shows the counts of all matching stamps, the collected and the rest; its links keep the search and reset the page (#50)
+$nbsp = "\u{a0}";
+foreach (['' => [], 'onlyCollected' => ['onlyCollected' => '1'], 'notCollected' => ['notCollected' => '1']] as $active => $params) {
+	[$response] = renderCountingHomepage(['user'], $params + ['search' => 'Praha', 'paginator-page' => '2']);
+	assert($response instanceof Nette\Application\Responses\TextResponse);
+	$html = (string) $response->getSource();
+	Assert::same([
+		"form.filter.all{$nbsp}·{$nbsp}9" => [['search' => 'Praha'], $active === ''],
+		"form.filter.mine{$nbsp}·{$nbsp}2" => [['onlyCollected' => '1', 'search' => 'Praha'], $active === 'onlyCollected'],
+		"form.filter.missing{$nbsp}·{$nbsp}7" => [['notCollected' => '1', 'search' => 'Praha'], $active === 'notCollected'],
+	], collectionSwitch($html), $active);
+}
+
+// "Nemám" marks the list, so bundle.js removes a stamp added to the collection by AJAX (#50)
+Assert::contains('<ul class="stamp-rows" data-not-collected>', $html);
+
+// An anonymous user has no collection, no switch (#50)
+[$response, $stampsModel] = renderCountingHomepage(null, []);
+assert($response instanceof Nette\Application\Responses\TextResponse);
+$html = (string) $response->getSource();
+Assert::notContains('collection-switch', $html);
+Assert::notContains('form.filter.missing', $html);
+
+// Without JS the filter is submitted by its button; bundle.js hides it (#50)
+Assert::match('%A%<div class="control filter-submit">%A%<input type="submit" name="ok"%A%', $html);
+
+
+// A filter change by AJAX redraws the list with the switch, the sort select (its date items depend on the view)
+// and the collect sheet (its form keeps the filter for redirects), not the search input being typed in (#50)
+[$response] = renderCountingHomepage(['user'], ['search' => 'Praha', 'onlyCollected' => '1'], ['X-Requested-With' => 'XMLHttpRequest']);
+Assert::type(Nette\Application\Responses\JsonResponse::class, $response);
+assert($response instanceof Nette\Application\Responses\JsonResponse);
+$snippets = (array) $response->getPayload()->snippets;
+Assert::same(['snippet--sort', 'snippet--list', 'snippet--collectSheet'], array_keys($snippets));
+Assert::contains('form.filter.sortBy.date.asc', $snippets['snippet--sort']);
+Assert::contains('<select name="sort"', $snippets['snippet--sort']);
+Assert::contains('id="stamp-3"', $snippets['snippet--list']);
+Assert::contains("form.filter.mine&nbsp;·&nbsp;2", $snippets['snippet--list']);
+Assert::contains('search=Praha', $snippets['snippet--collectSheet']);
+foreach ($snippets as $snippet) {
+	Assert::notContains('name="search"', $snippet);
+}
