@@ -24,6 +24,11 @@ Require all granted
 	RewriteRule !\.(pdf|js|mjs|ico|gif|jpg|jpeg|png|webp|svg|css|rar|zip|7z|tar\.gz|map|eot|ttf|otf|woff|woff2)$ index.php [L]
 </IfModule>
 
+# WebP stamp thumbnails (#52), for servers whose MIME types don't know it yet
+<IfModule mod_mime.c>
+	AddType image/webp .webp
+</IfModule>
+
 # enable gzip compression
 <IfModule mod_deflate.c>
 	<IfModule mod_filter.c>

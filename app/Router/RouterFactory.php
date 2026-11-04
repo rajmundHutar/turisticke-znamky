@@ -15,6 +15,7 @@ final class RouterFactory
 	{
 		$router = new RouteList;
 		$router->addRoute('stamp/<id \d+>', 'Stamp:default');
+		$router->addRoute('thumb/<name [a-z0-9-]+>', 'Thumbnail:default'); // no extension: the built-in dev server would not route it
 		$router->addRoute('<presenter>/<action>[/<id>]', 'Homepage:default');
 		return $router;
 	}

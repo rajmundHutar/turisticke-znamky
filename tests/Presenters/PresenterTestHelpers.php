@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Presenters;
 
+use App\Helpers\StampThumbnails;
 use App\Router\RouterFactory;
 use Latte;
 use Nette;
@@ -94,6 +95,7 @@ final class PresenterTestHelpers
 				$latte = new Latte\Engine;
 				$latte->addExtension(new UIExtension($control)); // layout lookup, as in the app's LatteExtension
 				$latte->addExtension(new FormsExtension); // {form} tags, as in the app's FormsExtension
+				$latte->addExtension(new StampThumbnails(__DIR__ . '/fixtures/stamp-images', supported: true)); // |stampThumb, the images have no thumbnail yet
 				return $latte;
 			}
 		};
