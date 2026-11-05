@@ -2,7 +2,8 @@
 
 /**
  * Test: StampPresenter collect form stores the values and redirects back (#3, #29, #48), shows invalid date errors (#31); the detail shows the feed data (#14, #4);
- * the layout of the detail: collection status, "Kde koupit", collapsible description (#51); the nearby stamps as rows (#69)
+ * the layout of the detail: collection status, "Kde koupit", collapsible description (#51); the nearby stamps as rows (#69);
+ * the distance and the navigation link of the sales points (#70)
  */
 
 declare(strict_types=1);
@@ -408,6 +409,33 @@ Assert::match(
 	. '<button type="button" class="[^"]*js-collect[^"]*" data-stamp-id="1" [^>]*data-collected="0"[^>]*>.*<span>Přidat do sbírky</span>~s',
 	$html,
 );
+
+
+// "Kde koupit" (#70): a sales point with coordinates shows its distance from the stamp and navigates to them on Mapy.cz,
+// one without coordinates navigates to the search by its name (it holds the address), a system row ("sale suspended") has neither
+$html = renderStampDetail($detailStamp, [
+	['id' => 1, 'stamp_id' => 1, 'name' => 'Pokladna hradu', 'lat' => '50.099', 'lng' => '14.42', 'website' => 'https://example.com/shop', 'sort' => 1, 'system' => 0],
+	['id' => 2, 'stamp_id' => 1, 'name' => 'Trafika, Nádražní 5, Žďár nad Sázavou', 'lat' => '', 'lng' => '0', 'website' => null, 'sort' => 2, 'system' => 0],
+	['id' => 3, 'stamp_id' => 1, 'name' => 'Prodej dočasně pozastaven', 'lat' => null, 'lng' => null, 'website' => null, 'sort' => 3, 'system' => 1],
+], $closest);
+$navigate = 'target="_blank" rel="noopener" class="stamp-detail-salespoint-navigate">Navigovat</a>';
+Assert::match('~<h2[^>]*>Kde koupit</h2>\s*<ul class="stamp-detail-salespoints">\s*'
+	. '<li>\s*<div class="stamp-detail-salespoint-text">\s*<span>Pokladna hradu</span>\s*<span class="stamp-detail-salespoint-distance text-muted">2,1 km</span>\s*</div>\s*'
+	. '<a href="https://example.com/shop" target="_blank" rel="noopener">Web</a>\s*'
+	. '<a href="https://mapy\.cz/fnc/v1/route\?end=14\.42,50\.099&amp;navigate=true" ' . preg_quote($navigate, '~') . '\s*</li>\s*'
+	. '<li>\s*<div class="stamp-detail-salespoint-text">\s*<span>Trafika, Nádražní 5, Žďár nad Sázavou</span>\s*</div>\s*'
+	. '<a href="https://mapy\.cz/fnc/v1/search\?query=Trafika%2C%20N%C3%A1dra%C5%BEn%C3%AD%205%2C%20%C5%BD%C4%8F%C3%A1r%20nad%20S%C3%A1zavou" ' . preg_quote($navigate, '~') . '\s*</li>\s*'
+	. '<li class="text-muted is-italic">\s*<div class="stamp-detail-salespoint-text">\s*<span>Prodej dočasně pozastaven</span>\s*</div>\s*</li>\s*'
+	. '</ul>.*<h2[^>]*>O místě</h2>~s', $html);
+Assert::same(2, substr_count($html, 'Navigovat'));
+Assert::same(1, substr_count($html, 'stamp-detail-salespoint-distance'));
+
+// a stamp without coordinates gives no distance, the navigation stays
+$html = renderStampDetail(['lat' => null, 'lng' => null] + $detailStamp, [
+	['id' => 1, 'stamp_id' => 1, 'name' => 'Pokladna hradu', 'lat' => '50.099', 'lng' => '14.42', 'website' => null, 'sort' => 1, 'system' => 0],
+]);
+Assert::notContains('stamp-detail-salespoint-distance', $html);
+Assert::contains('href="https://mapy.cz/fnc/v1/route?end=14.42,50.099&amp;navigate=true"', $html);
 
 
 // The Mapy.cz API key comes from the configuration, not from the template (#39)

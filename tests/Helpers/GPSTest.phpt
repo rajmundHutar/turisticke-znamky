@@ -33,6 +33,15 @@ Assert::same('10 km', GPS::prettyDistance(9_960)); // rounds up to 10 km, not "1
 Assert::same('15 km', GPS::prettyDistance(14_600));
 Assert::same('186 km', GPS::prettyDistance(186_200));
 
+// Coordinates from the database strings (#70): empty, zero and non-numeric values are no location
+Assert::same(49.5643003, GPS::coordinate('49.5643003'));
+Assert::same(-1.5, GPS::coordinate(' -1.5 '));
+Assert::null(GPS::coordinate(null));
+Assert::null(GPS::coordinate(''));
+Assert::null(GPS::coordinate('0'));
+Assert::null(GPS::coordinate('0.0'));
+Assert::null(GPS::coordinate('abc'));
+
 // lngScale shrinks longitude degrees towards the poles
 Assert::same(1.0, GPS::lngScale(0.0));
 Assert::true(abs(GPS::lngScale(50.0) - 0.6428) < 0.0001);

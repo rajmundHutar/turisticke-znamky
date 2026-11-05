@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Presenters;
 
+use App\Helpers\GPS;
 use App\Helpers\MapyConfig;
+use App\Helpers\MapyLinks;
 use App\Models\Traits\InjectCollectionModel;
 use App\Models\Traits\InjectStampsModel;
 use App\Presenters\Traits\CollectStamps;
@@ -70,8 +72,33 @@ class StampPresenter extends Presenter
 			self::NearbyStamps,
 			[$this->stampId]
 		);
-		$this->template->salespoints = $this->stampsModel->fetchSalespoints($this->stampId);
+		$this->template->salespoints = $salespoints = $this->stampsModel->fetchSalespoints($this->stampId);
+		$this->template->salespointLocations = array_map($this->salespointLocation(...), $salespoints);
 		$this->template->collection = $this->userCollection;
+	}
+
+	/**
+	 * Distance from the stamp and the navigation link of a sales point; a system row (e.g. "sale suspended") is no place.
+	 * @return array{distance: ?string, navigate: ?string}
+	 */
+	private function salespointLocation(ActiveRow $salespoint): array
+	{
+		if ($salespoint['system']) {
+			return ['distance' => null, 'navigate' => null];
+		}
+
+		$lat = GPS::coordinate($salespoint['lat']);
+		$lng = GPS::coordinate($salespoint['lng']);
+		if ($lat === null || $lng === null) {
+			return ['distance' => null, 'navigate' => MapyLinks::search($salespoint['name'])];
+		}
+
+		$stampLat = GPS::coordinate($this->stamp['lat']);
+		$stampLng = GPS::coordinate($this->stamp['lng']);
+		return [
+			'distance' => $stampLat === null || $stampLng === null ? null : GPS::prettyDistance(GPS::gpsDistance($stampLat, $stampLng, $lat, $lng)),
+			'navigate' => MapyLinks::route($lat, $lng),
+		];
 	}
 
 }
