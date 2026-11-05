@@ -73,30 +73,36 @@ class StampPresenter extends Presenter
 			[$this->stampId]
 		);
 		$this->template->salespoints = $salespoints = $this->stampsModel->fetchSalespoints($this->stampId);
-		$this->template->salespointLocations = array_map($this->salespointLocation(...), $salespoints);
+		// nearest first, the ones without a distance keep the feed order at the end; the template shows the first one
+		// and collapses the others (#80)
+		$items = array_values(array_map(fn(ActiveRow $salespoint) => ['salespoint' => $salespoint] + $this->salespointLocation($salespoint), $salespoints));
+		usort($items, fn(array $a, array $b) => [$a['meters'] === null, $a['meters']] <=> [$b['meters'] === null, $b['meters']]);
+		$this->template->salespointItems = $items;
 		$this->template->collection = $this->userCollection;
 	}
 
 	/**
 	 * Distance from the stamp and the navigation link of a sales point; a system row (e.g. "sale suspended") is no place.
-	 * @return array{distance: ?string, navigate: ?string}
+	 * @return array{distance: ?string, meters: ?float, navigate: ?string}
 	 */
 	private function salespointLocation(ActiveRow $salespoint): array
 	{
 		if ($salespoint['system']) {
-			return ['distance' => null, 'navigate' => null];
+			return ['distance' => null, 'meters' => null, 'navigate' => null];
 		}
 
 		$lat = GPS::coordinate($salespoint['lat']);
 		$lng = GPS::coordinate($salespoint['lng']);
 		if ($lat === null || $lng === null) {
-			return ['distance' => null, 'navigate' => MapyLinks::search($salespoint['name'])];
+			return ['distance' => null, 'meters' => null, 'navigate' => MapyLinks::search($salespoint['name'])];
 		}
 
 		$stampLat = GPS::coordinate($this->stamp['lat']);
 		$stampLng = GPS::coordinate($this->stamp['lng']);
+		$meters = $stampLat === null || $stampLng === null ? null : GPS::gpsDistance($stampLat, $stampLng, $lat, $lng);
 		return [
-			'distance' => $stampLat === null || $stampLng === null ? null : GPS::prettyDistance(GPS::gpsDistance($stampLat, $stampLng, $lat, $lng)),
+			'distance' => $meters === null ? null : GPS::prettyDistance($meters),
+			'meters' => $meters,
 			'navigate' => MapyLinks::route($lat, $lng),
 		];
 	}
