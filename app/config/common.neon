@@ -25,6 +25,13 @@ session:
 	expiration: 14 days
 
 
+http:
+	headers:
+		# pages differ per user (login, collection): keep them out of shared caches (the hosting's proxy cached
+		# them for 5 minutes and served one user's page to another); ThumbnailPresenter sets its own caching
+		Cache-Control: 'private, no-cache'
+
+
 di:
 	export:
 		parameters: no
