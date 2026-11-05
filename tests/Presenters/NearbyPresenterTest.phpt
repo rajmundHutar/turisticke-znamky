@@ -2,7 +2,7 @@
 
 /**
  * Test: NearbyPresenter collect form keeps the location (#2, #48); the list of stamp rows with distances,
- * the location status and the switch Vše / Mám / Nemám (#51)
+ * the location status and the switch Vše / Mám / Nemám (#51) with the counts over the 20 nearest stamps (#71)
  */
 
 declare(strict_types=1);
@@ -41,7 +41,11 @@ final class NearbyFakeStampsModel extends StampsModel
 	public function fetchClosest(float $lat, float $lng, ?int $num = 10, ?array $exclude = null, ?array $ids = null): array
 	{
 		$this->closestCalls[] = [$lat, $lng, $num, $exclude, $ids];
-		return $this->closest;
+		$closest = array_filter(
+			$this->closest,
+			fn(array $stamp): bool => !in_array($stamp['id'], $exclude ?? [], true) && ($ids === null || in_array($stamp['id'], $ids, true)),
+		);
+		return array_slice($closest, 0, $num, true);
 	}
 
 
@@ -182,17 +186,18 @@ $closestStamps = [
 
 
 /**
- * Renders the Nearby page (a full page load) with the stamp 5 collected; returns the HTML.
+ * Renders the Nearby page (a full page load) with the stamp 5 collected unless given; returns the HTML.
  * @param  list<string>|null  $roles
  * @param  array<string, string>  $params
+ * @param  array<int, CollectedStampDto>|null  $collection
  */
-function renderNearby(NearbyFakeStampsModel $stampsModel, ?array $roles, array $params): string
+function renderNearby(NearbyFakeStampsModel $stampsModel, ?array $roles, array $params, ?array $collection = null): string
 {
 	$translator = new App\Helpers\Translator;
 	$presenter = new NearbyPresenter($translator);
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
 	$presenter->injectStampsModel($stampsModel);
-	$presenter->injectCollectionModel(new NearbyFakeCollectionModel([
+	$presenter->injectCollectionModel(new NearbyFakeCollectionModel($collection ?? [
 		5 => new CollectedStampDto(5, 'Sněžka', 'type', 'region', new DateTime, '50.7', '15.7', 'img.jpg', new DateTime('2024-05-01'), 'Windy', null),
 	]));
 	$presenter->injectEditStampForm(new EditStampForm($translator));
@@ -207,11 +212,11 @@ function renderNearby(NearbyFakeStampsModel $stampsModel, ?array $roles, array $
 // under the name; the switch links keep the location; no coordinates in the heading (#51)
 $stampsModel = new NearbyFakeStampsModel($closestStamps);
 $html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4']);
-Assert::same([[50.1, 14.4, 20, [5], null]], $stampsModel->closestCalls);
+Assert::same([[50.1, 14.4, 20, [5], null], [50.1, 14.4, 20, null, null]], $stampsModel->closestCalls);
 Assert::match('~<article class="stamp-row" id="stamp-19">.*class="stamp-row-name">Osada Rezek</span>\s*<span class="stamp-row-distance">.*2,1 km</span>~s', $html);
-Assert::match('~<li class="is-active">\s*<a href="/nearby/\?lat=50.1&amp;lng=14.4"[^>]*>Nemám</a>~', $html);
-Assert::match('~<a href="/nearby/\?filter=all&amp;lat=50.1&amp;lng=14.4"[^>]*>Vše</a>~', $html);
-Assert::match('~<a href="/nearby/\?filter=collected&amp;lat=50.1&amp;lng=14.4"[^>]*>Mám</a>~', $html);
+Assert::match('~<li class="is-active">\s*<a href="/nearby/\?lat=50.1&amp;lng=14.4"[^>]*>Nemám&nbsp;·&nbsp;1</a>~', $html);
+Assert::match('~<a href="/nearby/\?filter=all&amp;lat=50.1&amp;lng=14.4"[^>]*>Vše&nbsp;·&nbsp;1</a>~', $html);
+Assert::match('~<a href="/nearby/\?filter=collected&amp;lat=50.1&amp;lng=14.4"[^>]*>Mám&nbsp;·&nbsp;0</a>~', $html);
 Assert::match('~<h1 class="title[^"]*">Poblíž</h1>~', $html);
 Assert::notContains('50.1, 14.4', $html);
 Assert::notContains('nearby.forLocation', $html);
@@ -226,13 +231,13 @@ Assert::contains('<dialog id="collect-sheet"', $html);
 // "Mám" lists the nearest collected stamps, "Vše" all of them (#51)
 $stampsModel = new NearbyFakeStampsModel($closestStamps);
 $html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'collected']);
-Assert::same([[50.1, 14.4, 20, null, [5]]], $stampsModel->closestCalls);
-Assert::match('~<li class="is-active">\s*<a [^>]*>Mám</a>~', $html);
+Assert::same([[50.1, 14.4, 20, null, [5]], [50.1, 14.4, 20, null, null]], $stampsModel->closestCalls);
+Assert::match('~<li class="is-active">\s*<a [^>]*>Mám&nbsp;·&nbsp;0</a>~', $html);
 
 $stampsModel = new NearbyFakeStampsModel($closestStamps);
 $html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'all']);
-Assert::same([[50.1, 14.4, 20, null, null]], $stampsModel->closestCalls);
-Assert::match('~<li class="is-active">\s*<a [^>]*>Vše</a>~', $html);
+Assert::same([[50.1, 14.4, 20, null, null]], $stampsModel->closestCalls); // the list itself gives the counts
+Assert::match('~<li class="is-active">\s*<a [^>]*>Vše&nbsp;·&nbsp;1</a>~', $html);
 
 
 // An anonymous user gets all the nearest stamps, no switch nor collect buttons (#51)
@@ -255,9 +260,9 @@ Assert::notContains('stamp-row', $html);
 // An invalid filter is "Nemám", not carried into the links (#51)
 $stampsModel = new NearbyFakeStampsModel($closestStamps);
 $html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => 'foo']);
-Assert::same([[50.1, 14.4, 20, [5], null]], $stampsModel->closestCalls);
+Assert::same([[50.1, 14.4, 20, [5], null], [50.1, 14.4, 20, null, null]], $stampsModel->closestCalls);
 Assert::notContains('filter=foo', $html);
-Assert::match('~<li class="is-active">\s*<a [^>]*>Nemám</a>~', $html);
+Assert::match('~<li class="is-active">\s*<a [^>]*>Nemám&nbsp;·&nbsp;1</a>~', $html);
 
 
 // A location that is not a finite number is ignored, not an error (#51)
@@ -285,6 +290,70 @@ $presenter->run(new Request(
 	['action' => 'default', 'lat' => '50.1', 'lng' => '14.4', 'do' => 'collectForm-submit'],
 	['id' => '19', 'date' => '', 'comment' => '', 'ok' => 'stamp.saveToCollection'],
 ));
-Assert::same([[50.1, 14.4, 20, [5, 19], null]], $stampsModel->closestCalls);
+Assert::same([[50.1, 14.4, 20, [5, 19], null], [50.1, 14.4, 20, null, null]], $stampsModel->closestCalls);
 $snippets = (array) $presenter->getPayload()->snippets;
 Assert::same(['snippet--stamps', 'snippet--flashes'], array_keys($snippets));
+Assert::contains('form.filter.all&nbsp;·&nbsp;1</a>', $snippets['snippet--stamps']); // the counts follow the collection (#71)
+Assert::contains('form.filter.mine&nbsp;·&nbsp;1</a>', $snippets['snippet--stamps']);
+Assert::contains('form.filter.missing&nbsp;·&nbsp;0</a>', $snippets['snippet--stamps']);
+
+
+/**
+ * 25 stamps around, ordered by distance; the stamps 1–5 collected.
+ * @return array{array<int, array<string, mixed>>, array<int, CollectedStampDto>}
+ */
+function nearbyCountsFixture(): array
+{
+	$closest = [];
+	foreach (range(1, 25) as $id) {
+		$closest[$id] = ['id' => $id, 'name' => "Stamp $id", 'lat' => '50.7', 'lng' => '15.4', 'image' => null, 'distance' => 100.0 * $id, 'prettyDistance' => "$id km"];
+	}
+	$collection = [];
+	foreach (range(1, 5) as $id) {
+		$collection[$id] = new CollectedStampDto($id, "Stamp $id", 'type', 'region', new DateTime, '50.7', '15.4', null, null, null, null);
+	}
+	return [$closest, $collection];
+}
+
+
+// The switch counts the 20 nearest stamps whatever the filter: Vše · 20, Mám · the collected ones of them, Nemám · the rest (#71)
+[$closest, $collection] = nearbyCountsFixture();
+foreach (['all', 'collected', 'missing'] as $filter) {
+	$stampsModel = new NearbyFakeStampsModel($closest);
+	$html = renderNearby($stampsModel, ['user'], ['lat' => '50.1', 'lng' => '14.4', 'filter' => $filter], $collection);
+	Assert::count($filter === 'all' ? 1 : 2, $stampsModel->closestCalls); // at most one extra query
+	Assert::match('~<a href="/nearby/\?filter=all&amp;lat=50.1&amp;lng=14.4"[^>]*>Vše&nbsp;·&nbsp;20</a>~', $html);
+	Assert::match('~<a href="/nearby/\?filter=collected&amp;lat=50.1&amp;lng=14.4"[^>]*>Mám&nbsp;·&nbsp;5</a>~', $html);
+	Assert::match('~<a href="/nearby/\?(filter=missing&amp;)?lat=50.1&amp;lng=14.4"[^>]*>Nemám&nbsp;·&nbsp;15</a>~', $html);
+}
+
+// An anonymous user has no switch nor counts; no extra query (#71)
+$stampsModel = new NearbyFakeStampsModel($closest);
+$html = renderNearby($stampsModel, null, ['lat' => '50.1', 'lng' => '14.4'], $collection);
+Assert::count(1, $stampsModel->closestCalls);
+Assert::notContains('&nbsp;·&nbsp;', $html);
+
+// No position, no counts (#71)
+$stampsModel = new NearbyFakeStampsModel($closest);
+$html = renderNearby($stampsModel, ['user'], [], $collection);
+Assert::same([], $stampsModel->closestCalls);
+Assert::notContains('&nbsp;·&nbsp;', $html);
+
+
+// Adding a stamp by AJAX in "Nemám" redraws the counts: Mám +1, Nemám −1, Vše unchanged (#71)
+$translator = PresenterTestHelpers::createTranslator();
+$presenter = new NearbyPresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
+$presenter->injectStampsModel(new NearbyFakeStampsModel($closest));
+$presenter->injectCollectionModel(new NearbyFakeCollectionModel($collection));
+$presenter->injectEditStampForm(new EditStampForm($translator));
+$presenter->run(new Request(
+	'Nearby',
+	'POST',
+	['action' => 'default', 'lat' => '50.1', 'lng' => '14.4', 'do' => 'collectForm-submit'],
+	['id' => '6', 'date' => '', 'comment' => '', 'ok' => 'stamp.saveToCollection'],
+));
+$snippet = ((array) $presenter->getPayload()->snippets)['snippet--stamps'];
+Assert::contains('form.filter.all&nbsp;·&nbsp;20</a>', $snippet);
+Assert::contains('form.filter.mine&nbsp;·&nbsp;6</a>', $snippet);
+Assert::contains('form.filter.missing&nbsp;·&nbsp;14</a>', $snippet);
