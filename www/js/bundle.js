@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initDatepicker(document)
     initCollectSheet()
     initLiveFilter()
+    initHeaderSearch()
 
 });
 
@@ -472,5 +473,22 @@ class StampMap {
 
         // finally we add our LogoControl to the map
         new LogoControl().addTo(map);
+    }
+}
+
+// The search icon in the header (#73): on the overview it focuses the search field (a tap opens the keyboard),
+// elsewhere it leads to the overview, whose field then gets the focus from the #frm-filterForm-search fragment
+function initHeaderSearch() {
+    const search = document.getElementById('frm-filterForm-search')
+    if (!search) {
+        return
+    }
+    document.querySelectorAll('.js-header-search').forEach((link) => link.addEventListener('click', (event) => {
+        event.preventDefault()
+        search.focus()
+        search.select()
+    }))
+    if (location.hash === '#frm-filterForm-search') {
+        search.focus()
     }
 }
