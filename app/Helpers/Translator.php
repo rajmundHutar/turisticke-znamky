@@ -46,6 +46,7 @@ class Translator implements \Nette\Localization\Translator
 		'menu.login' => 'Přihlásit se',
 		'menu.logout' => 'Odhlásit se',
 		'menu.administration' => 'Administrace',
+		'menu.search' => 'Hledat',
 		'detail.detailsOn' => 'Více na',
 		'detail.nearby' => 'Známky poblíž:',
 		'detail.website' => 'Web',

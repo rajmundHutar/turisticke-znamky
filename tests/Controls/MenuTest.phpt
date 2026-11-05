@@ -229,3 +229,15 @@ Assert::notContains('menu.administration', $header);
 $header = headerOf(renderMenuPage('Nearby', ['admin']));
 Assert::match('%A%<a href="/admin/" class="app-header-icon" aria-label="menu.administration" title="menu.administration">%A%', $header);
 Assert::contains('do=menu-logout', $header);
+
+
+// The search icon in the header for everybody (#73): leads to the search field on the overview, JS focuses it there
+foreach ([null, ['user'], ['admin']] as $roles) {
+	foreach (['Nearby', 'Homepage', 'CollectionStats'] as $page) {
+		if ($roles === null && $page === 'CollectionStats') {
+			continue;
+		}
+		$header = headerOf(renderMenuPage($page, $roles));
+		Assert::match('%A%<a href="/#frm-filterForm-search" class="app-header-icon js-header-search" aria-label="menu.search" title="menu.search">%A%', $header);
+	}
+}
