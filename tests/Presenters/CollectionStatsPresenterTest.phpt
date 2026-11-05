@@ -128,7 +128,7 @@ function statsStamp(int $id, string $name): CollectedStampDto
 // No stamps at all and an empty collection: 0 %, no division by zero; lowest / highest show a dash without a link
 $html = renderStats([], 0);
 Assert::contains('0 / 0', $html);
-Assert::contains('0%', $html);
+Assert::contains("0\u{a0}%", $html);
 Assert::same(2, substr_count($html, '<p class="title">–</p>'));
 Assert::notContains('href="/stamp/', $html);
 Assert::contains('stats.lowestNumber', $html);
@@ -138,6 +138,13 @@ Assert::contains('stats.highestNumber', $html);
 // A collection: the lowest and highest numbers with names link to the stamp detail; duplicates do not break the run
 $html = renderStats([statsStamp(42, 'Hrad Karlštejn'), statsStamp(3, 'Sněžka'), statsStamp(4, 'Říp'), statsStamp(4, 'Říp'), statsStamp(5, 'Ještěd')], 100);
 Assert::contains('5 / 100', $html);
-Assert::contains('5%', $html);
+Assert::contains("5\u{a0}%", $html);
 Assert::match('%A%<a href="/stamp/3">3</a>%A%<a href="/stamp/3">Sněžka</a>%A%stats.lowestNumber%A%<a href="/stamp/42">42</a>%A%<a href="/stamp/42">Hrad Karlštejn</a>%A%stats.highestNumber%A%', $html);
 Assert::contains('title="3, 4, 5">3</p>', $html);
+
+
+// Czech number format (#72): a decimal comma and a non-breaking space before %, thousands separated by a non-breaking space
+$html = renderStats(array_map(fn(int $id) => statsStamp($id, "Známka $id"), range(1, 119)), 3103);
+Assert::contains("119 / 3\u{a0}103", $html);
+Assert::contains("3,83\u{a0}%", $html);
+Assert::notContains('3.83', $html);
