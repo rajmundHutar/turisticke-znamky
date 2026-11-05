@@ -245,6 +245,11 @@ Assert::contains('Prodej dočasně pozastaven', $html);
 Assert::contains('"lat":"50.081"', $html); // salespoint with location goes to the map
 Assert::notContains('/images/stamps/"', $html); // no image without a file name, neither on the detail nor on the nearby card
 Assert::notMatch('~>\s*Rozhledna\s*<~', $html); // type is no longer displayed on cards (it stays only in the map data)
+// a system salespoint and the missing images in the muted text colour, Bulma's grey is below 4.5:1 on the dark theme (#53)
+Assert::match('%A%<li class="text-muted is-italic">%A%Prodej dočasně pozastaven%A%', $html);
+Assert::notContains('has-text-grey', $html);
+// the detail belongs to Známky in the bottom navigation (#53)
+Assert::match('%A%<a href="/" class="bottom-nav-item" aria-current="page">%A%', renderStampDetail($feedStamp, roles: ['user']));
 
 
 // Type, region and creation date are no longer displayed; missing links and salespoints render nothing (#14)

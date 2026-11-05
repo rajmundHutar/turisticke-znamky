@@ -25,7 +25,7 @@
             <figure n:if="$stamp['image']" class="image">
                 <img src="{$baseUrl}/{$stamp['image']|stampThumb}" width="{App\Helpers\StampThumbnails::Width}" height="{App\Helpers\StampThumbnails::Height}" alt="{$stamp['name']}" loading="lazy" decoding="async">
             </figure>
-            <span n:if="!$stamp['image']" class="icon is-large has-text-grey-lighter" title="{_'stamp.noImage'}">
+            <span n:if="!$stamp['image']" class="icon is-large text-muted" title="{_'stamp.noImage'}">
                 <i class="fas fa-4x fa-image"></i>
             </span>
         </a>

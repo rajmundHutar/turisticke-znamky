@@ -24,13 +24,14 @@ class Menu extends Control
 		$presenter->redirectUrl($presenter->getHttpRequest()->getUrl()->getBaseUrl());
 	}
 
-	/** The item of the bottom navigation for the current page: nearby, stamps, collection, stats, or null (#53) */
+	/** The item of the bottom navigation for the current page: nearby, stamps (also the detail), collection, stats, or null (#53) */
 	public function getActiveItem(): ?string
 	{
 		$presenter = $this->getPresenter();
 		return match ($presenter->getName()) {
 			'Nearby' => 'nearby',
 			'Homepage' => $presenter instanceof HomepagePresenter && $presenter->onlyCollected ? 'collection' : 'stamps',
+			'Stamp' => 'stamps', // the detail of a stamp
 			'CollectionStats' => 'stats',
 			default => null,
 		};

@@ -11,7 +11,7 @@
 				<img src="{$baseUrl}/images/stamps/{$stamp['image']}" alt="{$stamp['name']}">
 			</a>
 			<div n:if="!$stamp['image']" class="stamp-image">
-				<span class="icon is-large has-text-grey-lighter" title="{_'stamp.noImage'}">
+				<span class="icon is-large text-muted" title="{_'stamp.noImage'}">
 					<i class="fas fa-4x fa-image"></i>
 				</span>
 			</div>
@@ -38,7 +38,7 @@
 		<section n:if="$salespoints" class="stamp-detail-section">
 			<h2 class="title is-5">{_'detail.salespoints'}</h2>
 			<ul class="stamp-detail-salespoints">
-				<li n:foreach="$salespoints as $salespoint" n:class="$salespoint['system'] ? 'has-text-grey is-italic'">
+				<li n:foreach="$salespoints as $salespoint" n:class="$salespoint['system'] ? 'text-muted is-italic'">
 					{$salespoint['name']}
 					<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
 				</li>

@@ -134,7 +134,8 @@ function renderMenuPage(string $presenterName, ?array $roles, array $params = []
 		'Homepage' => new App\Presenters\HomepagePresenter($translator),
 		'Nearby' => new App\Presenters\NearbyPresenter($translator),
 		'CollectionStats' => new App\Presenters\CollectionStatsPresenter($translator),
-		default => new LoginPresenter($translator),
+		'Login' => new LoginPresenter($translator),
+		default => throw new LogicException("No presenter $presenterName in the test."),
 	};
 	PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser($roles));
 	if ($presenter instanceof LoginPresenter) {

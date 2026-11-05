@@ -2,6 +2,8 @@
    Text contrast is at least 4.5:1 on every background it is used on (readability outdoors). */
 :root {
     /* backgrounds */
+    /* #161819 is repeated where CSS variables cannot be used: theme-color in @layout.latte and Error/@layout.latte,
+       Error/500.phtml and 503.phtml, site.webmanifest, browserconfig.xml (and msapplication-TileColor) */
     --tz-bg: #161819;               /* page */
     --tz-surface: #202326;          /* cards, inputs, the sheet */
     --tz-well: #2a2d31;             /* behind the stamp images */

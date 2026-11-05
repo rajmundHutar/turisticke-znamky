@@ -207,6 +207,11 @@ a:hover {
     color: var(--tz-accent-text);
 }
 
+/* secondary text, e.g. a system salespoint; Bulma's grey is below 4.5:1 on the dark theme */
+.text-muted {
+    color: var(--tz-text-muted);
+}
+
 /* the placeholder is the only label of the search, readable outdoors */
 .input::placeholder,
 .textarea::placeholder {
@@ -680,6 +685,7 @@ html:not(.js) .nearby-locate {
 }
 
 .stamp-detail-map {
+    isolation: isolate; /* Leaflet's panes (z-index 400+) stay under the fixed bottom navigation */
     height: 320px;
     margin-top: 1.5rem;
 }
