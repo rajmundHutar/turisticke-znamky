@@ -36,4 +36,7 @@ foreach ([404 => 'Stránka nenalezena', 403 => 'Přístup odepřen'] as $code =>
 	Assert::contains('general.turistStampsTitle', $html); // layout title, translated by the identity translator
 	Assert::contains('<div id="nette-error">', $html); // error layout, not the site layout
 	Assert::notContains('bulma.min.css', $html);
+	// the dark theme (#53): the colour tokens, versioned
+	Assert::contains('<link rel="stylesheet" href="http://localhost/css/theme.css?v=' . filemtime(__DIR__ . '/../../www/css/theme.css') . '">', $html);
+	Assert::contains('<meta name="theme-color" content="#161819">', $html);
 }

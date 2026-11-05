@@ -9,6 +9,13 @@ application:
 		*: App\*Module\Presenters\*Presenter
 
 
+assets:
+	# the files of www/, URLs with ?v=<modification time>, so phones load the new ones after a deploy (#53)
+	basePath: %appDir%/../www
+	mapping:
+		default: ''
+
+
 latte:
 	extensions:
 		- @App\Helpers\StampThumbnails

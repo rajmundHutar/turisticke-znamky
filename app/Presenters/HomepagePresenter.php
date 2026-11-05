@@ -100,6 +100,7 @@ final class HomepagePresenter extends Presenter
 			$this->redrawControl('sort'); // date items only in "Mám"
 			$this->redrawControl('list');
 			$this->redrawControl('collectSheet'); // its form action keeps the filter for redirects
+			$this['menu']->redrawControl('nav'); // "Mám" is Sbírka in the bottom navigation (#53)
 		}
 	}
 

@@ -1,51 +1,45 @@
-<nav class="navbar" role="navigation" aria-label="{_'menu.mainNavigation'}">
-	<div class="navbar-brand">
-		<a class="navbar-item" href="{$baseUrl}">
-			<img src="{$baseUrl}/mstile-150x150.png">
+{* The header with the account icons and the bottom navigation (#53); icons are inline SVGs in the text colour *}
+<header class="app-header">
+	<a class="app-brand" href="{$baseUrl}/">
+		<img src="{$baseUrl}/favicon-32x32.png" width="28" height="28" alt="">
+		<span>{_'general.turistStampsTitle'}</span>
+	</a>
+
+	<div class="app-header-actions">
+		<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="app-header-icon" aria-label="{_'menu.administration'}" title="{_'menu.administration'}">
+			<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
 		</a>
+		{if $user->isLoggedIn()}
+			{* a signal, protected against cross-site requests (#36) *}
+			<a href="{link logout!}" class="app-header-icon" aria-label="{_'menu.logout'}" title="{_'menu.logout'}">
+				<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+			</a>
+		{else}
+			<a href="{plink Login:}" class="app-header-icon" aria-label="{_'menu.login'}" title="{_'menu.login'}">
+				<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+			</a>
+		{/if}
+	</div>
+</header>
 
-		<a role="button" class="navbar-burger burger" aria-label="{_'menu.toggle'}" aria-expanded="false" data-target="navbarBasicExample">
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
+{* redrawn by the live filter of the homepage, "Mám" makes Sbírka the current page *}
+<nav class="bottom-nav" aria-label="{_'menu.mainNavigation'}" n:snippet="nav">
+	<a href="{plink Nearby:}" class="bottom-nav-item" n:attr="aria-current => $active === 'nearby' ? 'page'">
+		<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+		<span class="bottom-nav-label">{_'menu.nearby'}</span>
+	</a>
+	<a href="{plink Homepage:, onlyCollected => false, notCollected => false}" class="bottom-nav-item" n:attr="aria-current => $active === 'stamps' ? 'page'">
+		<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
+		<span class="bottom-nav-label">{_'menu.allStamps'}</span>
+	</a>
+	{if $user->isLoggedIn()}
+		<a href="{plink Homepage:, onlyCollected => true, notCollected => false}" class="bottom-nav-item" n:attr="aria-current => $active === 'collection' ? 'page'">
+			<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/><path d="M9 9.5l2 2 4-4"/></svg>
+			<span class="bottom-nav-label">{_'menu.myCollection'}</span>
 		</a>
-	</div>
-
-	<div id="navbarBasicExample" class="navbar-menu">
-		<div class="navbar-start">
-			<a href="{plink Homepage:, onlyCollected => false, notCollected => false}" class="navbar-item">
-				{_'menu.allStamps'}
-			</a>
-
-			<a href="{plink Nearby:}" class="navbar-item">
-				{_'menu.nearby'}
-			</a>
-
-			<a n:if="$user->isLoggedIn()" href="{plink Homepage:, onlyCollected => true, notCollected => false}" class="navbar-item">
-				{_'menu.myCollection'}
-			</a>
-
-			<a n:if="$user->isLoggedIn()" href="{plink CollectionStats:}" class="navbar-item">
-				{_'menu.myCollectionStats'}
-			</a>
-		</div>
-
-		<div class="navbar-end">
-				<span n:if="$user->isLoggedIn()" class="navbar-item">
-					<small>({$user->getIdentity()->email})</small>
-				</span>
-				<a n:if="$user->isInRole('admin')" href="{plink Admin:}" class="navbar-item is-dark">
-					{_'menu.administration'}
-				</a>
-				{if $user->isLoggedIn()}
-					<a href="{link logout!}" class="navbar-item is-danger">
-						{_'menu.logout'}
-					</a>
-				{else}
-					<a href="{plink Login:}" class="navbar-item is-primary">
-						<strong>{_'menu.login'}</strong>
-					</a>
-				{/if}
-		</div>
-	</div>
+		<a href="{plink CollectionStats:}" class="bottom-nav-item" n:attr="aria-current => $active === 'stats' ? 'page'">
+			<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M12 20V4M19 20v-6"/></svg>
+			<span class="bottom-nav-label">{_'menu.myCollectionStats'}</span>
+		</a>
+	{/if}
 </nav>

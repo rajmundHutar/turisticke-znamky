@@ -434,6 +434,26 @@ foreach (['19x', '1984 Praha', '1985', '0', '99999999999999999999'] as $search) 
 Assert::same([], $stampsModel->fetched); // no lookup for a term that is not a number
 
 
+// Saving the collect form by AJAX redraws the stamp, not the bottom navigation (#53)
+$translator = PresenterTestHelpers::createTranslator();
+$presenter = new HomepagePresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
+$presenter->injectCollectionModel(new HomepageFakeCollectionModel);
+$presenter->injectStampsModel(new HomepageFakeStampsModel([Nette\Utils\ArrayHash::from(['id' => 5, 'name' => 'Stamp 5', 'image' => null])]));
+$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
+$presenter->injectEditStampForm(new EditStampForm($translator));
+$response = $presenter->run(new Request(
+	'Homepage',
+	'POST',
+	['action' => 'default', 'onlyCollected' => '1', 'do' => 'collectForm-submit'],
+	['id' => '5', 'date' => '2. 6. 2024', 'comment' => '', 'ok' => 'stamp.saveToCollection'],
+));
+Assert::type(Nette\Application\Responses\JsonResponse::class, $response);
+$snippets = (array) $presenter->getPayload()->snippets;
+Assert::true(count($snippets) > 0);
+Assert::false(isset($snippets['snippet-menu-nav']));
+
+
 // Typing in the search with JS requests the page without the form signal: no jump while typing "19" on the way to "1984" (#50)
 $translator = PresenterTestHelpers::createTranslator();
 $stampsModel = new HomepageJumpStampsModel;
@@ -585,12 +605,14 @@ Assert::match('%A%<div class="control filter-submit">%A%<input type="submit" nam
 
 
 // A filter change by AJAX redraws the list with the switch, the sort select (its date items depend on the view)
-// and the collect sheet (its form keeps the filter for redirects), not the search input being typed in (#50)
+// and the collect sheet (its form keeps the filter for redirects), not the search input being typed in (#50);
+// and the bottom navigation, "Mám" makes Sbírka the current page (#53)
 [$response] = renderCountingHomepage(['user'], ['search' => 'Praha', 'onlyCollected' => '1'], ['X-Requested-With' => 'XMLHttpRequest']);
 Assert::type(Nette\Application\Responses\JsonResponse::class, $response);
 assert($response instanceof Nette\Application\Responses\JsonResponse);
 $snippets = (array) $response->getPayload()->snippets;
-Assert::same(['snippet--sort', 'snippet--list', 'snippet--collectSheet'], array_keys($snippets));
+Assert::same(['snippet--sort', 'snippet--list', 'snippet--collectSheet', 'snippet-menu-nav'], array_keys($snippets));
+Assert::match('%A%<a href="%[^"]*%onlyCollected=1%[^"]*%" class="bottom-nav-item" aria-current="page">%A%', $snippets['snippet-menu-nav']);
 Assert::contains('form.filter.sortBy.date.asc', $snippets['snippet--sort']);
 Assert::contains('<select name="sort"', $snippets['snippet--sort']);
 Assert::contains('id="stamp-3"', $snippets['snippet--list']);

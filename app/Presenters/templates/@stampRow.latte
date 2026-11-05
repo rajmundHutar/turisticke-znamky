@@ -6,7 +6,7 @@
 	<a n:href="Stamp:, id => $stamp['id']" class="stamp-row-link">
 		<span class="stamp-row-thumb">
 			<img n:if="$stamp['image']" src="{$baseUrl}/{$stamp['image']|stampThumb}" width="{App\Helpers\StampThumbnails::Width}" height="{App\Helpers\StampThumbnails::Height}" alt="{$stamp['name']}" loading="lazy" decoding="async">
-			<span n:if="!$stamp['image']" class="icon has-text-grey-lighter" title="{_'stamp.noImage'}">
+			<span n:if="!$stamp['image']" class="icon text-muted" title="{_'stamp.noImage'}">
 				<i class="fas fa-2x fa-image"></i>
 			</span>
 		</span>

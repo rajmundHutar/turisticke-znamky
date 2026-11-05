@@ -39,10 +39,9 @@ class Translator implements \Nette\Localization\Translator
 		'login.tooManyAttempts' => 'Příliš mnoho pokusů o přihlášení, zkuste to později.',
 
 		'menu.mainNavigation' => 'Hlavní navigace',
-		'menu.toggle' => 'Menu',
 		'menu.allStamps' => 'Známky',
 		'menu.nearby' => 'Poblíž',
-		'menu.myCollection' => 'Moje sbírka',
+		'menu.myCollection' => 'Sbírka',
 		'menu.myCollectionStats' => 'Statistiky',
 		'menu.login' => 'Přihlásit se',
 		'menu.logout' => 'Odhlásit se',
