@@ -35,19 +35,20 @@
 			{/if}
 		</section>
 
-		<section n:if="$salespoints" class="stamp-detail-section">
+		{* the nearest sales point, the others collapsed (#80) *}
+		<section n:if="$salespointItems" class="stamp-detail-section">
 			<h2 class="title is-5">{_'detail.salespoints'}</h2>
 			<ul class="stamp-detail-salespoints">
-				<li n:foreach="$salespoints as $key => $salespoint" n:class="$salespoint['system'] ? 'text-muted is-italic'">
-					{var $location = $salespointLocations[$key]}
-					<div class="stamp-detail-salespoint-text">
-						<span>{$salespoint['name']}</span>
-						<span n:if="$location['distance']" class="stamp-detail-salespoint-distance text-muted">{$location['distance']}</span>
-					</div>
-					<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
-					<a n:if="$location['navigate']" href="{$location['navigate']}" target="_blank" rel="noopener" class="stamp-detail-salespoint-navigate">{_'detail.navigate'}</a>
-				</li>
+				{include salespoint, item => $salespointItems[0]}
 			</ul>
+			<details n:if="count($salespointItems) > 1" class="stamp-detail-salespoints-more">
+				<summary>{_'detail.moreSalespoints{count}', ['count' => count($salespointItems) - 1]}</summary>
+				<ul class="stamp-detail-salespoints">
+					{foreach array_slice($salespointItems, 1) as $item}
+						{include salespoint, item => $item}
+					{/foreach}
+				</ul>
+			</details>
 		</section>
 
 		{* the full text without JS; bundle.js shortens it to a few lines with a button to expand it *}
@@ -93,3 +94,16 @@
 	initDescription(); // first, a failing map must not leave the description shortened without its button
 	new StampMap('map', {{$allStamps}}, {{$collection}}, {{$stamp['lat']}}, {{$stamp['lng']}}, {{$baseUrl}}, API_KEY, {{$salespointMarkers}});
 </script>
+
+
+{define salespoint}
+	{var $salespoint = $item['salespoint']}
+	<li n:class="$salespoint['system'] ? 'text-muted is-italic'">
+		<div class="stamp-detail-salespoint-text">
+			<span>{$salespoint['name']}</span>
+			<span n:if="$item['distance']" class="stamp-detail-salespoint-distance text-muted">{$item['distance']}</span>
+		</div>
+		<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
+		<a n:if="$item['navigate']" href="{$item['navigate']}" target="_blank" rel="noopener" class="stamp-detail-salespoint-navigate">{_'detail.navigate'}</a>
+	</li>
+{/define}

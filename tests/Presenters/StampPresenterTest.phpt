@@ -419,14 +419,16 @@ $html = renderStampDetail($detailStamp, [
 	['id' => 3, 'stamp_id' => 1, 'name' => 'Prodej dočasně pozastaven', 'lat' => null, 'lng' => null, 'website' => null, 'sort' => 3, 'system' => 1],
 ], $closest);
 $navigate = 'target="_blank" rel="noopener" class="stamp-detail-salespoint-navigate">Navigovat</a>';
+// only the nearest one is shown, the others are collapsed under "Další místa (N)" (#80)
 Assert::match('~<h2[^>]*>Kde koupit</h2>\s*<ul class="stamp-detail-salespoints">\s*'
 	. '<li>\s*<div class="stamp-detail-salespoint-text">\s*<span>Pokladna hradu</span>\s*<span class="stamp-detail-salespoint-distance text-muted">2,1 km</span>\s*</div>\s*'
 	. '<a href="https://example.com/shop" target="_blank" rel="noopener">Web</a>\s*'
 	. '<a href="https://mapy\.cz/fnc/v1/route\?end=14\.42,50\.099&amp;navigate=true" ' . preg_quote($navigate, '~') . '\s*</li>\s*'
+	. '</ul>\s*<details class="stamp-detail-salespoints-more">\s*<summary>Další místa \(2\)</summary>\s*<ul class="stamp-detail-salespoints">\s*'
 	. '<li>\s*<div class="stamp-detail-salespoint-text">\s*<span>Trafika, Nádražní 5, Žďár nad Sázavou</span>\s*</div>\s*'
 	. '<a href="https://mapy\.cz/fnc/v1/search\?query=Trafika%2C%20N%C3%A1dra%C5%BEn%C3%AD%205%2C%20%C5%BD%C4%8F%C3%A1r%20nad%20S%C3%A1zavou" ' . preg_quote($navigate, '~') . '\s*</li>\s*'
 	. '<li class="text-muted is-italic">\s*<div class="stamp-detail-salespoint-text">\s*<span>Prodej dočasně pozastaven</span>\s*</div>\s*</li>\s*'
-	. '</ul>.*<h2[^>]*>O místě</h2>~s', $html);
+	. '</ul>\s*</details>.*<h2[^>]*>O místě</h2>~s', $html);
 Assert::same(2, substr_count($html, 'Navigovat'));
 Assert::same(1, substr_count($html, 'stamp-detail-salespoint-distance'));
 
@@ -465,3 +467,21 @@ $keys = array_keys($snippets);
 sort($keys);
 Assert::same(['snippet--flashes', 'snippet--stamp-7'], $keys);
 Assert::match('~^\s*<article class="stamp-row" id="stamp-7">.*2,1 km.*class="button stamp-row-button js-collect[^"]*" data-stamp-id="7" ~s', $snippets['snippet--stamp-7']);
+
+
+// "Kde koupit" (#80): the sales points are sorted by their distance from the stamp, the nearest one is shown first,
+// the ones without a distance keep the feed order at the end; a single sales point has nothing to collapse
+$html = renderStampDetail($detailStamp, [
+	['id' => 1, 'stamp_id' => 1, 'name' => 'Bez polohy', 'lat' => null, 'lng' => null, 'website' => null, 'sort' => 1, 'system' => 0],
+	['id' => 2, 'stamp_id' => 1, 'name' => 'Daleko', 'lat' => '50.2', 'lng' => '14.42', 'website' => null, 'sort' => 2, 'system' => 0],
+	['id' => 3, 'stamp_id' => 1, 'name' => 'Blízko', 'lat' => '50.081', 'lng' => '14.42', 'website' => null, 'sort' => 3, 'system' => 0],
+]);
+Assert::match('~<ul class="stamp-detail-salespoints">\s*<li>.*?<span>Blízko</span>.*?</ul>\s*'
+	. '<details class="stamp-detail-salespoints-more">\s*<summary>Další místa \(2\)</summary>'
+	. '.*?<span>Daleko</span>.*?<span>Bez polohy</span>.*?</details>~s', $html);
+
+$html = renderStampDetail($detailStamp, [
+	['id' => 1, 'stamp_id' => 1, 'name' => 'Pokladna hradu', 'lat' => '50.099', 'lng' => '14.42', 'website' => null, 'sort' => 1, 'system' => 0],
+]);
+Assert::contains('<span>Pokladna hradu</span>', $html);
+Assert::notContains('stamp-detail-salespoints-more', $html);

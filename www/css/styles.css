@@ -566,6 +566,31 @@ html:not(.js) .nearby-locate {
     white-space: nowrap;
 }
 
+/* the other sales points, collapsed (#80) */
+.stamp-detail-salespoints-more summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    gap: 0.5rem;
+    color: var(--tz-accent-text);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+
+.stamp-detail-salespoints-more summary::-webkit-details-marker {
+    display: none;
+}
+
+/* the flex summary hides the native marker: a chevron that turns when open */
+.stamp-detail-salespoints-more summary::before {
+    content: "▸";
+}
+
+.stamp-detail-salespoints-more[open] summary::before {
+    content: "▾";
+}
+
 /* three lines with JS, bundle.js adds the button to expand it; the full text without JS */
 .stamp-description {
     line-height: 1.5;
