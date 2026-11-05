@@ -1,5 +1,5 @@
 ::backdrop {
-    background-color: rgba(10, 10, 10, 0.62);
+    background-color: var(--tz-backdrop);
 }
 
 .stamp-image {
@@ -31,18 +31,17 @@
     z-index: -1;
     content: '';
     display: block;
-    border: 5px solid hsl(141, 53%, 53%);
+    border: 5px solid var(--tz-accent);
 }
 .ribbon span {
     position: absolute;
     display: block;
     width: 225px;
     padding: 15px 0;
-    background-color: hsl(141, 53%, 53%);
+    background-color: var(--tz-accent);
     box-shadow: 0 5px 10px rgba(0,0,0,.1);
-    color: #fff;
-    font: 700 18px/1 'Lato', sans-serif;
-    text-shadow: 0 1px 1px rgba(0,0,0,.2);
+    color: var(--tz-on-accent);
+    font: 700 18px/1 var(--tz-font);
     text-align: center;
 }
 
@@ -150,6 +149,291 @@ dialog {
     border: none;
 }
 
+/* dark theme (#53): the colours are the tokens of theme.css */
+body {
+    font-family: var(--tz-font);
+    /* the content is not hidden under the fixed bottom navigation */
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 1rem);
+}
+
+:root {
+    --bottom-nav-height: 68px;
+}
+
+a:hover {
+    color: var(--tz-accent-hover);
+}
+
+.card,
+.box {
+    --bulma-card-background-color: var(--tz-surface);
+    --bulma-box-background-color: var(--tz-surface);
+    border: 1px solid var(--tz-border);
+}
+
+/* flash messages and the login form in the centered column of the pages */
+.flashes,
+.form-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 0.75rem;
+}
+
+.form-page {
+    max-width: 480px;
+}
+
+/* flash messages: a surface with a coloured edge, the text in the text colour */
+.flashes .notification {
+    margin-bottom: 0.75rem;
+    background: var(--tz-surface);
+    border-left: 4px solid var(--tz-text-muted);
+    color: var(--tz-text);
+}
+
+.flashes .notification.is-success {
+    border-left-color: var(--tz-accent);
+}
+
+.flashes .notification.is-danger {
+    border-left-color: var(--tz-danger-text);
+}
+
+/* secondary buttons on the dark surfaces: Bulma's is-light and is-white would be white */
+.stamp-detail-collected .button,
+.stamp-card-button:not(.is-success) {
+    background-color: var(--tz-surface);
+    border-color: var(--tz-collected-border);
+    color: var(--tz-accent-text);
+}
+
+/* the placeholder is the only label of the search, readable outdoors */
+.input::placeholder,
+.textarea::placeholder {
+    color: var(--tz-text-muted);
+}
+
+/* header: the app name, the account icons (#53) */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 56px;
+    padding: 0 0.75rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--tz-separator);
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    font-weight: 600;
+    color: var(--tz-text);
+}
+
+.app-brand img {
+    border-radius: 6px;
+}
+
+.app-header-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.app-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: var(--tz-text);
+}
+
+.app-header-icon:hover {
+    background: var(--tz-surface);
+    color: var(--tz-accent-hover);
+}
+
+/* stroked icons of the header and the navigation, in the text colour */
+.ui-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* bottom navigation (#53): fixed, equal columns, above the safe area of the phone;
+   centered with the content column on wide screens */
+.bottom-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    display: flex;
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    padding: 0 max(0px, (100% - 960px) / 2) env(safe-area-inset-bottom);
+    background: var(--tz-nav);
+    border-top: 1px solid var(--tz-border);
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--tz-text-muted);
+}
+
+.bottom-nav-item:hover {
+    color: var(--tz-text);
+}
+
+.bottom-nav-item[aria-current="page"] {
+    font-weight: 700;
+    color: var(--tz-accent-text);
+}
+
+/* tap targets of at least 44 px: the switch Vše / Mám / Nemám and the pagination */
+.collection-switch a,
+.pagination-link,
+.pagination-previous,
+.pagination-next {
+    min-height: 44px;
+}
+
+.pagination-link {
+    min-width: 44px;
+}
+
+/* stats (#53): cards in a grid */
+.stats-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 0.75rem;
+}
+
+.stats-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem 0.75rem;
+    text-align: center;
+    background: var(--tz-surface);
+    border: 1px solid var(--tz-border);
+    border-radius: 10px;
+}
+
+.stats-card .title {
+    margin-bottom: 0.25rem;
+    font-size: 1.75rem;
+    color: var(--tz-accent-text);
+}
+
+.stats-card .subtitle {
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--tz-text-muted);
+}
+
+.stats-card-name {
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+/* the datepicker of the collect sheet in the dark theme, the selected day in brass */
+.datepicker-picker {
+    background-color: var(--tz-surface);
+    color: var(--tz-text);
+}
+
+.datepicker-dropdown .datepicker-picker {
+    box-shadow: 0 0 0 1px var(--tz-border), 0 8px 24px rgb(0 0 0 / 0.5);
+}
+
+.datepicker-title,
+.datepicker-footer {
+    background-color: var(--tz-well);
+    box-shadow: none;
+}
+
+.datepicker-header .datepicker-controls .button {
+    background-color: transparent;
+    color: var(--tz-text);
+}
+
+.datepicker-header .datepicker-controls .button:hover,
+.datepicker-header .datepicker-controls .button:active,
+.datepicker-cell:not(.disabled):hover,
+.datepicker-cell.focused:not(.selected) {
+    background-color: var(--tz-well);
+}
+
+.datepicker-cell.selected,
+.datepicker-cell.selected:hover {
+    background-color: var(--tz-accent);
+    color: var(--tz-on-accent);
+}
+
+.datepicker-cell.today:not(.selected),
+.datepicker-cell.today.focused:not(.selected) {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px var(--tz-accent);
+}
+
+.datepicker-cell.today:not(.selected):not(.disabled) {
+    color: var(--tz-accent-text);
+}
+
+.datepicker-view .week,
+.datepicker-cell.next:not(.disabled),
+.datepicker-cell.prev:not(.disabled) {
+    color: var(--tz-text-muted);
+}
+
+.datepicker-cell.disabled {
+    color: var(--tz-text-muted);
+    opacity: 0.45;
+}
+
+/* Leaflet map around the (unchanged) tiles: dark controls and popups */
+.leaflet-container {
+    background: var(--tz-well);
+    font-family: var(--tz-font);
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+    background-color: var(--tz-surface);
+    border-bottom-color: var(--tz-border);
+    color: var(--tz-text);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: var(--tz-surface);
+    color: var(--tz-text);
+}
+
+.leaflet-container .leaflet-control-attribution {
+    background: var(--tz-nav);
+    color: var(--tz-text-muted);
+}
+
+.leaflet-container a {
+    color: var(--tz-accent-text);
+}
+
 /* compact stamp rows (#49) */
 /* the whole stamp list page (filter, pagination, rows) is one centered column, also on desktop */
 .stamp-list-page {
@@ -184,7 +468,7 @@ dialog {
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 0;
-    border-bottom: 1px solid #ededed;
+    border-bottom: 1px solid var(--tz-separator);
 }
 
 .stamp-row-link {
@@ -203,7 +487,7 @@ dialog {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f5f5f5;
+    background: var(--tz-well);
     border-radius: 4px;
     overflow: hidden;
 }
@@ -223,11 +507,12 @@ dialog {
 
 .stamp-row-number {
     font-size: 0.8rem;
-    color: #7a7a7a;
+    color: var(--tz-text-muted);
 }
 
 .stamp-row-name {
     font-weight: 600;
+    color: var(--tz-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -235,7 +520,7 @@ dialog {
 
 .stamp-row-date {
     font-size: 0.8rem;
-    color: hsl(141, 53%, 31%);
+    color: var(--tz-accent-text);
 }
 
 .stamp-row-button {
@@ -246,12 +531,19 @@ dialog {
     padding: 0;
 }
 
+/* "+" of a stamp not in the collection; a collected one is the brass .is-success */
+.stamp-row-button:not(.is-success) {
+    background-color: var(--tz-surface);
+    border-color: var(--tz-border);
+    color: var(--tz-accent-text);
+}
+
 /* distance of a nearby stamp (#51) */
 .stamp-row-distance {
     font-size: 0.9rem;
     font-weight: 600;
     white-space: nowrap;
-    color: hsl(204, 71%, 39%);
+    color: var(--tz-accent-text);
 }
 
 /* Nearby (#51): the heading with the button to locate again and the status of the location */
@@ -283,7 +575,7 @@ dialog {
     gap: 0.5rem;
     margin-top: 0.5rem;
     font-size: 0.9rem;
-    color: #7a7a7a;
+    color: var(--tz-text-muted);
 }
 
 .nearby-status-dot {
@@ -291,19 +583,19 @@ dialog {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #b5b5b5;
+    background: var(--tz-text-muted);
 }
 
 .nearby-status[data-state="located"] .nearby-status-dot {
-    background: hsl(141, 53%, 53%);
+    background: var(--tz-accent);
 }
 
 .nearby-status[data-state="error"] {
-    color: hsl(348, 86%, 43%);
+    color: var(--tz-danger-text);
 }
 
 .nearby-status[data-state="error"] .nearby-status-dot {
-    background: hsl(348, 86%, 61%);
+    background: var(--tz-danger-text);
 }
 
 /* without JS the location is unknown, a <noscript> note says so */
@@ -321,7 +613,7 @@ html:not(.js) .nearby-locate {
 
 .stamp-detail-image {
     margin: 0 -0.75rem 0.75rem;
-    background: #f5f5f5;
+    background: var(--tz-well);
 }
 
 .stamp-detail-image img {
@@ -334,7 +626,7 @@ html:not(.js) .nearby-locate {
 .stamp-detail-number {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #7a7a7a;
+    color: var(--tz-text-muted);
 }
 
 .stamp-detail-page .title.is-3 {
@@ -346,8 +638,9 @@ html:not(.js) .nearby-locate {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
+    border: 1px solid var(--tz-collected-border);
     border-radius: 6px;
-    background: hsl(141, 53%, 96%);
+    background: var(--tz-collected-bg);
 }
 
 .stamp-detail-collected-text {
@@ -398,11 +691,11 @@ html:not(.js) .nearby-locate {
     margin-top: 1rem;
 }
 
-/* bottom sheet of the shared collect form (#48); a theme (#53) restyles it through the variables */
+/* bottom sheet of the shared collect form (#48), in the colours of the theme (#53) */
 :root {
-    --collect-sheet-background: #fff;
-    --collect-sheet-color: #4a4a4a;
-    --collect-sheet-handle: #dbdbdb;
+    --collect-sheet-background: var(--tz-surface);
+    --collect-sheet-color: var(--tz-text-body);
+    --collect-sheet-handle: var(--tz-border);
     --collect-sheet-radius: 16px;
 }
 
@@ -468,7 +761,9 @@ body:has(.collect-sheet[open]) {
 /* larger screens: the same single column, just scaled up */
 @media screen and (min-width: 1024px) {
     .stamp-list-page,
-    .stamp-detail-page {
+    .stamp-detail-page,
+    .stats-page,
+    .flashes {
         max-width: 960px;
     }
 

@@ -11,6 +11,7 @@ use Nette;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\Presenter;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
+use Nette\Bridges\AssetsLatte\LatteExtension as AssetsLatteExtension;
 use Nette\Bridges\ApplicationLatte\TemplateFactory;
 use Nette\Bridges\ApplicationLatte\UIExtension;
 use Nette\Bridges\FormsLatte\FormsExtension;
@@ -89,13 +90,22 @@ final class PresenterTestHelpers
 		$httpResponse = new Nette\Http\Response;
 		$presenterFactory = new Nette\Application\PresenterFactory;
 		$presenterFactory->setMapping(['*' => 'App\*Module\Presenters\*Presenter']);
-		$latteFactory = new class implements LatteFactory {
+		$assets = new Nette\Assets\Registry;
+		$assets->addMapper('default', new Nette\Assets\FilesystemMapper('http://localhost', __DIR__ . '/../../www'));
+		$latteFactory = new class ($assets) implements LatteFactory {
+			public function __construct(
+				private Nette\Assets\Registry $assets,
+			) {
+			}
+
+
 			public function create(?Control $control = null): Latte\Engine
 			{
 				$latte = new Latte\Engine;
 				$latte->addExtension(new UIExtension($control)); // layout lookup, as in the app's LatteExtension
 				$latte->addExtension(new FormsExtension); // {form} tags, as in the app's FormsExtension
 				$latte->addExtension(new StampThumbnails(__DIR__ . '/fixtures/stamp-images', supported: true)); // |stampThumb, the images have no thumbnail yet
+				$latte->addExtension(new AssetsLatteExtension($this->assets)); // asset(), the static files of www/ as in the app's config
 				return $latte;
 			}
 		};
