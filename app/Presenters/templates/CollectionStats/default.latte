@@ -10,11 +10,12 @@
 	<div class="fixed-grid has-2-cols has-3-cols-tablet">
 		<div class="grid">
 			<article class="cell stats-card">
-				<p class="title">{$collectedCount} / {$totalCount}</p>
+				{* Czech number format (#72): decimal comma, non-breaking space as the thousands separator and before % *}
+				<p class="title">{$collectedCount|number: 0, ',', "\u{a0}"} / {$totalCount|number: 0, ',', "\u{a0}"}</p>
 				<p class="subtitle">{_'stats.numberOfCollected'}</p>
 			</article>
 			<article class="cell stats-card">
-				<p class="title">{$percentage}%</p>
+				<p class="title">{$percentage|number: ($percentage == floor($percentage) ? 0 : 2), ',', "\u{a0}"}{="\u{a0}"}%</p>
 				<p class="subtitle">{_'stats.percentage'}</p>
 			</article>
 			<article class="cell stats-card">
