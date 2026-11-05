@@ -585,12 +585,14 @@ Assert::match('%A%<div class="control filter-submit">%A%<input type="submit" nam
 
 
 // A filter change by AJAX redraws the list with the switch, the sort select (its date items depend on the view)
-// and the collect sheet (its form keeps the filter for redirects), not the search input being typed in (#50)
+// and the collect sheet (its form keeps the filter for redirects), not the search input being typed in (#50);
+// and the bottom navigation, "Mám" makes Sbírka the current page (#53)
 [$response] = renderCountingHomepage(['user'], ['search' => 'Praha', 'onlyCollected' => '1'], ['X-Requested-With' => 'XMLHttpRequest']);
 Assert::type(Nette\Application\Responses\JsonResponse::class, $response);
 assert($response instanceof Nette\Application\Responses\JsonResponse);
 $snippets = (array) $response->getPayload()->snippets;
-Assert::same(['snippet--sort', 'snippet--list', 'snippet--collectSheet'], array_keys($snippets));
+Assert::same(['snippet--sort', 'snippet--list', 'snippet--collectSheet', 'snippet-menu-nav'], array_keys($snippets));
+Assert::match('%A%<a href="%[^"]*%onlyCollected=1%[^"]*%" class="bottom-nav-item" aria-current="page">%A%', $snippets['snippet-menu-nav']);
 Assert::contains('form.filter.sortBy.date.asc', $snippets['snippet--sort']);
 Assert::contains('<select name="sort"', $snippets['snippet--sort']);
 Assert::contains('id="stamp-3"', $snippets['snippet--list']);

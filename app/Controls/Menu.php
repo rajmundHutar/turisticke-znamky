@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controls;
 
+use App\Presenters\HomepagePresenter;
 use Nette\Application\UI\Control;
 use Nette\Localization\Translator;
 
@@ -23,10 +24,23 @@ class Menu extends Control
 		$presenter->redirectUrl($presenter->getHttpRequest()->getUrl()->getBaseUrl());
 	}
 
+	/** The item of the bottom navigation for the current page: nearby, stamps, collection, stats, or null (#53) */
+	public function getActiveItem(): ?string
+	{
+		$presenter = $this->getPresenter();
+		return match ($presenter->getName()) {
+			'Nearby' => 'nearby',
+			'Homepage' => $presenter instanceof HomepagePresenter && $presenter->onlyCollected ? 'collection' : 'stamps',
+			'CollectionStats' => 'stats',
+			default => null,
+		};
+	}
+
 	public function render()
 	{
 
 		$this->template->setTranslator($this->translator);
+		$this->template->active = $this->getActiveItem();
 		$this->template->setFile(__DIR__ . '/Menu.latte');
 		$this->template->render();
 	}
