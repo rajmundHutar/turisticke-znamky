@@ -65,20 +65,16 @@
 		</div>
 	</article>
 
-	<div class="columns is-multiline px-4">
-		<div class="column is-12">
-			<p class="title is-3 pt-6">
-				{_'detail.nearby'}
-			</p>
-		</div>
+	<section n:if="$closest" class="stamp-detail-page stamp-detail-section">
+		<h2 class="title is-5">{_'detail.nearby'}</h2>
 		{snippetArea stamps}
-			{foreach $closest as $closestStamp}
-				<div class="column is-3">
-					{include "../@stampCard.latte", stamp => $closestStamp, collection => $collection}
-				</div>
-			{/foreach}
+			<ul class="stamp-rows">
+				<li n:foreach="$closest as $closestStamp">
+					{include "../@stampRow.latte", stamp => $closestStamp, collection => $collection}
+				</li>
+			</ul>
 		{/snippetArea}
-	</div>
+	</section>
 
 	<div n:snippet="collectSheet">{include "../@collectSheet.latte"}</div>
 </div>

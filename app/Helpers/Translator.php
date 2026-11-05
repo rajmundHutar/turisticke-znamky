@@ -48,7 +48,7 @@ class Translator implements \Nette\Localization\Translator
 		'menu.administration' => 'Administrace',
 		'menu.search' => 'Hledat',
 		'detail.detailsOn' => 'Více na',
-		'detail.nearby' => 'Známky poblíž:',
+		'detail.nearby' => 'Známky poblíž',
 		'detail.website' => 'Web',
 		'detail.salespoints' => 'Kde koupit',
 		'detail.stampNumber{number}' => 'Známka {number}',
@@ -65,7 +65,6 @@ class Translator implements \Nette\Localization\Translator
 		'stats.lowestNumber' => 'nejnižší číslo',
 		'stats.highestNumber' => 'nejvyšší číslo',
 
-		'stamp.collected' => 'Mám',
 		'stamp.collect' => 'Přidat do sbírky',
 		'stamp.uncollect' => 'Odebrat ze sbírky',
 		'stamp.noImage' => 'Zatím bez obrázku',

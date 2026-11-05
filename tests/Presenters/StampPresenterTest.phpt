@@ -2,7 +2,7 @@
 
 /**
  * Test: StampPresenter collect form stores the values and redirects back (#3, #29, #48), shows invalid date errors (#31); the detail shows the feed data (#14, #4);
- * the layout of the detail: collection status, "Kde koupit", collapsible description (#51)
+ * the layout of the detail: collection status, "Kde koupit", collapsible description (#51); the nearby stamps as rows (#69)
  */
 
 declare(strict_types=1);
@@ -100,7 +100,7 @@ function assertUpdate(int $stampId, string $date, string $comment, array $update
 $collected = static fn(int $id) => new CollectedStampDto($id, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2024-05-01'), 'Windy', null);
 
 
-// Submitting the collect form for a collected nearby stamp stores the values and redirects back to the detail with the card's anchor
+// Submitting the collect form for a collected nearby stamp stores the values and redirects back to the detail with the row's anchor
 $collectionModel = new StampFakeCollectionModel([1 => $collected(1), 7 => $collected(7)]);
 $presenter = createStampPresenter($collectionModel);
 $response = $presenter->run(new Request(
@@ -227,7 +227,7 @@ $salespoints = [
 	['id' => 2, 'stamp_id' => 3091, 'name' => 'Prodej dočasně pozastaven', 'lat' => null, 'lng' => null, 'website' => null, 'sort' => 2, 'system' => 1],
 ];
 $closest = [
-	7 => ['id' => 7, 'name' => 'Bez obrázku', 'type' => 'Rozhledna', 'lat' => '50.1', 'lng' => '14.5', 'image' => null, 'distance' => 1500.0, 'prettyDistance' => '1.5 km'],
+	7 => ['id' => 7, 'name' => 'Bez obrázku', 'type' => 'Rozhledna', 'lat' => '50.1', 'lng' => '14.5', 'image' => null, 'distance' => 2100.0, 'prettyDistance' => '2,1 km'],
 ];
 
 
@@ -243,7 +243,7 @@ foreach (['https://example.com/castle', 'https://cs.wikipedia.org/wiki/Hrad', 'h
 Assert::contains('Pokladna hradu', $html);
 Assert::contains('Prodej dočasně pozastaven', $html);
 Assert::contains('"lat":"50.081"', $html); // salespoint with location goes to the map
-Assert::notContains('/images/stamps/"', $html); // no image without a file name, neither on the detail nor on the nearby card
+Assert::notContains('/images/stamps/"', $html); // no image without a file name, neither on the detail nor on the nearby row
 Assert::notMatch('~>\s*Rozhledna\s*<~', $html); // type is no longer displayed on cards (it stays only in the map data)
 // a system salespoint and the missing images in the muted text colour, Bulma's grey is below 4.5:1 on the dark theme (#53)
 Assert::match('%A%<li class="text-muted is-italic">%A%Prodej dočasně pozastaven%A%', $html);
@@ -354,7 +354,7 @@ Assert::match(
 	$html,
 );
 Assert::match(
-	'~<div id="snippet--stamp-7">\s*<div class="card" id="stamp-7">.*class="button is-white stamp-card-button js-collect" '
+	'~<div id="snippet--stamp-7">\s*<article class="stamp-row" id="stamp-7">.*class="button stamp-row-button js-collect" '
 	. 'data-stamp-id="7" data-stamp-number="7" data-stamp-name="Bez obrázku" data-collected="0" data-date="" data-note=""~s',
 	$html,
 );
@@ -366,13 +366,14 @@ Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm" cla
 
 // An anonymous user gets no collect buttons nor the form
 $html = renderStampDetail($detailStamp, [], $closest);
+Assert::contains('<article class="stamp-row" id="stamp-7">', $html); // the nearby rows without the add buttons (#69)
 Assert::notContains('js-collect', $html);
 Assert::notContains('<form', $html);
 Assert::notContains('Ve sbírce', $html);
 
 
 // The detail (#51): the image on top, number and name, the collection status, "Kde koupit" before the collapsible "O místě", then the map
-$snezka = ['id' => 8, 'name' => 'Sněžka', 'lat' => '50.7', 'lng' => '15.7', 'image' => '8-snezka.png', 'distance' => 900.0, 'prettyDistance' => '0.9 km'];
+$snezka = ['id' => 8, 'name' => 'Sněžka', 'lat' => '50.7', 'lng' => '15.7', 'image' => '8-snezka.png', 'distance' => 900.0, 'prettyDistance' => '0,9 km'];
 $nearby = [8 => $snezka] + $closest;
 $html = renderStampDetail(['image' => '1-praded.png'] +
 	$detailStamp, $salespoints, $nearby, roles: ['user'], collection: [1 => new CollectedStampDto(1, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2022-05-29'), 'S rodinou', null)]);
@@ -385,9 +386,19 @@ Assert::match('~<figure class="stamp-detail-image">\s*'
 	. '<h2[^>]*>O místě</h2>\s*<div class="stamp-description js-description" id="stamp-description">.*First paragraph.*</div>\s*'
 	. '<button type="button" class="[^"]*js-description-toggle[^"]*"[^>]*aria-controls="stamp-description"[^>]*data-less="[^"]+"[^>]*>Zobrazit celý popis</button>.*'
 	. 'id="map"~s', $html);
-// the nearby cards load the lazy thumbnails, only the detail image is the full one (#52)
+// the nearby rows load the lazy thumbnails, only the detail image is the full one (#52)
 Assert::contains('<img src="http://localhost/thumb/8-snezka" width="400" height="300" alt="Sněžka" loading="lazy" decoding="async">', $html);
 Assert::notContains('/images/stamps/8-snezka.png', $html);
+
+// "Známky poblíž" lists the nearby stamps as the rows of the overview: thumbnail, number, name, distance from the shown stamp (#69)
+Assert::match('~<h2 class="title is-5">Známky poblíž</h2>\s*<ul class="stamp-rows">\s*<li>\s*<div id="snippet--stamp-8">\s*'
+	. '<article class="stamp-row" id="stamp-8">\s*<a href="/stamp/8" class="stamp-row-link">\s*<span class="stamp-row-thumb">\s*'
+	. '<img src="http://localhost/thumb/8-snezka" .*<span class="stamp-row-number">\#8</span>\s*<span class="stamp-row-name">Sněžka</span>\s*'
+	. '<span class="stamp-row-distance">.*</span> 0,9 km</span>.*</article>.*'
+	. '<article class="stamp-row" id="stamp-7">\s*<a href="/stamp/7" .*<span class="stamp-row-distance">.*</span> 2,1 km</span>~s', $html);
+Assert::notContains('stamp-card', $html);
+Assert::notContains('ribbon', $html);
+Assert::notContains('class="card', $html);
 
 // a logged-in user without the stamp gets the add button with the data for the shared sheet
 $html = renderStampDetail($detailStamp, [], $closest, roles: ['user']);
@@ -403,3 +414,26 @@ Assert::match(
 $html = renderStampDetail($feedStamp, mapyApiKey: 'test-key-123');
 Assert::contains('const API_KEY = "test-key-123";', $html);
 Assert::notContains('qsdduL32xP7zUe8rj174i2LSClOB0JlpArnIk3fG_3Y', $html);
+
+
+// Collecting a nearby stamp via AJAX on the detail sends just its row, the flash messages and not the detail's own block (#69)
+$translator = new App\Helpers\Translator;
+$collectionModel = new StampFakeCollectionModel([7 => $collected(7)]);
+$presenter = new StampPresenter($translator);
+PresenterTestHelpers::injectPrimary($presenter, PresenterTestHelpers::createUser(['user']), ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
+$presenter->injectMapyConfig(new App\Helpers\MapyConfig(''));
+$presenter->injectCollectionModel($collectionModel);
+$presenter->injectEditStampForm(new EditStampForm($translator));
+$presenter->injectStampsModel(new StampFakeStampsModel($detailStamp, [], $closest));
+$presenter->run(new Request(
+	'Stamp',
+	'POST',
+	['action' => 'default', 'id' => '1', 'do' => 'collectForm-submit'],
+	['id' => '7', 'date' => '2. 6. 2024', 'comment' => 'Sunny', 'ok' => 'stamp.saveToCollection'],
+));
+Assert::count(1, $collectionModel->updates);
+$snippets = (array) $presenter->getPayload()->snippets;
+$keys = array_keys($snippets);
+sort($keys);
+Assert::same(['snippet--flashes', 'snippet--stamp-7'], $keys);
+Assert::match('~^\s*<article class="stamp-row" id="stamp-7">.*2,1 km.*class="button stamp-row-button js-collect[^"]*" data-stamp-id="7" ~s', $snippets['snippet--stamp-7']);
