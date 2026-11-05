@@ -390,7 +390,7 @@ Assert::exception(
 Assert::same([], $collectionModel->writes);
 
 
-// Stamp detail: saving the detail stamp redirects back to the detail, a nearby card to its anchor (#48)
+// Stamp detail: saving the detail stamp redirects back to the detail, a nearby row to its anchor (#48)
 $collectionModel = new CollectFakeCollectionModel;
 $url = redirectUrl(runCollect(new CollectTestStampPresenter($translator), 'Stamp', ['user'], $collectionModel, [
 	'action' => 'default',

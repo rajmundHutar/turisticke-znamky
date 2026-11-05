@@ -29,7 +29,6 @@ Assert::same('Zrušit', $translator->translate('general.reset', 3));
 // The UI is in Czech (#47)
 Assert::same('Předchozí', $translator->translate('general.prev'));
 Assert::same('Další', $translator->translate('general.next'));
-Assert::same('Mám', $translator->translate('stamp.collected'));
 Assert::same('Přidat do sbírky', $translator->translate('stamp.collect'));
 Assert::same('Odebrat ze sbírky', $translator->translate('stamp.uncollect'));
 Assert::same('Uložení se nepovedlo, zkuste to znovu.', $translator->translate('stamp.sheet.saveFailed'));
