@@ -322,6 +322,13 @@ a:hover {
     margin-bottom: 0.75rem;
 }
 
+/* what the counts of the switch on Nearby refer to (#71) */
+.collection-switch-note {
+    margin: -0.5rem 0 0.75rem;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
 .filter-summary {
     display: flex;
     align-items: center;

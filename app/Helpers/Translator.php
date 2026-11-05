@@ -22,6 +22,7 @@ class Translator implements \Nette\Localization\Translator
 
 		'nearby.title' => 'Poblíž',
 		'nearby.locateAgain' => 'Znovu zjistit polohu',
+		'nearby.countsOf{count}Nearest' => 'Počty z {count} nejbližších známek', // what the Vše / Mám / Nemám counts refer to (#71)
 		'nearby.noScript' => 'Ke zjištění polohy je potřeba zapnutý JavaScript.',
 		'nearby.status.locating' => 'Zjišťuji polohu…',
 		'nearby.status.located' => 'Poloha zjištěna · přesnost ±{accuracy} m', // {accuracy} filled in by bundle.js

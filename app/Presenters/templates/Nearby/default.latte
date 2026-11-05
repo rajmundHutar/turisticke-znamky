@@ -37,6 +37,7 @@
 				</li>
 			</ul>
 		</nav>
+		<p n:if="$switchCounts" class="collection-switch-note text-muted">{_'nearby.countsOf{count}Nearest', ['count' => $switchCounts['all']]}</p>
 
 		<ul n:if="$stamps" class="stamp-rows">
 			<li n:foreach="$stamps as $stamp">

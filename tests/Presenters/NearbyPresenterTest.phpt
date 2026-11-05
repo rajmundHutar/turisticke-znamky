@@ -325,6 +325,7 @@ foreach (['all', 'collected', 'missing'] as $filter) {
 	Assert::match('~<a href="/nearby/\?filter=all&amp;lat=50.1&amp;lng=14.4"[^>]*>Vše&nbsp;·&nbsp;20</a>~', $html);
 	Assert::match('~<a href="/nearby/\?filter=collected&amp;lat=50.1&amp;lng=14.4"[^>]*>Mám&nbsp;·&nbsp;5</a>~', $html);
 	Assert::match('~<a href="/nearby/\?(filter=missing&amp;)?lat=50.1&amp;lng=14.4"[^>]*>Nemám&nbsp;·&nbsp;15</a>~', $html);
+	Assert::match('%A%</nav>%A%<p class="collection-switch-note text-muted">Počty z 20 nejbližších známek</p>%A%', $html); // what the counts refer to
 }
 
 // An anonymous user has no switch nor counts; no extra query (#71)
@@ -332,6 +333,7 @@ $stampsModel = new NearbyFakeStampsModel($closest);
 $html = renderNearby($stampsModel, null, ['lat' => '50.1', 'lng' => '14.4'], $collection);
 Assert::count(1, $stampsModel->closestCalls);
 Assert::notContains('&nbsp;·&nbsp;', $html);
+Assert::notContains('collection-switch-note', $html);
 
 // No position, no counts (#71)
 $stampsModel = new NearbyFakeStampsModel($closest);
