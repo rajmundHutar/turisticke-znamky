@@ -38,9 +38,14 @@
 		<section n:if="$salespoints" class="stamp-detail-section">
 			<h2 class="title is-5">{_'detail.salespoints'}</h2>
 			<ul class="stamp-detail-salespoints">
-				<li n:foreach="$salespoints as $salespoint" n:class="$salespoint['system'] ? 'text-muted is-italic'">
-					{$salespoint['name']}
+				<li n:foreach="$salespoints as $key => $salespoint" n:class="$salespoint['system'] ? 'text-muted is-italic'">
+					{var $location = $salespointLocations[$key]}
+					<div class="stamp-detail-salespoint-text">
+						<span>{$salespoint['name']}</span>
+						<span n:if="$location['distance']" class="stamp-detail-salespoint-distance text-muted">{$location['distance']}</span>
+					</div>
 					<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
+					<a n:if="$location['navigate']" href="{$location['navigate']}" target="_blank" rel="noopener" class="stamp-detail-salespoint-navigate">{_'detail.navigate'}</a>
 				</li>
 			</ul>
 		</section>

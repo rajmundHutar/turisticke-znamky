@@ -26,6 +26,15 @@ class GPS
 	}
 
 	/**
+	 * Coordinate from a database string; empty, zero and non-numeric values are no location.
+	 */
+	public static function coordinate(?string $value): ?float
+	{
+		$value = trim((string) $value);
+		return is_numeric($value) && (float) $value !== 0.0 ? (float) $value : null;
+	}
+
+	/**
 	 * Length of one degree of longitude relative to one degree of latitude at the given latitude.
 	 */
 	public static function lngScale(float $lat): float

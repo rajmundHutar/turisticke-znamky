@@ -51,6 +51,7 @@ class Translator implements \Nette\Localization\Translator
 		'detail.nearby' => 'Známky poblíž',
 		'detail.website' => 'Web',
 		'detail.salespoints' => 'Kde koupit',
+		'detail.navigate' => 'Navigovat',
 		'detail.stampNumber{number}' => 'Známka {number}',
 		'detail.inCollection' => 'Ve sbírce',
 		'detail.inCollectionSince{date}' => 'Ve sbírce od {date}',
