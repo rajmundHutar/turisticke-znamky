@@ -23,20 +23,21 @@
 	</header>
 
 	<div n:snippet="stamps">
-		{* the links keep lat/lng of this request *}
-		<nav n:if="$located && $user->isLoggedIn()" class="tabs is-toggle is-fullwidth collection-switch" aria-label="{_'form.filter.collection'}">
+		{* the links keep lat/lng of this request; the counts are redrawn with the snippet after a collect (#71) *}
+		<nav n:if="$switchCounts" class="tabs is-toggle is-fullwidth collection-switch" aria-label="{_'form.filter.collection'}">
 			<ul>
 				<li n:class="$activeFilter === all ? is-active">
-					<a n:href="this, filter => all" class="ajax">{_'form.filter.all'}</a>
+					<a n:href="this, filter => all" class="ajax">{_'form.filter.all'}&nbsp;·&nbsp;{$switchCounts['all']|number: 0, ',', "\u{a0}"}</a>
 				</li>
 				<li n:class="$activeFilter === collected ? is-active">
-					<a n:href="this, filter => collected" class="ajax">{_'form.filter.mine'}</a>
+					<a n:href="this, filter => collected" class="ajax">{_'form.filter.mine'}&nbsp;·&nbsp;{$switchCounts['collected']|number: 0, ',', "\u{a0}"}</a>
 				</li>
 				<li n:class="$activeFilter === missing ? is-active">
-					<a n:href="this, filter => missing" class="ajax">{_'form.filter.missing'}</a>
+					<a n:href="this, filter => missing" class="ajax">{_'form.filter.missing'}&nbsp;·&nbsp;{$switchCounts['missing']|number: 0, ',', "\u{a0}"}</a>
 				</li>
 			</ul>
 		</nav>
+		<p n:if="$switchCounts" class="collection-switch-note text-muted">{_'nearby.countsOf{count}Nearest', ['count' => $switchCounts['all']]}</p>
 
 		<ul n:if="$stamps" class="stamp-rows">
 			<li n:foreach="$stamps as $stamp">

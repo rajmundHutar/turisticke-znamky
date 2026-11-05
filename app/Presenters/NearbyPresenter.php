@@ -67,7 +67,18 @@ class NearbyPresenter extends Presenter
 			);
 		}
 
+		// the switch counts the 20 nearest stamps whatever the filter, the list of "Vše" (#71)
+		$switchCounts = null;
+		if ($this->user->isLoggedIn() && $this->lat !== null && $this->lng !== null) {
+			$nearest = $filter === 'all'
+				? $stamps
+				: $this->stampsModel->fetchClosest((float) $this->lat, (float) $this->lng, 20);
+			$collected = count(array_filter($nearest, fn(array $stamp): bool => isset($this->userCollection[$stamp['id']])));
+			$switchCounts = ['all' => count($nearest), 'collected' => $collected, 'missing' => count($nearest) - $collected];
+		}
+
 		$this->template->stamps = $stamps;
+		$this->template->switchCounts = $switchCounts;
 		$this->template->collection = $this->userCollection;
 		$this->template->located = $this->lat !== null && $this->lng !== null;
 		$this->template->activeFilter = $filter;
