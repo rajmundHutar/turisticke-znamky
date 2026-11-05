@@ -621,10 +621,13 @@ html:not(.js) .nearby-locate {
     background: var(--tz-well);
 }
 
+/* low enough that the number, name and collection block fit on a phone screen without scrolling (#68);
+   a tap opens the full image in the lightbox */
 .stamp-detail-image img {
     display: block;
     width: 100%;
-    max-height: 60vh;
+    height: clamp(150px, 26vh, 220px);
+    padding: 0.75rem;
     object-fit: contain;
 }
 
@@ -775,6 +778,10 @@ body:has(.collect-sheet[open]) {
 
     .stamp-detail-image {
         margin: 0 0 1rem;
+    }
+
+    .stamp-detail-image img {
+        height: 360px;
     }
 
     .stamp-detail-map {
