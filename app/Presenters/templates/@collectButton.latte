@@ -1,8 +1,10 @@
 {* The "+" / check button of a stamp; the shared collect sheet (@collectSheet.latte) reads its data attributes (#48).
-   With a $label (#51) it shows the text: "Upravit" alone, a "+" with "Přidat do sbírky". *}
+   With a $label (#51) it shows the text: "Upravit" alone, a "+" with "Přidat do sbírky".
+   data-photo: the URL of the owner's trip photo, previewed by the sheet only when it opens (#19). *}
 {var $collected = $collection[$stamp['id']] ?? null}
 {var $label = $label ?? null}
-<button type="button" n:class="$class, js-collect, $collected && !$label ? is-success" data-stamp-id="{$stamp['id']}" data-stamp-number="{$stamp['id']}" data-stamp-name="{$stamp['name']}" data-collected="{$collected ? 1 : 0}" data-date="{$collected?->date?->format('j. n. Y') ?? ''}" data-note="{$collected?->comment ?? ''}" aria-label="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}" title="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}">
+{var $photoUrl = $collected?->file && $user->isLoggedIn() ? $presenter->link('Photo:default', ['stampId' => $stamp['id'], 'v' => basename($collected->file, '.jpg')]) : null}
+<button type="button" n:class="$class, js-collect, $collected && !$label ? is-success" data-stamp-id="{$stamp['id']}" data-stamp-number="{$stamp['id']}" data-stamp-name="{$stamp['name']}" data-collected="{$collected ? 1 : 0}" data-date="{$collected?->date?->format('j. n. Y') ?? ''}" data-note="{$collected?->comment ?? ''}" n:attr="data-photo => $photoUrl" aria-label="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}" title="{_($collected ? 'stamp.editInCollection' : 'stamp.collect')}">
 	<span n:if="!$label || !$collected" class="icon"><i n:class="fas, $collected ? fa-check : fa-plus"></i></span>
 	<span n:if="$label">{$label}</span>
 </button>

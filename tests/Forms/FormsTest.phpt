@@ -21,7 +21,7 @@ $translator = PresenterTestHelpers::createTranslator();
 $factories = [
 	'login' => [fn() => (new LoginForm($translator))->create(fn() => null), ['email', 'password', 'ok']],
 	'filter' => [fn() => (new FilterForm($translator))->create(['id' => 'form.filter.sortBy.id.asc']), ['search', 'sort', 'ok']],
-	'editStamp' => [fn() => (new EditStampForm($translator))->create(null, [], fn() => null), ['date', 'comment', 'id', 'ok', 'remove']],
+	'editStamp' => [fn() => (new EditStampForm($translator))->create(null, [], fn() => null), ['date', 'comment', 'photo', 'deletePhoto', 'id', 'ok', 'remove']],
 ];
 
 foreach ($factories as $name => [$create, $fields]) {

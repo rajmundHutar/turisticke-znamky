@@ -5,3 +5,4 @@ deployment.phar
 deployment.log
 vendor/*
 .claude/worktrees/
+data/photos/

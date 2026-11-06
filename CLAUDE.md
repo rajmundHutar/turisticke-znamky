@@ -25,7 +25,7 @@ Production (tz.rajmund.dev) is deployed over FTPS with [FTP Deployment](https://
 
 Both run `deployment.phar` in Docker with `error_reporting` without `E_WARNING`: the Wedos FTPS server drops TLS without a clean shutdown and the stray `SSL_shutdown failed` warning would abort the run; transfer errors are still caught and retried.
 
-Runtime data on the server (`app/config/local.neon`, `log/`, `temp/`, downloaded `www/images/stamps/`) is ignored and never uploaded or deleted.
+Runtime data on the server (`app/config/local.neon`, `log/`, `temp/`, downloaded `www/images/stamps/`, uploaded collection photos in `data/photos/`) is ignored and never uploaded or deleted. `data/photos/` must be listed as `/data/photos/*` in the ignore list of `deployment.ini` (not in git): FTP Deployment deletes only remote files it uploaded itself (listed in `.htdeployment`), so the photos on the server are safe, but without the entry the deploy would upload the local dev photos to production.
 
 ## Conventions
 

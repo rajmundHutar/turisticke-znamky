@@ -529,6 +529,20 @@ html:not(.js) .nearby-locate {
     min-width: 0;
 }
 
+/* the owner's trip photo (#19), a small preview under the note opening the lightbox */
+.stamp-detail-photo {
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+.stamp-detail-photo img {
+    display: block;
+    height: 80px;
+    width: auto;
+    max-width: 100%;
+    border-radius: 6px;
+}
+
 .stamp-detail-section {
     margin-top: 1.5rem;
 }
@@ -678,6 +692,27 @@ body:has(.collect-sheet[open]) {
     font-size: 1.25rem;
     font-weight: 600;
     color: inherit;
+}
+
+/* the trip photo in the sheet (#19): the current one, or the resized new one */
+.collect-sheet-photo-preview {
+    display: block;
+    height: 80px;
+    width: auto;
+    max-width: 100%;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.collect-sheet-photo-preview[hidden],
+.collect-sheet-photo-status[hidden],
+.collect-sheet-photo-delete[hidden] {
+    display: none;
+}
+
+.collect-sheet-photo-delete {
+    margin-top: 0.5rem;
 }
 
 .collect-sheet-buttons {

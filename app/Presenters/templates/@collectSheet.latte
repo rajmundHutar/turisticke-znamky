@@ -1,12 +1,12 @@
 {* The shared collect form, rendered once per page inside the 'collectSheet' snippet, shown as a bottom sheet (#48).
-   bundle.js fills the hidden id, date, note and title from the data attributes of the clicked .js-collect button.
+   bundle.js fills the hidden id, date, note and title from the data attributes of the clicked .js-collect button,
+   and from its data-photo the photo preview, the label of the file input, the delete checkbox and the remove confirmation (#19).
    The only redirect of an AJAX submit is to log in after an expired session; data-naja-force-redirect loads it as a page. *}
 <dialog n:if="$user->isLoggedIn()" id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" data-title-add="{_'stamp.sheet.add'}" data-title-edit="{_'stamp.sheet.edit'}" data-error-text="{_'stamp.sheet.saveFailed'}"{if $control['collectForm']->hasErrors()} data-open{/if}>
 	<div class="collect-sheet-handle"></div>
 	<button type="button" class="delete is-medium collect-sheet-close" aria-label="{_'general.closeDialog'}"></button>
 	<form n:name="collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>
 		<p class="collect-sheet-title" id="collect-sheet-title"></p>
-		<div class="collect-sheet-photo"></div>{* reserved for the photo of the stamp (#19) *}
 		<div class="field">
 			<label n:name="date" class="label" />
 			<div class="control">
@@ -20,10 +20,22 @@
 				<textarea n:name="comment" class="textarea" rows="2"></textarea>
 			</div>
 		</div>
+		{* the trip photo (#19): bundle.js resizes the chosen file before the submit and previews it *}
+		<div class="field collect-sheet-photo" data-photo-processing="{_'stamp.photo.processing'}" data-photo-unreadable="{_'stamp.photo.unreadable'}" data-photo-too-large="{_'stamp.photo.tooLarge'}">
+			<img class="collect-sheet-photo-preview" alt="{_'detail.photo'}" hidden>
+			<label n:name="photo" class="label" data-label-add="{_'stamp.photo.add'}" data-label-change="{_'stamp.photo.change'}" />
+			<div class="control">
+				<input n:name="photo">
+			</div>
+			<p class="help collect-sheet-photo-status" hidden></p>
+			<label class="checkbox collect-sheet-photo-delete" hidden>
+				<input n:name="deletePhoto:"> {_'stamp.photo.delete'}
+			</label>
+		</div>
 		<input n:name="id">
 		<div class="field collect-sheet-buttons">
 			<input n:name="ok" class="button is-link">
-			<input n:name="remove" class="button is-danger is-light" data-confirm="{_'stamp.uncollectConfirm'}">
+			<input n:name="remove" class="button is-danger is-light" data-confirm="{_'stamp.uncollectConfirm'}" data-confirm-plain="{_'stamp.uncollectConfirm'}" data-confirm-photo="{_'stamp.uncollectConfirmPhoto'}">
 		</div>
 	</form>
 </dialog>
