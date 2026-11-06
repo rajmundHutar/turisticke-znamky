@@ -184,6 +184,9 @@ $cases = [
 	'old version with extension' => [['user'], '5', $file],
 	'empty version' => [['user'], '5', ''],
 	'missing file' => [['user'], '8', substr($missing, 0, -4)],
+	'version not a string (v[]=x)' => [['user'], '5', ['x']],
+	'stamp id not an integer' => [['user'], '5x', $version],
+	'stamp id an array' => [['user'], ['5'], $version],
 ];
 foreach ($cases as $label => [$roles, $stampId, $v]) {
 	$httpResponse = null;

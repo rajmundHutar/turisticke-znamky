@@ -75,11 +75,18 @@ class CollectionModel
 		return $this->fetch($stampId, $userId)?->file;
 	}
 
-	/** Sets the basename of the trip photo of the collected stamp (#19); null clears it. */
-	public function setFile(int $stampId, int $userId, ?string $file): void
+	/**
+	 * Sets the basename of the trip photo of the collected stamp (#19); null clears it.
+	 * @return int  the number of updated rows, 0 when the stamp is not collected (anymore)
+	 */
+	public function setFile(int $stampId, int $userId, ?string $file): int
 	{
 
-		$this->update($stampId, $userId, ['file' => $file]);
+		return $this->db
+			->table(\Table::Collection)
+			->where('stamp_id', $stampId)
+			->where('user_id', $userId)
+			->update(['file' => $file]);
 	}
 
 	public function remove(int $stampId, int $userId): void

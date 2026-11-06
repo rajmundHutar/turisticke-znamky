@@ -31,9 +31,14 @@ final class PhotoPresenter implements Nette\Application\IPresenter
 		$userId = $this->user->isLoggedIn() ? $this->user->getId() : null;
 		$this->session->close(); // releases the lock of the session read for the login, so parallel requests are not serialized
 
-		$stampId = (int) $request->getParameter('stampId');
+		$stampId = $request->getParameter('stampId');
+		$version = $request->getParameter('v');
+		if (!is_string($version) || !Nette\Utils\Validators::isNumericInt($stampId)) { // e.g. v[]=x
+			throw new BadRequestException('Invalid photo URL.');
+		}
+		$stampId = (int) $stampId;
 		$file = $userId === null ? null : $this->collectionModel->fetchFile($stampId, (int) $userId);
-		$path = ($file === null || $file !== $request->getParameter('v') . '.jpg' ? null : $this->photos->path($file)) ?? throw new BadRequestException("No photo of the stamp {$stampId}.");
+		$path = ($file === null || $file !== $version . '.jpg' ? null : $this->photos->path($file)) ?? throw new BadRequestException("No photo of the stamp {$stampId}.");
 
 		$this->httpResponse->setExpiration('7 days'); // replaces Pragma and Expires sent by the session
 		$this->httpResponse->setHeader('Cache-Control', 'private, max-age=604800'); // the owner's browser only

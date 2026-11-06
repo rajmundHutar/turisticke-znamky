@@ -87,7 +87,7 @@ class Translator implements \Nette\Localization\Translator
 		'stamp.photo.change' => 'Změnit fotku',
 		'stamp.photo.delete' => 'Smazat fotku',
 		'stamp.photo.processing' => 'Zpracovávám fotku…',
-		'stamp.photo.unreadable' => 'Tuto fotku se nepodařilo načíst, zkus jinou (JPEG, PNG).',
+		'stamp.photo.unreadable' => 'Tuto fotku se nepodařilo načíst, zkuste jinou (JPEG, PNG).',
 		'stamp.photo.tooLarge' => 'Fotka je příliš velká.',
 		'stamp.photo.saveFailed' => 'Fotku se nepodařilo uložit.',
 

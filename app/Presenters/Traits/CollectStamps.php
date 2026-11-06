@@ -72,10 +72,10 @@ trait CollectStamps
 					$this->collectionModel->add($stampId, $userId, $values['date'], $values['comment']);
 					$flash = 'stamp.flash.added';
 				}
-				$photoSaved = $remove || $this->saveCollectionPhoto($stampId, $userId, $values['photo'], $values['deletePhoto']);
+				$photoError = $remove ? null : $this->saveCollectionPhoto($stampId, $userId, $values['photo'], $values['deletePhoto']);
 				$this->flashMessage($this->t($flash), \Flash::SUCCESS);
-				if (!$photoSaved) {
-					$this->flashMessage($this->t('stamp.photo.saveFailed'), \Flash::ERROR);
+				if ($photoError !== null) {
+					$this->flashMessage($this->t($photoError), \Flash::ERROR);
 				}
 
 				if (!$this->isAjax()) {
@@ -123,9 +123,10 @@ trait CollectStamps
 
 	/**
 	 * Saves the photo change of a saved stamp (#19): a new upload replaces the photo, otherwise the checkbox deletes it.
-	 * @return bool  false when the upload failed or is not a valid image; logged without any content of the file
+	 * @return ?string  the translation key of the error when the upload failed or is not a valid image, logged without
+	 *                   any content of the file; null on success
 	 */
-	private function saveCollectionPhoto(int $stampId, int $userId, FileUpload $upload, bool $delete): bool
+	private function saveCollectionPhoto(int $stampId, int $userId, FileUpload $upload, bool $delete): ?string
 	{
 		try {
 			if ($upload->hasFile()) {
@@ -136,10 +137,12 @@ trait CollectStamps
 			} elseif ($delete) {
 				$this->deleteCollectionPhoto($stampId, $userId);
 			}
-			return true;
+			return null;
 		} catch (\RuntimeException $e) {
 			Debugger::log("Collection photo of stamp {$stampId}, user {$userId} not saved: {$e->getMessage()}", Debugger::WARNING);
-			return false;
+			return $upload->getError() === UPLOAD_ERR_INI_SIZE || $upload->getError() === UPLOAD_ERR_FORM_SIZE
+				? 'stamp.photo.tooLarge'
+				: 'stamp.photo.saveFailed';
 		}
 	}
 
@@ -154,7 +157,9 @@ trait CollectStamps
 		$old = $this->collectionModel->fetchFile($stampId, $userId);
 		$new = $this->collectionPhotos->store($uploadedPath);
 		try {
-			$this->collectionModel->setFile($stampId, $userId, $new);
+			if ($this->collectionModel->setFile($stampId, $userId, $new) === 0) {
+				throw new \RuntimeException('The stamp is not collected anymore.'); // removed meanwhile, e.g. in another tab
+			}
 		} catch (\Throwable $e) {
 			$this->collectionPhotos->delete($new);
 			throw $e;

@@ -10,7 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
 // AJAX for forms and links with the class 'ajax' (https://naja.js.org); back and forward refetch the page instead of
 // restoring cached snippets, which would show the stamp list (and the collection) as it was before later changes (#50)
 naja.initialize({ snippetCache: 'off' })
-naja.snippetHandler.addEventListener('afterUpdate', (event) => initDatepicker(event.detail.snippet))
+naja.snippetHandler.addEventListener('afterUpdate', (event) => {
+    initDatepicker(event.detail.snippet)
+    window.refreshFsLightbox?.() // binds the lightbox to redrawn links, e.g. the trip photo on the detail (#19)
+})
 
 // Czech locale of vanillajs-datepicker (locale files are not bundled in datepicker-full.min.js)
 Datepicker.locales.cs = {
@@ -183,7 +186,8 @@ function initCollectSheet() {
         const box = input.closest('.collect-sheet-photo')
         const file = input.files[0]
         const run = ++photoRun
-        if (!file) {
+        if (!file) { // the picker cancelled, also during a resize of the previous choice
+            setPending(false)
             showPreview(box, trigger?.dataset.photo)
             setPhotoStatus(box, null)
             return

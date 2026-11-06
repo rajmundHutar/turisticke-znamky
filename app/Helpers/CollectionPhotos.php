@@ -16,6 +16,9 @@ final class CollectionPhotos
 
 	private const Quality = 85;
 
+	/** memory of a decoded truecolor GD image, with a margin */
+	private const BytesPerPixel = 5;
+
 	private const NamePattern = '~^[a-f0-9]{32}\.jpg$~D';
 
 	private string $dir;
@@ -23,12 +26,13 @@ final class CollectionPhotos
 
 	/**
 	 * @param  int  $maxBytes  larger uploads are refused
-	 * @param  int  $maxPixels  larger images are refused before decoding, so they can't exhaust the memory limit
+	 * @param  int  $maxPixels  larger images are refused before decoding, so they can't exhaust the memory limit;
+	 *                          the browser uploads at most MaxEdge × MaxEdge
 	 */
 	public function __construct(
 		string $dir,
 		private int $maxBytes = 15_000_000,
-		private int $maxPixels = 25_000_000,
+		private int $maxPixels = 8_000_000,
 	) {
 		$this->dir = rtrim($dir, '/');
 	}
@@ -58,6 +62,8 @@ final class CollectionPhotos
 		};
 		if ($size[0] * $size[1] > $this->maxPixels) {
 			throw new \RuntimeException("The photo is too large ({$size[0]} × {$size[1]} px).");
+		} elseif ($size[0] * $size[1] * self::BytesPerPixel > self::freeMemory()) {
+			throw new \RuntimeException("Not enough memory to decode the photo ({$size[0]} × {$size[1]} px).");
 		}
 
 		$image = @$decode($uploadedPath);
@@ -87,6 +93,23 @@ final class CollectionPhotos
 			throw new \RuntimeException('Cannot write the photo.');
 		}
 		return $name;
+	}
+
+
+	/** The memory left under memory_limit in bytes, PHP_INT_MAX when unlimited. */
+	private static function freeMemory(): int
+	{
+		$limit = trim((string) ini_get('memory_limit'));
+		if ($limit === '' || (int) $limit <= 0) {
+			return PHP_INT_MAX;
+		}
+		$bytes = (int) $limit * match (strtoupper(substr($limit, -1))) {
+			'G' => 1024 ** 3,
+			'M' => 1024 ** 2,
+			'K' => 1024,
+			default => 1,
+		};
+		return $bytes - memory_get_usage(true); // the limit is enforced on the memory allocated from the system
 	}
 
 

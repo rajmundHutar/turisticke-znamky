@@ -90,13 +90,17 @@ final class CollectFakeCollectionModel extends CollectionModel
 	}
 
 
-	public function setFile(int $stampId, int $userId, ?string $file): void
+	public function setFile(int $stampId, int $userId, ?string $file): int
 	{
 		if ($this->onSetFile) {
 			($this->onSetFile)();
 		}
 		$this->writes[] = ['setFile', $stampId, $userId, $file];
+		if (!isset($this->collection[$stampId])) {
+			return 0;
+		}
 		$this->collection[$stampId] = collected($stampId, file: $file);
+		return 1;
 	}
 
 }
@@ -569,6 +573,13 @@ foreach ([null, $photo5] as $file) {
 Assert::notNull($photos->path($photo6));
 
 
+/** @return list<string> */
+function storedPhotosBefore(string $dir): array
+{
+	return array_map('basename', glob("$dir/*") ?: []);
+}
+
+
 /** The stamp detail presenter with the photos and the fake model injected, for the photo methods of the trait. */
 function photoPresenter(CollectFakeCollectionModel $collectionModel, CollectionPhotos $photos): CollectTestStampPresenter
 {
@@ -615,6 +626,13 @@ $collectionModel->onSetFile = fn() => throw new Nette\Database\DriverException('
 Assert::exception(fn() => photoPresenter($collectionModel, $photos)->publicReplaceCollectionPhoto(6, 1, $upload), Nette\Database\DriverException::class);
 Assert::notNull($photos->path($newPhoto));
 Assert::count(2, glob("$photosDir/*") ?: []);
+
+
+// a row removed meanwhile (no row updated) deletes the new file and fails, no orphan is left
+$before = storedPhotosBefore($photosDir);
+$collectionModel = new CollectFakeCollectionModel;
+Assert::exception(fn() => photoPresenter($collectionModel, $photos)->publicReplaceCollectionPhoto(6, 1, $upload), RuntimeException::class, '~not collected~');
+Assert::same($before, storedPhotosBefore($photosDir));
 
 
 // Deleting a photo clears the DB first, then the file (#19); without a photo it changes nothing
@@ -705,7 +723,13 @@ Assert::same(['stamp.flash.saved'], array_map(fn($flash) => $flash->message, $pr
 // An invalid photo or a failed upload: the date and the note are saved, the photo is not, an error flash says so
 // and a short warning is logged (#19)
 file_put_contents("$photosDir-upload/text.jpg", 'not an image');
-foreach ([uploaded("$photosDir-upload/text.jpg"), uploaded('', UPLOAD_ERR_INI_SIZE)] as $file) {
+$cases = [
+	[uploaded("$photosDir-upload/text.jpg"), 'stamp.photo.saveFailed'],
+	[uploaded('', UPLOAD_ERR_PARTIAL), 'stamp.photo.saveFailed'],
+	[uploaded('', UPLOAD_ERR_INI_SIZE), 'stamp.photo.tooLarge'], // over upload_max_filesize
+	[uploaded('', UPLOAD_ERR_FORM_SIZE), 'stamp.photo.tooLarge'],
+];
+foreach ($cases as [$file, $photoFlash]) {
 	$stored = $photos->store($upload);
 	$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $stored)]);
 	$presenter = new HomepagePresenter($translator);
@@ -714,7 +738,7 @@ foreach ([uploaded("$photosDir-upload/text.jpg"), uploaded('', UPLOAD_ERR_INI_SI
 	Assert::same('Sunny', $collectionModel->writes[0][3]['comment']);
 	Assert::same([$stored], storedPhotos($photosDir));
 	Assert::same(
-		[['stamp.flash.saved', Flash::SUCCESS], ['stamp.photo.saveFailed', Flash::ERROR]],
+		[['stamp.flash.saved', Flash::SUCCESS], [$photoFlash, Flash::ERROR]],
 		array_map(fn($flash) => [$flash->message, $flash->type], $presenter->getTemplate()->flashes),
 	);
 	Assert::same(5, $presenter->getPayload()->stampId); // the sheet closes, the flash shows the error

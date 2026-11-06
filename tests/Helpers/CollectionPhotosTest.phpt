@@ -48,7 +48,7 @@ $photos = new CollectionPhotos($dir . '/');
 
 // A large phone JPEG with EXIF/GPS is scaled down to 1600 px on the long edge and re-encoded without any metadata;
 // the directory is created on the first store
-createJpegWithExif("$uploads/phone.jpg", 4000, 3000);
+createJpegWithExif("$uploads/phone.jpg", 3200, 2400);
 Assert::contains('GPSLatitude', (string) file_get_contents("$uploads/phone.jpg"));
 Assert::notSame(false, getimagesize("$uploads/phone.jpg"));
 $name = $photos->store("$uploads/phone.jpg");
@@ -122,6 +122,28 @@ Assert::exception(
 	RuntimeException::class,
 	'~too large~',
 );
+Assert::count(5, glob("$dir/*") ?: []);
+
+
+// The default pixel limit is 8 MP, enough for the browser-resized uploads (at most 1600 px), safe for shared hosting memory
+imagejpeg(createImage(3300, 2500), "$uploads/large.jpg");
+Assert::exception(fn() => $photos->store("$uploads/large.jpg"), RuntimeException::class, '~too large \(3300 × 2500 px\)~');
+
+
+// An image whose decoding (about 5 B per pixel in GD) would not fit into the remaining memory_limit is refused before decoding;
+// the limit may be in K, M or G, or -1 for unlimited
+$memoryLimit = (string) ini_get('memory_limit');
+$tight = (int) ceil((memory_get_usage(true) + 1_500_000) / 1024) . 'K'; // 800 × 600 needs about 2.4 MB
+Assert::notSame(false, ini_set('memory_limit', $tight));
+$e = Assert::exception(fn() => $photos->store("$uploads/small.jpg"), RuntimeException::class, '~memory~');
+ini_set('memory_limit', $memoryLimit);
+foreach (['-1', '1G', '512M'] as $limit) {
+	ini_set('memory_limit', $limit);
+	$stored = $photos->store("$uploads/small.jpg");
+	Assert::notNull($photos->path($stored), $limit);
+	$photos->delete($stored);
+}
+ini_set('memory_limit', $memoryLimit);
 Assert::count(5, glob("$dir/*") ?: []);
 
 
