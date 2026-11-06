@@ -27,6 +27,13 @@
 					<div class="stamp-detail-collected-text">
 						<p class="has-text-weight-semibold">{if $collected->date !== null}{_'detail.inCollectionSince{date}', ['date' => $collected->date->format('j. n. Y')]}{else}{_'detail.inCollection'}{/if}</p>
 						<p n:if="$collected->comment">{$collected->comment|breaklines}</p>
+						{* the owner's private trip photo (#19); the URL has no extension, so fslightbox is told the type *}
+						{if $collected->file && $user->isLoggedIn()}
+							{var $photoUrl = $presenter->link('Photo:default', ['stampId' => $stamp['id'], 'v' => basename($collected->file, '.jpg')])}
+							<a href="{$photoUrl}" class="stamp-detail-photo" data-fslightbox="photo" data-type="image">
+								<img src="{$photoUrl}" alt="{_'detail.photo'}" height="80" loading="lazy" decoding="async">
+							</a>
+						{/if}
 					</div>
 					{include "../@collectButton.latte", stamp => $stamp, collection => $collection, class => 'button is-light', label => ('stamp.sheet.edit'|translate)}
 				</div>

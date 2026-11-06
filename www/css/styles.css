@@ -529,6 +529,20 @@ html:not(.js) .nearby-locate {
     min-width: 0;
 }
 
+/* the owner's trip photo (#19), a small preview under the note opening the lightbox */
+.stamp-detail-photo {
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+.stamp-detail-photo img {
+    display: block;
+    height: 80px;
+    width: auto;
+    max-width: 100%;
+    border-radius: 6px;
+}
+
 .stamp-detail-section {
     margin-top: 1.5rem;
 }

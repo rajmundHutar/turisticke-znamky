@@ -1,6 +1,7 @@
 parameters:
 	feedUrl: "https://turisticke-znamky.cz/api/feeds/tourist-stamps.xml"
 	stampsImagesPath: "%appDir%/../www/images/stamps/"
+	collectionPhotosPath: "%appDir%/../data/photos/"  # private trip photos (#19), outside www/, ignored by the deploy
 	mapyApiKey: ""  # set in local.neon (not in git), restricted to the site's referrers in the Mapy.cz account
 
 application:
@@ -28,7 +29,7 @@ session:
 http:
 	headers:
 		# pages differ per user (login, collection): keep them out of shared caches (the hosting's proxy cached
-		# them for 5 minutes and served one user's page to another); ThumbnailPresenter sets its own caching
+		# them for 5 minutes and served one user's page to another); ThumbnailPresenter and PhotoPresenter set their own caching
 		Cache-Control: 'private, no-cache'
 
 
@@ -44,6 +45,7 @@ services:
 	translator: App\Helpers\Translator
 	- App\Helpers\MapyConfig(%mapyApiKey%)
 	- App\Helpers\StampThumbnails(%stampsImagesPath%)
+	- App\Helpers\CollectionPhotos(%collectionPhotosPath%)
 
 	# Models
 	- App\Models\StampsModel

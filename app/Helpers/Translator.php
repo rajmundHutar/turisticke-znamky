@@ -57,6 +57,7 @@ class Translator implements \Nette\Localization\Translator
 		'detail.stampNumber{number}' => 'Známka {number}',
 		'detail.inCollection' => 'Ve sbírce',
 		'detail.inCollectionSince{date}' => 'Ve sbírce od {date}',
+		'detail.photo' => 'Moje fotka z výletu',
 		'detail.about' => 'O místě',
 		'detail.showFullDescription' => 'Zobrazit celý popis',
 		'detail.showLessDescription' => 'Zobrazit méně',

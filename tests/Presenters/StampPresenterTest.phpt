@@ -485,3 +485,26 @@ $html = renderStampDetail($detailStamp, [
 ]);
 Assert::contains('<span>Pokladna hradu</span>', $html);
 Assert::notContains('stamp-detail-salespoints-more', $html);
+
+
+// The owner's trip photo (#19): a small lazy preview in the "Ve sbírce od …" block opening the full photo in its own lightbox
+// gallery (the URL has no extension); without a photo, or for an anonymous visitor, nothing
+$photo = str_repeat('0123456789abcdef', 2) . '.jpg';
+$withPhoto = [1 => new CollectedStampDto(1, 'Stamp', null, null, null, '50.0', '14.0', null, new DateTime('2024-05-01'), 'Windy', $photo)];
+$html = renderStampDetail($detailStamp, [], $closest, roles: ['user'], collection: $withPhoto);
+Assert::match(
+	'~<div class="stamp-detail-collected">.*Ve sbírce od 1. 5. 2024.*'
+	. '<a href="/photo/1/0123456789abcdef0123456789abcdef" class="stamp-detail-photo" data-fslightbox="photo" data-type="image">\s*'
+	. '<img src="/photo/1/0123456789abcdef0123456789abcdef" alt="Moje fotka z výletu" height="80" loading="lazy" decoding="async">\s*</a>.*'
+	. 'data-stamp-id="1" [^>]*data-collected="1"~s',
+	$html,
+);
+Assert::same(2, substr_count($html, '/photo/')); // the link and the preview
+
+$html = renderStampDetail($detailStamp, [], $closest, roles: ['user'], collection: [1 => $collected(1)]);
+Assert::contains('Ve sbírce od 1. 5. 2024', $html);
+Assert::notContains('/photo/', $html);
+Assert::notContains('stamp-detail-photo', $html);
+
+$html = renderStampDetail($detailStamp, [], $closest, collection: $withPhoto);
+Assert::notContains('/photo/', $html);

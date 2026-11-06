@@ -68,6 +68,20 @@ class CollectionModel
 			]);
 	}
 
+	/** The basename of the trip photo of the collected stamp (#19), null without a photo or when not collected. */
+	public function fetchFile(int $stampId, int $userId): ?string
+	{
+
+		return $this->fetch($stampId, $userId)?->file;
+	}
+
+	/** Sets the basename of the trip photo of the collected stamp (#19); null clears it. */
+	public function setFile(int $stampId, int $userId, ?string $file): void
+	{
+
+		$this->update($stampId, $userId, ['file' => $file]);
+	}
+
 	public function remove(int $stampId, int $userId): void
 	{
 

@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 use App\Dto\CollectedStampDto;
 use App\Forms\EditStampForm;
+use App\Helpers\CollectionPhotos;
 use App\Models\CollectionModel;
 use App\Models\StampsModel;
 use App\Presenters\HomepagePresenter;
@@ -39,6 +40,9 @@ final class CollectFakeCollectionModel extends CollectionModel
 
 	/** @var list<int> stamps stored after the action loaded the collection, e.g. by a double submit */
 	public array $storedMeanwhile = [];
+
+	/** @var ?callable(): void  called before a file is written, e.g. to record the files on the disk or fail */
+	public $onSetFile = null;
 
 
 	/** @param  array<int, CollectedStampDto>  $collection */
@@ -77,6 +81,22 @@ final class CollectFakeCollectionModel extends CollectionModel
 	{
 		$this->writes[] = ['remove', $stampId, $userId];
 		unset($this->collection[$stampId]);
+	}
+
+
+	public function fetchFile(int $stampId, int $userId): ?string
+	{
+		return $this->collection[$stampId]->file ?? null;
+	}
+
+
+	public function setFile(int $stampId, int $userId, ?string $file): void
+	{
+		if ($this->onSetFile) {
+			($this->onSetFile)();
+		}
+		$this->writes[] = ['setFile', $stampId, $userId, $file];
+		$this->collection[$stampId] = collected($stampId, file: $file);
 	}
 
 }
@@ -129,6 +149,18 @@ final class CollectTestStampPresenter extends StampPresenter
 	{
 		$this->terminate();
 	}
+
+
+	public function publicReplaceCollectionPhoto(int $stampId, int $userId, string $uploadedPath): void
+	{
+		$this->replaceCollectionPhoto($stampId, $userId, $uploadedPath);
+	}
+
+
+	public function publicDeleteCollectionPhoto(int $stampId, int $userId): void
+	{
+		$this->deleteCollectionPhoto($stampId, $userId);
+	}
 }
 
 
@@ -156,6 +188,7 @@ function runCollect(
 	array $params,
 	?array $post = null,
 	array $headers = ['Sec-Fetch-Site' => 'same-origin'], // signals and forms are CSRF protected
+	?CollectionPhotos $photos = null,
 ): Nette\Application\Response {
 	assert($presenter instanceof HomepagePresenter || $presenter instanceof NearbyPresenter || $presenter instanceof StampPresenter);
 	$translator = PresenterTestHelpers::createTranslator();
@@ -163,6 +196,7 @@ function runCollect(
 	$presenter->injectCollectionModel($collectionModel);
 	$presenter->injectStampsModel(new CollectFakeStampsModel);
 	$presenter->injectEditStampForm(new EditStampForm($translator));
+	$presenter->injectCollectionPhotos($photos ?? new CollectionPhotos(sys_get_temp_dir() . '/collect-stamps-none'));
 	if ($presenter instanceof HomepagePresenter) {
 		$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
 	}
@@ -178,9 +212,9 @@ function redirectUrl(Nette\Application\Response $response): Nette\Http\Url
 }
 
 
-function collected(int $id, ?string $date = '2024-05-01', ?string $comment = 'Windy'): CollectedStampDto
+function collected(int $id, ?string $date = '2024-05-01', ?string $comment = 'Windy', ?string $file = null): CollectedStampDto
 {
-	return new CollectedStampDto($id, "Stamp $id", null, null, null, '50.0', '14.0', null, $date === null ? null : new DateTime($date), $comment, null);
+	return new CollectedStampDto($id, "Stamp $id", null, null, null, '50.0', '14.0', null, $date === null ? null : new DateTime($date), $comment, $file);
 }
 
 
@@ -495,3 +529,101 @@ runCollect($presenter, 'Stamp', ['user'], new CollectFakeCollectionModel, [
 ], ['id' => '7', 'date' => '', 'comment' => '', 'ok' => 'stamp.saveToCollection'], ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest']);
 Assert::false($presenter->isControlInvalid('detailCollection'));
 Assert::true($presenter->isControlInvalid('stamp-7'));
+
+
+// Removing a stamp from the collection deletes its photo after the row is gone; another stamp's photo stays (#19)
+$photosDir = sys_get_temp_dir() . '/collect-stamps-photos-' . getmypid();
+Nette\Utils\FileSystem::delete($photosDir);
+register_shutdown_function(fn() => Nette\Utils\FileSystem::delete($photosDir));
+$photos = new CollectionPhotos($photosDir);
+Nette\Utils\FileSystem::createDir("$photosDir-upload");
+register_shutdown_function(fn() => Nette\Utils\FileSystem::delete("$photosDir-upload"));
+$upload = "$photosDir-upload/photo.jpg";
+imagejpeg(imagecreatetruecolor(40, 30), $upload);
+$photo5 = $photos->store($upload);
+$photo6 = $photos->store($upload);
+
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $photo5), 6 => collected(6, file: $photo6)]);
+redirectUrl(runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, [
+	'id' => '5',
+	'date' => '',
+	'comment' => '',
+	'remove' => 'stamp.uncollect',
+], photos: $photos));
+Assert::same([['remove', 5, 1]], $collectionModel->writes);
+Assert::null($photos->path($photo5));
+Assert::notNull($photos->path($photo6));
+
+// a stamp without a photo, or with a file already missing, is removed as before
+foreach ([null, $photo5] as $file) {
+	$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $file)]);
+	redirectUrl(runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, [
+		'id' => '5',
+		'date' => '',
+		'comment' => '',
+		'remove' => 'stamp.uncollect',
+	], photos: $photos));
+	Assert::same([['remove', 5, 1]], $collectionModel->writes);
+}
+Assert::notNull($photos->path($photo6));
+
+
+/** The stamp detail presenter with the photos and the fake model injected, for the photo methods of the trait. */
+function photoPresenter(CollectFakeCollectionModel $collectionModel, CollectionPhotos $photos): CollectTestStampPresenter
+{
+	$presenter = new CollectTestStampPresenter(PresenterTestHelpers::createTranslator());
+	$presenter->injectCollectionModel($collectionModel);
+	$presenter->injectCollectionPhotos($photos);
+	return $presenter;
+}
+
+
+// Replacing a photo: the new file is stored first, then the DB points to it, then the old file is deleted (#19)
+$collectionModel = new CollectFakeCollectionModel([6 => collected(6, file: $photo6)]);
+$seen = null;
+$collectionModel->onSetFile = function () use ($photosDir, $photo6, &$seen): void {
+	$seen = array_map('basename', glob("$photosDir/*") ?: []);
+	Assert::contains($photo6, $seen); // the old file still exists while the DB is written
+};
+photoPresenter($collectionModel, $photos)->publicReplaceCollectionPhoto(6, 1, $upload);
+Assert::count(2, $seen); // the old and the new one
+[$op, $stampId, $userId, $newPhoto] = $collectionModel->writes[0];
+Assert::same(['setFile', 6, 1], [$op, $stampId, $userId]);
+Assert::notSame($photo6, $newPhoto);
+Assert::notNull($photos->path($newPhoto));
+Assert::null($photos->path($photo6));
+Assert::same([$newPhoto], array_map('basename', glob("$photosDir/*") ?: []));
+
+// a first photo of a stamp without one
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5)]);
+photoPresenter($collectionModel, $photos)->publicReplaceCollectionPhoto(5, 1, $upload);
+Assert::same('setFile', $collectionModel->writes[0][0]);
+Assert::count(2, glob("$photosDir/*") ?: []);
+$photo5 = $collectionModel->writes[0][3];
+
+// an invalid image writes nothing to the DB and keeps the current photo
+$collectionModel = new CollectFakeCollectionModel([6 => collected(6, file: $newPhoto)]);
+file_put_contents("$photosDir-upload/text.jpg", 'not an image');
+Assert::exception(fn() => photoPresenter($collectionModel, $photos)->publicReplaceCollectionPhoto(6, 1, "$photosDir-upload/text.jpg"), RuntimeException::class);
+Assert::same([], $collectionModel->writes);
+Assert::count(2, glob("$photosDir/*") ?: []);
+
+// a failed DB write deletes the new file and keeps the old one
+$collectionModel = new CollectFakeCollectionModel([6 => collected(6, file: $newPhoto)]);
+$collectionModel->onSetFile = fn() => throw new Nette\Database\DriverException('Gone away');
+Assert::exception(fn() => photoPresenter($collectionModel, $photos)->publicReplaceCollectionPhoto(6, 1, $upload), Nette\Database\DriverException::class);
+Assert::notNull($photos->path($newPhoto));
+Assert::count(2, glob("$photosDir/*") ?: []);
+
+
+// Deleting a photo clears the DB first, then the file (#19); without a photo it changes nothing
+$collectionModel = new CollectFakeCollectionModel([6 => collected(6, file: $newPhoto)]);
+$collectionModel->onSetFile = fn() => Assert::notNull($photos->path($newPhoto));
+photoPresenter($collectionModel, $photos)->publicDeleteCollectionPhoto(6, 1);
+Assert::same([['setFile', 6, 1, null]], $collectionModel->writes);
+Assert::null($photos->path($newPhoto));
+Assert::notNull($photos->path($photo5));
+
+$collectionModel = new CollectFakeCollectionModel([6 => collected(6)]);
+photoPresenter($collectionModel, $photos)->publicDeleteCollectionPhoto(6, 1);
+Assert::same([], $collectionModel->writes);
