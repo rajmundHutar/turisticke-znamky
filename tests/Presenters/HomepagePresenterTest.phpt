@@ -329,11 +329,11 @@ Assert::same(2, substr_count($html, '<form')); // filter and collect form
 Assert::match(
 	'%A%<div id="snippet--collectSheet"><dialog id="collect-sheet" class="collect-sheet" aria-labelledby="collect-sheet-title" '
 	. 'data-title-add="stamp.sheet.add" data-title-edit="stamp.sheet.edit" data-error-text="stamp.sheet.saveFailed">%A%'
-	. '<form action="/?paginator-page=2" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>%A%',
+	. '<form action="/?paginator-page=2" method="post" enctype="multipart/form-data" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>%A%',
 	$html,
 );
 Assert::contains('aria-label="general.closeDialog"', $html);
-Assert::contains('<div class="collect-sheet-photo"></div>', $html);
+Assert::contains('<div class="field collect-sheet-photo"', $html); // the trip photo (#19)
 
 // No old big cards on the homepage (#49)
 Assert::notContains('class="card"', $html);

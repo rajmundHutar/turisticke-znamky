@@ -84,7 +84,10 @@ function initCollectSheet() {
         const collected = button.dataset.collected === '1'
         const title = collected ? sheet.dataset.titleEdit : sheet.dataset.titleAdd
         sheet.querySelector('.collect-sheet-title').textContent = `${title} #${button.dataset.stampNumber} ${button.dataset.stampName}`
-        form.elements.namedItem('remove').classList.toggle('is-hidden', !collected)
+        const remove = form.elements.namedItem('remove')
+        remove.classList.toggle('is-hidden', !collected)
+        fillPhoto(sheet, button, withValues)
+        remove.dataset.confirm = button.dataset.photo ? remove.dataset.confirmPhoto : remove.dataset.confirmPlain
         if (!withValues) {
             return
         }
@@ -95,6 +98,124 @@ function initCollectSheet() {
         form.elements.namedItem('comment').value = button.dataset.note
         sheet.querySelectorAll('.help.is-danger, .collect-sheet-error').forEach((error) => error.remove())
     }
+
+    // The trip photo (#19): the preview of the current one (data-photo of the button), the label "Přidat" / "Změnit fotku"
+    // and the delete checkbox only with a photo. A chosen file is resized here and replaces the file of the input,
+    // so the form submits (by Naja's FormData of the form, or without it) a JPEG of at most MaxPhotoEdge px, already rotated
+    // by its EXIF orientation and without any metadata (GPS); the server validates and re-encodes it again.
+    const MaxPhotoEdge = 1600
+    const MaxPhotoBytes = 8 * 1024 * 1024 // the resized photo is far smaller, this guards the server's post limit
+    let photoRun = 0 // a newer choice (or a refilled sheet) discards the result of a resize still in progress
+    let previewUrl = null
+
+    function fillPhoto(sheet, button, withValues) {
+        const box = sheet.querySelector('.collect-sheet-photo')
+        const input = box.querySelector('input[type="file"]')
+        const label = box.querySelector(`label[for="${CSS.escape(input.id)}"]`)
+        label.textContent = button.dataset.photo ? label.dataset.labelChange : label.dataset.labelAdd
+        box.querySelector('.collect-sheet-photo-delete').hidden = !button.dataset.photo
+        if (withValues) {
+            photoRun++ // a resize still in progress for the previous stamp is discarded
+            setPending(false)
+            input.value = ''
+            box.querySelector('input[type="checkbox"]').checked = false
+            setPhotoStatus(box, null)
+        }
+        showPreview(box, button.dataset.photo)
+    }
+
+    function showPreview(box, url) {
+        const preview = box.querySelector('.collect-sheet-photo-preview')
+        if (previewUrl && previewUrl !== url) {
+            URL.revokeObjectURL(previewUrl)
+        }
+        previewUrl = url?.startsWith('blob:') ? url : null
+        preview.hidden = !url
+        if (url) {
+            preview.src = url
+        } else {
+            preview.removeAttribute('src')
+        }
+    }
+
+    function setPhotoStatus(box, message, error = false) {
+        const status = box.querySelector('.collect-sheet-photo-status')
+        status.hidden = !message
+        status.textContent = message ?? ''
+        status.classList.toggle('is-danger', error)
+    }
+
+    // decodes the file (HEIC too where the browser can) upright by its EXIF orientation and draws it scaled down;
+    // the canvas keeps no metadata
+    async function resizePhoto(file) {
+        const url = URL.createObjectURL(file)
+        try {
+            let image
+            try {
+                image = await createImageBitmap(file, { imageOrientation: 'from-image' })
+            } catch {
+                image = new Image()
+                image.src = url
+                await image.decode()
+            }
+            const width = image.naturalWidth || image.width
+            const height = image.naturalHeight || image.height
+            const scale = Math.min(1, MaxPhotoEdge / Math.max(width, height))
+            const canvas = document.createElement('canvas')
+            canvas.width = Math.max(1, Math.round(width * scale))
+            canvas.height = Math.max(1, Math.round(height * scale))
+            const context = canvas.getContext('2d')
+            context.fillStyle = '#fff' // transparency becomes white in JPEG
+            context.fillRect(0, 0, canvas.width, canvas.height)
+            context.drawImage(image, 0, 0, canvas.width, canvas.height)
+            image.close?.()
+            return await new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Cannot encode the photo.')), 'image/jpeg', 0.85))
+        } finally {
+            URL.revokeObjectURL(url)
+        }
+    }
+
+    document.addEventListener('change', async (event) => {
+        const input = event.target
+        if (input.type !== 'file' || !input.closest('#collect-sheet .collect-sheet-photo')) {
+            return
+        }
+        const box = input.closest('.collect-sheet-photo')
+        const file = input.files[0]
+        const run = ++photoRun
+        if (!file) {
+            showPreview(box, trigger?.dataset.photo)
+            setPhotoStatus(box, null)
+            return
+        }
+        setPending(true)
+        setPhotoStatus(box, box.dataset.photoProcessing)
+        let message = null
+        let resized = null
+        try {
+            resized = await resizePhoto(file)
+            if (resized.size > MaxPhotoBytes) {
+                message = box.dataset.photoTooLarge
+            }
+        } catch {
+            message = box.dataset.photoUnreadable
+        }
+        if (run !== photoRun) {
+            return
+        }
+        setPending(false)
+        if (message) {
+            input.value = '' // the original is not uploaded
+            showPreview(box, trigger?.dataset.photo)
+            setPhotoStatus(box, message, true)
+            return
+        }
+        const transfer = new DataTransfer()
+        transfer.items.add(new File([resized], 'photo.jpg', { type: 'image/jpeg' }))
+        input.files = transfer.files // sets no change event
+        showPreview(box, URL.createObjectURL(resized))
+        setPhotoStatus(box, null)
+    })
 
     function show(sheet) {
         if (!sheet.open) {
@@ -214,6 +335,11 @@ function initCollectSheet() {
 
     naja.addEventListener('success', (event) => {
         const { payload } = event.detail
+        // a request over the server's size limit: the flash says so, behind the sheet
+        if (payload.collectFailed) {
+            findSheet()?.close()
+            return
+        }
         if (payload.stampId === undefined) {
             return
         }

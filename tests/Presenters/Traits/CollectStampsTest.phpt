@@ -189,6 +189,7 @@ function runCollect(
 	?array $post = null,
 	array $headers = ['Sec-Fetch-Site' => 'same-origin'], // signals and forms are CSRF protected
 	?CollectionPhotos $photos = null,
+	array $files = [],
 ): Nette\Application\Response {
 	assert($presenter instanceof HomepagePresenter || $presenter instanceof NearbyPresenter || $presenter instanceof StampPresenter);
 	$translator = PresenterTestHelpers::createTranslator();
@@ -200,7 +201,7 @@ function runCollect(
 	if ($presenter instanceof HomepagePresenter) {
 		$presenter->injectFilterForm(new App\Forms\FilterForm($translator));
 	}
-	return $presenter->run(new Request($name, $post === null ? 'GET' : 'POST', $params, $post ?? []));
+	return $presenter->run(new Request($name, $post === null ? 'GET' : 'POST', $params, $post ?? [], $files));
 }
 
 
@@ -250,7 +251,7 @@ $form = $presenter['collectForm'];
 [$date, $ok, $remove] = [$form['date'], $form['ok'], $form['remove']];
 assert($date instanceof TextInput && $ok instanceof SubmitButton && $remove instanceof SubmitButton);
 Assert::same((new DateTime('today'))->format('j. n. Y'), $date->getValue());
-Assert::same(['date', 'comment', 'id', 'ok', 'remove'], array_keys(iterator_to_array($form->getComponents())));
+Assert::same(['date', 'comment', 'photo', 'deletePhoto', 'id', 'ok', 'remove'], array_keys(iterator_to_array($form->getComponents())));
 Assert::same('stamp.saveToCollection', $ok->getCaption());
 Assert::same('stamp.uncollect', $remove->getCaption());
 
@@ -627,3 +628,191 @@ Assert::notNull($photos->path($photo5));
 $collectionModel = new CollectFakeCollectionModel([6 => collected(6)]);
 photoPresenter($collectionModel, $photos)->publicDeleteCollectionPhoto(6, 1);
 Assert::same([], $collectionModel->writes);
+
+
+/** A file uploaded in the collect form; the error code of PHP's $_FILES. */
+function uploaded(string $path, int $error = UPLOAD_ERR_OK): Nette\Http\FileUpload
+{
+	return new Nette\Http\FileUpload(['name' => basename($path), 'size' => (int) @filesize($path), 'tmp_name' => $path, 'error' => $error]);
+}
+
+
+/** @return list<string>  the basenames of the stored photos */
+function storedPhotos(string $dir): array
+{
+	return array_map('basename', glob("$dir/*") ?: []);
+}
+
+
+Nette\Utils\FileSystem::delete($photosDir);
+$photos = new CollectionPhotos($photosDir);
+$logDir = "$photosDir-log";
+Nette\Utils\FileSystem::createDir($logDir);
+register_shutdown_function(fn() => Nette\Utils\FileSystem::delete($logDir));
+Tracy\Debugger::$logDirectory = $logDir; // a rejected photo is logged
+$okPost = ['id' => '5', 'date' => '2. 6. 2024', 'comment' => 'Sunny', 'ok' => 'stamp.saveToCollection'];
+$ajax = ['Sec-Fetch-Site' => 'same-origin', 'X-Requested-With' => 'XMLHttpRequest'];
+
+
+// The form uploads a photo: it is multipart, with a file input and a delete checkbox; the upload has no rules of its own,
+// a rejected photo must not block saving the date and the note (#19)
+$presenter = new HomepagePresenter($translator);
+runCollect($presenter, 'Homepage', ['user'], new CollectFakeCollectionModel, ['action' => 'default']);
+$form = $presenter['collectForm'];
+Assert::same('multipart/form-data', $form->getElementPrototype()->enctype);
+[$photo, $deletePhoto] = [$form['photo'], $form['deletePhoto']];
+assert($photo instanceof Nette\Forms\Controls\UploadControl && $deletePhoto instanceof Nette\Forms\Controls\Checkbox);
+Assert::same('stamp.photo.delete', $deletePhoto->getCaption());
+Assert::same([], iterator_to_array($photo->getRules()));
+Assert::contains('image/', $photo->getControlPrototype()->accept);
+
+
+// Add with a photo: the stamp is added, then the photo stored and set (#19)
+$collectionModel = new CollectFakeCollectionModel;
+redirectUrl(runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, $okPost, photos: $photos, files: ['photo' => uploaded($upload)]));
+Assert::same(['add', 'setFile'], array_column($collectionModel->writes, 0));
+$added = $collectionModel->writes[1][3];
+Assert::same([5, 1], array_slice($collectionModel->writes[1], 1, 2));
+Assert::same([$added], storedPhotos($photosDir));
+
+
+// Edit with a new photo replaces the old one, the old file is gone (#19)
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $added)]);
+redirectUrl(runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, $okPost, photos: $photos, files: ['photo' => uploaded($upload)]));
+Assert::same(['update', 'setFile'], array_column($collectionModel->writes, 0));
+$replaced = $collectionModel->writes[1][3];
+Assert::notSame($added, $replaced);
+Assert::same([$replaced], storedPhotos($photosDir));
+
+
+// Edit without a file keeps the photo, also with the deletePhoto checkbox unchecked (#19)
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $replaced)]);
+redirectUrl(runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, $okPost, photos: $photos, files: ['photo' => new Nette\Http\FileUpload(null)]));
+Assert::same(['update'], array_column($collectionModel->writes, 0));
+Assert::same([$replaced], storedPhotos($photosDir));
+
+
+// "Smazat fotku" deletes the photo on save (#19)
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $replaced)]);
+$presenter = new HomepagePresenter($translator);
+redirectUrl(runCollect($presenter, 'Homepage', ['user'], $collectionModel, $homepageParams, $okPost + ['deletePhoto' => 'on'], photos: $photos));
+Assert::same(['update', 'setFile'], array_column($collectionModel->writes, 0));
+Assert::null($collectionModel->writes[1][3]);
+Assert::same([], storedPhotos($photosDir));
+Assert::same(['stamp.flash.saved'], array_map(fn($flash) => $flash->message, $presenter->getTemplate()->flashes));
+
+
+// An invalid photo or a failed upload: the date and the note are saved, the photo is not, an error flash says so
+// and a short warning is logged (#19)
+file_put_contents("$photosDir-upload/text.jpg", 'not an image');
+foreach ([uploaded("$photosDir-upload/text.jpg"), uploaded('', UPLOAD_ERR_INI_SIZE)] as $file) {
+	$stored = $photos->store($upload);
+	$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $stored)]);
+	$presenter = new HomepagePresenter($translator);
+	$response = runCollect($presenter, 'Homepage', ['user'], $collectionModel, $homepageParams, $okPost, $ajax, photos: $photos, files: ['photo' => $file]);
+	Assert::same(['update'], array_column($collectionModel->writes, 0));
+	Assert::same('Sunny', $collectionModel->writes[0][3]['comment']);
+	Assert::same([$stored], storedPhotos($photosDir));
+	Assert::same(
+		[['stamp.flash.saved', Flash::SUCCESS], ['stamp.photo.saveFailed', Flash::ERROR]],
+		array_map(fn($flash) => [$flash->message, $flash->type], $presenter->getTemplate()->flashes),
+	);
+	Assert::same(5, $presenter->getPayload()->stampId); // the sheet closes, the flash shows the error
+	$photos->delete($stored);
+}
+$log = (string) file_get_contents("$logDir/warning.log");
+Assert::contains('stamp 5', $log);
+Assert::contains('user 1', $log);
+Assert::contains('not a JPEG, PNG or WebP', $log);
+Assert::contains((string) UPLOAD_ERR_INI_SIZE, $log);
+
+
+// An invalid photo of a new stamp still adds the stamp (#19)
+$collectionModel = new CollectFakeCollectionModel;
+$invalid = uploaded("$photosDir-upload/text.jpg");
+redirectUrl(runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, $okPost, photos: $photos, files: ['photo' => $invalid]));
+Assert::same(['add'], array_column($collectionModel->writes, 0));
+Assert::same([], storedPhotos($photosDir));
+
+
+// Remove with a photo deletes it; an attached invalid file or a checked delete box is ignored, only the id is validated (#19)
+$stored = $photos->store($upload);
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5, file: $stored)]);
+redirectUrl(runCollect(new HomepagePresenter($translator), 'Homepage', ['user'], $collectionModel, $homepageParams, [
+	'id' => '5',
+	'date' => 'nonsense',
+	'comment' => '',
+	'deletePhoto' => 'on',
+	'remove' => 'stamp.uncollect',
+], photos: $photos, files: ['photo' => uploaded("$photosDir-upload/text.jpg")]));
+Assert::same([['remove', 5, 1]], $collectionModel->writes);
+Assert::same([], storedPhotos($photosDir));
+
+
+// A POST over post_max_size comes with an empty POST and no files, so also without the form's signal (_do is in the body):
+// a flash says the photo is too large; back to the page, or by AJAX the flashes are redrawn and the sheet closes (#19)
+$oversizedParams = array_diff_key($homepageParams, ['do' => true]);
+$collectionModel = new CollectFakeCollectionModel([5 => collected(5)]);
+$presenter = new HomepagePresenter($translator);
+$url = redirectUrl(runCollect($presenter, 'Homepage', ['user'], $collectionModel, $oversizedParams, [], ['Sec-Fetch-Site' => 'same-origin', 'Content-Length' => '30000000']));
+Assert::same([], $collectionModel->writes);
+Assert::null($url->getQueryParameter('do'));
+Assert::same('Praha', $url->getQueryParameter('search'));
+Assert::same([['stamp.photo.tooLarge', Flash::ERROR]], array_map(fn($flash) => [$flash->message, $flash->type], $presenter->getTemplate()->flashes));
+
+$presenter = new HomepagePresenter($translator);
+$response = runCollect($presenter, 'Homepage', ['user'], $collectionModel, $oversizedParams, [], $ajax + ['Content-Length' => '30000000']);
+Assert::same([], $collectionModel->writes);
+Assert::true($presenter->getPayload()->collectFailed);
+$snippets = (array) $presenter->getPayload()->snippets;
+Assert::same(['snippet--flashes'], array_keys($snippets));
+Assert::contains('stamp.photo.tooLarge', $snippets['snippet--flashes']);
+
+// ... the same on the stamp detail and Nearby
+$response = runCollect(new CollectTestStampPresenter($translator), 'Stamp', ['user'], $collectionModel, ['action' => 'default', 'id' => '1'], [], [
+	'Sec-Fetch-Site' => 'same-origin',
+	'Content-Length' => '30000000',
+]);
+Assert::same('/stamp/1', redirectUrl($response)->getPath());
+$response = runCollect(new CollectTestNearbyPresenter($translator), 'Nearby', ['user'], $collectionModel, ['action' => 'default', 'lat' => '50.1', 'lng' => '14.4'], [], [
+	'Sec-Fetch-Site' => 'same-origin',
+	'Content-Length' => '30000000',
+]);
+Assert::same('50.1', redirectUrl($response)->getQueryParameter('lat'));
+Assert::same([], $collectionModel->writes);
+
+// ... a POST with data is no oversized one
+$presenter = new HomepagePresenter($translator);
+redirectUrl(runCollect($presenter, 'Homepage', ['user'], $collectionModel, $homepageParams, $okPost, ['Sec-Fetch-Site' => 'same-origin', 'Content-Length' => '300']));
+Assert::same(['stamp.flash.saved'], array_map(fn($flash) => $flash->message, $presenter->getTemplate()->flashes));
+
+
+// The collect button carries the URL of the current photo for the sheet, only for a collected stamp with a photo (#19)
+$stored = $photos->store($upload);
+$presenter = new HomepagePresenter($translator);
+runCollect($presenter, 'Homepage', ['user'], new CollectFakeCollectionModel([5 => collected(5, file: $stored), 6 => collected(6)]), $homepageParams, $okPost, $ajax, photos: $photos);
+$snippet = ((array) $presenter->getPayload()->snippets)['snippet--stamp-5'];
+Assert::contains('data-photo="/photo/5/' . basename($stored, '.jpg') . '"', $snippet);
+$photos->delete($stored);
+
+$presenter = new HomepagePresenter($translator);
+runCollect($presenter, 'Homepage', ['user'], new CollectFakeCollectionModel([5 => collected(5)]), $homepageParams, $okPost, $ajax, photos: $photos);
+Assert::notContains('data-photo', ((array) $presenter->getPayload()->snippets)['snippet--stamp-5']);
+
+
+// The sheet: multipart, the photo preview, file input and delete checkbox, labels and a remove confirmation for a stamp
+// with a photo, all switched by bundle.js from the button's data-photo (#19)
+$presenter = new HomepagePresenter($translator);
+runCollect($presenter, 'Homepage', ['user'], new CollectFakeCollectionModel, $homepageParams, ['id' => '5', 'date' => '31. 2. 2024', 'comment' => '', 'ok' => 'stamp.saveToCollection'], $ajax);
+$sheet = ((array) $presenter->getPayload()->snippets)['snippet--collectSheet'];
+Assert::contains('enctype="multipart/form-data"', $sheet);
+Assert::match('~<input type="file" name="photo"[^>]* accept="image/\*"~', $sheet);
+Assert::match('~<input type="checkbox" name="deletePhoto"~', $sheet);
+Assert::contains('class="collect-sheet-photo-preview"', $sheet);
+Assert::contains('data-label-add="stamp.photo.add"', $sheet);
+Assert::contains('data-label-change="stamp.photo.change"', $sheet);
+Assert::contains('data-confirm="stamp.uncollectConfirm"', $sheet);
+Assert::contains('data-confirm-photo="stamp.uncollectConfirmPhoto"', $sheet);
+Assert::contains('data-photo-unreadable="stamp.photo.unreadable"', $sheet);
+Assert::contains('data-photo-too-large="stamp.photo.tooLarge"', $sheet);
+Assert::contains('data-photo-processing="stamp.photo.processing"', $sheet);

@@ -694,6 +694,27 @@ body:has(.collect-sheet[open]) {
     color: inherit;
 }
 
+/* the trip photo in the sheet (#19): the current one, or the resized new one */
+.collect-sheet-photo-preview {
+    display: block;
+    height: 80px;
+    width: auto;
+    max-width: 100%;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.collect-sheet-photo-preview[hidden],
+.collect-sheet-photo-status[hidden],
+.collect-sheet-photo-delete[hidden] {
+    display: none;
+}
+
+.collect-sheet-photo-delete {
+    margin-top: 0.5rem;
+}
+
 .collect-sheet-buttons {
     display: flex;
     gap: 0.75rem;

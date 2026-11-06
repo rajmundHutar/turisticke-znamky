@@ -62,7 +62,9 @@ function submitDate(string $date): array
 
 // Empty date is stored as null
 [$values] = submitDate('');
-Assert::same(['date' => null, 'comment' => 'Windy', 'id' => '5'], $values);
+Assert::false($values['photo']->hasFile()); // no photo uploaded (#19)
+unset($values['photo']);
+Assert::same(['date' => null, 'comment' => 'Windy', 'deletePhoto' => false, 'id' => '5'], $values);
 
 
 // A valid Czech date (d. m. yyyy, with or without leading zeros and spaces) is converted to DateTime at midnight;

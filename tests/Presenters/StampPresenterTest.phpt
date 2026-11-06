@@ -362,7 +362,7 @@ Assert::match(
 Assert::notContains('toggleCollect', $html);
 Assert::same(1, substr_count($html, '<dialog'));
 Assert::same(1, substr_count($html, '<form'));
-Assert::contains('<form action="/stamp/1" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>', $html);
+Assert::contains('<form action="/stamp/1" method="post" enctype="multipart/form-data" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>', $html);
 
 
 // An anonymous user gets no collect buttons nor the form
@@ -499,7 +499,8 @@ Assert::match(
 	. 'data-stamp-id="1" [^>]*data-collected="1"~s',
 	$html,
 );
-Assert::same(2, substr_count($html, '/photo/')); // the link and the preview
+Assert::same(3, substr_count($html, '/photo/')); // the link, the preview and the photo of the sheet (below)
+Assert::match('~data-stamp-id="1" [^>]*data-photo="/photo/1/0123456789abcdef0123456789abcdef"~', $html); // the sheet previews it
 
 $html = renderStampDetail($detailStamp, [], $closest, roles: ['user'], collection: [1 => $collected(1)]);
 Assert::contains('Ve sbírce od 1. 5. 2024', $html);

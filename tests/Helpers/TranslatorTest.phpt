@@ -35,3 +35,13 @@ Assert::same('Uložení se nepovedlo, zkuste to znovu.', $translator->translate(
 Assert::same('Přihlášení proběhlo úspěšně.', $translator->translate('login.loginSuccessful'));
 Assert::same('Neplatné datum, zadejte D. M. RRRR.', $translator->translate('form.editStamp.invalidDate'));
 Assert::same('sebráno', $translator->translate('stats.numberOfCollected'));
+
+// The collection photo in the sheet (#19)
+Assert::same('Přidat fotku', $translator->translate('stamp.photo.add'));
+Assert::same('Změnit fotku', $translator->translate('stamp.photo.change'));
+Assert::same('Smazat fotku', $translator->translate('stamp.photo.delete'));
+Assert::same('Fotku se nepodařilo uložit.', $translator->translate('stamp.photo.saveFailed'));
+Assert::same('Fotka je příliš velká.', $translator->translate('stamp.photo.tooLarge'));
+Assert::same('Tuto fotku se nepodařilo načíst, zkus jinou (JPEG, PNG).', $translator->translate('stamp.photo.unreadable'));
+Assert::same('Zpracovávám fotku…', $translator->translate('stamp.photo.processing'));
+Assert::same('Odebrat známku ze sbírky? Smaže se i fotka.', $translator->translate('stamp.uncollectConfirmPhoto'));

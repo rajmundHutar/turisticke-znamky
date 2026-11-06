@@ -177,7 +177,10 @@ $presenter->injectEditStampForm(new EditStampForm($translator));
 $presenter->run(new Request('Nearby', 'GET', ['action' => 'default', 'lat' => '50.1', 'lng' => '14.4']));
 $snippets = (array) $presenter->getPayload()->snippets;
 Assert::same(['snippet--stamps'], array_keys($snippets));
-Assert::contains('<form action="/nearby/?lat=50.1&amp;lng=14.4" method="post" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>', $snippets['snippet--stamps']);
+Assert::contains(
+	'<form action="/nearby/?lat=50.1&amp;lng=14.4" method="post" enctype="multipart/form-data" id="frm-collectForm" class="ajax" data-naja-history="off" data-naja-force-redirect>',
+	$snippets['snippet--stamps'],
+);
 
 
 $closestStamps = [

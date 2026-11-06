@@ -7,7 +7,9 @@ namespace App\Presenters\Traits;
 use App\Forms\EditStampForm;
 use App\Helpers\CollectionPhotos;
 use Nette\Application\UI\Form;
+use Nette\Http\FileUpload;
 use Nette\Utils\DateTime;
+use Tracy\Debugger;
 
 /**
  * One collect form (POST) for adding, editing and removing a stamp, shared by the presenters listing stamps.
@@ -34,11 +36,12 @@ trait CollectStamps
 	public function injectCollectionPhotos(CollectionPhotos $collectionPhotos): void
 	{
 		$this->collectionPhotos = $collectionPhotos;
+		$this->onStartup[] = $this->rejectOversizedPost(...);
 	}
 
 	/**
-	 * Fields: date (Czech d. m. yyyy, today by default), comment, hidden id of the stamp;
-	 * buttons: ok saves (adds or updates), remove removes the stamp from the collection.
+	 * Fields: date (Czech d. m. yyyy, today by default), comment, photo (#19; empty keeps the current one), deletePhoto,
+	 * hidden id of the stamp; buttons: ok saves (adds or updates), remove removes the stamp from the collection.
 	 */
 	public function createComponentCollectForm(): Form
 	{
@@ -69,7 +72,11 @@ trait CollectStamps
 					$this->collectionModel->add($stampId, $userId, $values['date'], $values['comment']);
 					$flash = 'stamp.flash.added';
 				}
+				$photoSaved = $remove || $this->saveCollectionPhoto($stampId, $userId, $values['photo'], $values['deletePhoto']);
 				$this->flashMessage($this->t($flash), \Flash::SUCCESS);
+				if (!$photoSaved) {
+					$this->flashMessage($this->t('stamp.photo.saveFailed'), \Flash::ERROR);
+				}
 
 				if (!$this->isAjax()) {
 					$this->redirectAfterCollectionChange($stampId);
@@ -88,6 +95,54 @@ trait CollectStamps
 		};
 		return $form;
 	}
+
+	/**
+	 * A POST over post_max_size arrives without any data (#19), even without the form's signal (_do is in the body),
+	 * so the page would just render again. At startup, tells the user the photo is too large and stops the request.
+	 */
+	private function rejectOversizedPost(): void
+	{
+		$request = $this->getRequest();
+		if (
+			!$request->isMethod('POST')
+			|| $request->getPost() !== []
+			|| $request->getFiles() !== []
+			|| (int) $this->getHttpRequest()->getHeader('Content-Length') <= 0
+		) {
+			return;
+		}
+		$this->flashMessage($this->t('stamp.photo.tooLarge'), \Flash::ERROR);
+		if (!$this->isAjax()) {
+			$this->redirect('this');
+		}
+		$this->payload->collectFailed = true; // bundle.js closes the sheet, so the flash is seen
+		$this->redrawControl('flashes');
+		$this->sendTemplate(); // just the flashes snippet, no action or render method needed
+	}
+
+
+	/**
+	 * Saves the photo change of a saved stamp (#19): a new upload replaces the photo, otherwise the checkbox deletes it.
+	 * @return bool  false when the upload failed or is not a valid image; logged without any content of the file
+	 */
+	private function saveCollectionPhoto(int $stampId, int $userId, FileUpload $upload, bool $delete): bool
+	{
+		try {
+			if ($upload->hasFile()) {
+				if (!$upload->isOk()) {
+					throw new \RuntimeException("Upload error {$upload->getError()}.");
+				}
+				$this->replaceCollectionPhoto($stampId, $userId, $upload->getTemporaryFile());
+			} elseif ($delete) {
+				$this->deleteCollectionPhoto($stampId, $userId);
+			}
+			return true;
+		} catch (\RuntimeException $e) {
+			Debugger::log("Collection photo of stamp {$stampId}, user {$userId} not saved: {$e->getMessage()}", Debugger::WARNING);
+			return false;
+		}
+	}
+
 
 	/**
 	 * Stores the uploaded trip photo of the collected stamp, replacing the current one (#19): the new file is written first,

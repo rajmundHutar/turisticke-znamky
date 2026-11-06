@@ -39,6 +39,12 @@ final class EditStampForm
 				->addFilter(fn(string $value) => self::parseDate($value));
 		$form->addTextArea('comment', 'form.editStamp.description')
 			->setNullable();
+		// the trip photo (#19), resized by the browser; no rules: a rejected photo must not block saving the date and the note,
+		// the presenter reports it (also the upload errors, which the default rules would turn into a form error)
+		$photo = $form->addUpload('photo', 'stamp.photo.add');
+		$photo->getRules()->reset();
+		$photo->getControlPrototype()->accept = 'image/*';
+		$form->addCheckbox('deletePhoto', 'stamp.photo.delete');
 		$id = $form->addHidden('id', $stampId);
 
 		$form->addSubmit('ok', 'stamp.saveToCollection');
