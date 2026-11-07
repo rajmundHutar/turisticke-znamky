@@ -23,9 +23,10 @@
 		{* the trip photo (#19): bundle.js resizes the chosen file before the submit and previews it *}
 		<div class="field collect-sheet-photo" data-photo-processing="{_'stamp.photo.processing'}" data-photo-unreadable="{_'stamp.photo.unreadable'}" data-photo-too-large="{_'stamp.photo.tooLarge'}">
 			<img class="collect-sheet-photo-preview" alt="{_'detail.photo'}" hidden>
-			<label n:name="photo" class="label" data-label-add="{_'stamp.photo.add'}" data-label-change="{_'stamp.photo.change'}" />
+			{* the native input is only visually hidden: it keeps the keyboard focus and opens the picker, its label is the button (#83) *}
 			<div class="control">
-				<input n:name="photo">
+				<input n:name="photo" class="collect-sheet-photo-input">
+				<label n:name="photo" class="button collect-sheet-photo-button" data-label-add="{_'stamp.photo.add'}" data-label-change="{_'stamp.photo.change'}" />
 			</div>
 			<p class="help collect-sheet-photo-status" hidden></p>
 			<label class="checkbox collect-sheet-photo-delete" hidden>
