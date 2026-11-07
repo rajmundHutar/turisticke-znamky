@@ -301,7 +301,7 @@ foreach ($rows as $id => $row) {
 	Assert::contains("Stamp $id", $row);
 }
 // the row loads a small lazy thumbnail with its box size, not the full image (#52)
-Assert::contains('<img src="http://localhost/thumb/5-stamp" width="400" height="300" alt="Stamp 5" loading="lazy" decoding="async">', $rows[5]);
+Assert::contains('<img src="http://localhost/thumb/5-stamp" width="360" height="240" alt="Stamp 5" loading="lazy" decoding="async">', $rows[5]);
 
 // A collected stamp shows its date and a check button carrying the data for the shared collect sheet (#49, #48)
 Assert::contains('stamp.collectedOn 2. 6. 2024', $rows[5]);

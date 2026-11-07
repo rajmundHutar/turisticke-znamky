@@ -9,13 +9,16 @@ use Latte;
 /**
  * Small WebP thumbnails of the stamp images for the lists (#52).
  * A thumbnail is created on import, or on the first request of /thumb/<name> (ThumbnailPresenter),
- * and stored in thumbs/<name>.webp next to the images, so later pages load it as a static file.
+ * and stored in thumbs-<Width>/<name>.webp next to the images, so later pages load it as a static file.
  */
 final class StampThumbnails extends Latte\Extension
 {
-	/** the box the image is scaled down into: twice the largest list row (176 × 100 CSS px), about the nearby card width */
-	public const Width = 400;
-	public const Height = 300;
+	/** the box the image is scaled down into: about twice the list row (92 × 52 CSS px on mobile, 176 × 100 from 1024 px) */
+	public const Width = 360;
+	public const Height = 240;
+
+	/** named after the box, so thumbnails of an older box size are never served and new ones are created on demand (#83) */
+	private const Dir = 'thumbs-' . self::Width;
 
 	private const Quality = 80;
 
@@ -56,7 +59,7 @@ final class StampThumbnails extends Latte\Extension
 
 	public function getThumbnailPath(string $name): string
 	{
-		return "{$this->imagesDir}/thumbs/{$name}.webp";
+		return "{$this->imagesDir}/" . self::Dir . "/{$name}.webp";
 	}
 
 
@@ -69,7 +72,7 @@ final class StampThumbnails extends Latte\Extension
 		if (!preg_match('~^(' . self::NamePattern . ')\.png$~D', $image, $m)) {
 			return "images/stamps/{$image}";
 		} elseif (is_file($this->getThumbnailPath($m[1]))) {
-			return "images/stamps/thumbs/{$m[1]}.webp";
+			return 'images/stamps/' . self::Dir . "/{$m[1]}.webp";
 		}
 		return $this->supported && $this->getSourcePath($m[1]) !== null ? "thumb/{$m[1]}" : "images/stamps/{$image}";
 	}
