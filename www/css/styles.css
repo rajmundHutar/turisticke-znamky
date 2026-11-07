@@ -572,9 +572,12 @@ html:not(.js) .nearby-locate {
     font-size: 0.9rem;
 }
 
-.stamp-detail-salespoint-navigate {
+/* "Web" and "Navigovat": a 44 px tap target */
+.stamp-detail-salespoint-link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: 44px;
     min-height: 44px;
     padding: 0 0.25rem;
     white-space: nowrap;

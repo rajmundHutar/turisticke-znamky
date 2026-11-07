@@ -110,7 +110,7 @@
 			<span>{$salespoint['name']}</span>
 			<span n:if="$item['distance']" class="stamp-detail-salespoint-distance text-muted">{$item['distance']}</span>
 		</div>
-		<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener">{_'detail.website'}</a>
-		<a n:if="$item['navigate']" href="{$item['navigate']}" target="_blank" rel="noopener" class="stamp-detail-salespoint-navigate">{_'detail.navigate'}</a>
+		<a n:if="$salespoint['website']" href="{$salespoint['website']}" target="_blank" rel="noopener" class="stamp-detail-salespoint-link">{_'detail.website'}</a>
+		<a n:if="$item['navigate']" href="{$item['navigate']}" target="_blank" rel="noopener" class="stamp-detail-salespoint-link">{_'detail.navigate'}</a>
 	</li>
 {/define}
