@@ -155,9 +155,9 @@ function assertRedirectToOriginal(string $name, array $result): void
 [$response, $httpResponse, $session] = runThumbnail(new StampThumbnails($dir), '1-praded');
 Assert::type(FileResponse::class, $response);
 assert($response instanceof FileResponse);
-Assert::same("$dir/thumbs/1-praded.webp", $response->getFile());
+Assert::same("$dir/thumbs-360/1-praded.webp", $response->getFile());
 Assert::same('image/webp', $response->getContentType());
-Assert::true(is_file("$dir/thumbs/1-praded.webp"));
+Assert::true(is_file("$dir/thumbs-360/1-praded.webp"));
 Assert::same('1 year', $httpResponse->expiration); // replaces Pragma and Expires of the session cache limiter
 Assert::same('private, max-age=31536000', $httpResponse->headers['Cache-Control']);
 Assert::true($session->closed); // parallel thumbnail requests don't wait for the session lock
@@ -170,11 +170,11 @@ foreach (['404-missing', '../1-praded', '1-praded.png'] as $name) {
 
 // Without GD/WebP support, or with a corrupt, empty or too large image, it redirects to the original
 assertRedirectToOriginal('1-praded', runThumbnail(new StampThumbnails($dir, supported: false), '1-praded'));
-Nette\Utils\FileSystem::delete("$dir/thumbs");
+Nette\Utils\FileSystem::delete("$dir/thumbs-360");
 assertRedirectToOriginal('1-praded', runThumbnail(new StampThumbnails($dir, maxPixels: 1000), '1-praded'));
 assertRedirectToOriginal('7-broken', runThumbnail(new StampThumbnails($dir), '7-broken'));
 assertRedirectToOriginal('8-empty', runThumbnail(new StampThumbnails($dir), '8-empty'));
-Assert::same([], glob("$dir/thumbs/*") ?: []);
+Assert::same([], glob("$dir/thumbs-360/*") ?: []);
 
 // a failure is logged as one short line
 $log = (string) file_get_contents("$dir/warning.log");

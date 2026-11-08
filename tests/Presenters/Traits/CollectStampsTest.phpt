@@ -831,6 +831,9 @@ runCollect($presenter, 'Homepage', ['user'], new CollectFakeCollectionModel, $ho
 $sheet = ((array) $presenter->getPayload()->snippets)['snippet--collectSheet'];
 Assert::contains('enctype="multipart/form-data"', $sheet);
 Assert::match('~<input type="file" name="photo"[^>]* accept="image/\*"~', $sheet);
+// the native input is visually hidden (still focusable), its label is the button "Přidat fotku" right after it (#83)
+Assert::match('~<input type="file" name="photo" accept="image/\*" id="(?<id>[^"]+)" class="collect-sheet-photo-input">\s*'
+	. '<label for="(?P=id)" class="button collect-sheet-photo-button" data-label-add="stamp.photo.add" data-label-change="stamp.photo.change">stamp.photo.add</label>~', $sheet);
 Assert::match('~<input type="checkbox" name="deletePhoto"~', $sheet);
 Assert::contains('class="collect-sheet-photo-preview"', $sheet);
 Assert::contains('data-label-add="stamp.photo.add"', $sheet);

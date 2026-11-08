@@ -388,7 +388,7 @@ Assert::match('~<figure class="stamp-detail-image">\s*'
 	. '<button type="button" class="[^"]*js-description-toggle[^"]*"[^>]*aria-controls="stamp-description"[^>]*data-less="[^"]+"[^>]*>Zobrazit celý popis</button>.*'
 	. 'id="map"~s', $html);
 // the nearby rows load the lazy thumbnails, only the detail image is the full one (#52)
-Assert::contains('<img src="http://localhost/thumb/8-snezka" width="400" height="300" alt="Sněžka" loading="lazy" decoding="async">', $html);
+Assert::contains('<img src="http://localhost/thumb/8-snezka" width="360" height="240" alt="Sněžka" loading="lazy" decoding="async">', $html);
 Assert::notContains('/images/stamps/8-snezka.png', $html);
 
 // "Známky poblíž" lists the nearby stamps as the rows of the overview: thumbnail, number, name, distance from the shown stamp (#69)
@@ -418,11 +418,12 @@ $html = renderStampDetail($detailStamp, [
 	['id' => 2, 'stamp_id' => 1, 'name' => 'Trafika, Nádražní 5, Žďár nad Sázavou', 'lat' => '', 'lng' => '0', 'website' => null, 'sort' => 2, 'system' => 0],
 	['id' => 3, 'stamp_id' => 1, 'name' => 'Prodej dočasně pozastaven', 'lat' => null, 'lng' => null, 'website' => null, 'sort' => 3, 'system' => 1],
 ], $closest);
-$navigate = 'target="_blank" rel="noopener" class="stamp-detail-salespoint-navigate">Navigovat</a>';
+// both links share the class giving them the 44 px tap target (#83)
+$navigate = 'target="_blank" rel="noopener" class="stamp-detail-salespoint-link">Navigovat</a>';
 // only the nearest one is shown, the others are collapsed under "Další místa (N)" (#80)
 Assert::match('~<h2[^>]*>Kde koupit</h2>\s*<ul class="stamp-detail-salespoints">\s*'
 	. '<li>\s*<div class="stamp-detail-salespoint-text">\s*<span>Pokladna hradu</span>\s*<span class="stamp-detail-salespoint-distance text-muted">2,1 km</span>\s*</div>\s*'
-	. '<a href="https://example.com/shop" target="_blank" rel="noopener">Web</a>\s*'
+	. '<a href="https://example.com/shop" target="_blank" rel="noopener" class="stamp-detail-salespoint-link">Web</a>\s*'
 	. '<a href="https://mapy\.cz/fnc/v1/route\?end=14\.42,50\.099&amp;navigate=true" ' . preg_quote($navigate, '~') . '\s*</li>\s*'
 	. '</ul>\s*<details class="stamp-detail-salespoints-more">\s*<summary>Další místa \(2\)</summary>\s*<ul class="stamp-detail-salespoints">\s*'
 	. '<li>\s*<div class="stamp-detail-salespoint-text">\s*<span>Trafika, Nádražní 5, Žďár nad Sázavou</span>\s*</div>\s*'

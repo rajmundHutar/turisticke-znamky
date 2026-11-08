@@ -572,9 +572,12 @@ html:not(.js) .nearby-locate {
     font-size: 0.9rem;
 }
 
-.stamp-detail-salespoint-navigate {
+/* "Web" and "Navigovat": a 44 px tap target */
+.stamp-detail-salespoint-link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: 44px;
     min-height: 44px;
     padding: 0 0.25rem;
     white-space: nowrap;
@@ -703,6 +706,36 @@ body:has(.collect-sheet[open]) {
     margin-bottom: 0.5rem;
     border-radius: 6px;
     object-fit: cover;
+}
+
+/* the native file input (and its "Choose File" text) is visually hidden but stays focusable, the label is its button (#83) */
+.collect-sheet-photo-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.collect-sheet-photo-button {
+    min-height: 44px;
+    background-color: var(--tz-well);
+    border-color: var(--tz-border);
+    color: var(--tz-accent-text);
+}
+
+.collect-sheet-photo-button:hover {
+    border-color: var(--tz-accent);
+    color: var(--tz-accent-hover);
+}
+
+.collect-sheet-photo-input:focus-visible + .collect-sheet-photo-button {
+    outline: 2px solid var(--tz-accent-text);
+    outline-offset: 2px;
 }
 
 .collect-sheet-photo-preview[hidden],
